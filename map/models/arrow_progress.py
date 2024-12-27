@@ -1,19 +1,15 @@
 from django.db import models
-from map.models import (
-    Arrow,
-    Map,
-)
 from member.models import Member
 
 
 class ArrowProgress(models.Model):
     map = models.ForeignKey(
-        Map,
+        'map.Map',
         on_delete=models.DO_NOTHING,
         related_name='arrow_progresses',
     )
     arrow = models.ForeignKey(
-        Arrow,
+        'map.Arrow',
         on_delete=models.DO_NOTHING,
         related_name='progresses',
         help_text='진행 중인 Arrow',

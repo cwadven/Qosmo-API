@@ -1,24 +1,20 @@
 from django.db import models
-from map.models import (
-    Map,
-    Node,
-)
 
 
 class Arrow(models.Model):
     map = models.ForeignKey(
-        Map,
+        'map.Map',
         on_delete=models.DO_NOTHING,
         related_name='arrows',
     )
     start_node = models.ForeignKey(
-        Node,
+        'map.Node',
         on_delete=models.DO_NOTHING,
         related_name='starting_arrows',
         help_text='시작 Node',
     )
     end_node = models.ForeignKey(
-        Node,
+        'map.Node',
         on_delete=models.DO_NOTHING,
         related_name='ending_arrows',
         help_text='타겟 Node',
