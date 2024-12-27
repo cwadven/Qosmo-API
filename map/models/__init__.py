@@ -1,11 +1,15 @@
-from .map import Map
-from .node import Node
-from .arrow import Arrow
-from .node_rule import ActiveRuleNode
+from map.models.map import Map
+from map.models.node import Node
+from map.models.arrow import Arrow
+from map.models.node_rule import NodeCompleteRule
+from map.models.node_history import NodeCompletedHistory
+from map.models.arrow_progress import ArrowProgress
 
 __all__ = [
     'Map',
     'Node',
     'Arrow',
-    'ActiveRuleNode',
+    'NodeCompleteRule',
+    'NodeCompletedHistory',
+    'ArrowProgress',
 ]
