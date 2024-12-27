@@ -54,9 +54,9 @@ jobs:
         DJANGO_SETTINGS_MODULE: config.settings.test
         PGPASSWORD: postgres
       run: |
-        psql -h localhost -U postgres -c "CREATE DATABASE nully_test;"
-        psql -h localhost -U postgres -d nully_test -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
-        psql -h localhost -U postgres -d nully -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
+        psql -h localhost -U postgres -c "CREATE DATABASE checker_test;"
+        psql -h localhost -U postgres -d checker_test -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
+        psql -h localhost -U postgres -d checker -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
 
     - name: Install Dependencies
       env:
