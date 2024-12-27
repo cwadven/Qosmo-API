@@ -1,0 +1,24 @@
+# Dockerfile
+
+# Example: Force building for AMD64 architecture
+FROM --platform=linux/arm64 python:3.11
+
+# 작업 디렉토리 설정
+WORKDIR /app
+
+# 필요한 Python 라이브러리 설치
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 애플리케이션 코드 복사
+COPY . .
+
+# Gunicorn Log 폴더 생성
+RUN mkdir -p /var/log/gunicorn
+
+# Celery Log 폴더 생성
+RUN mkdir -p /var/log/celery
+
+# CRON 적용
+RUN apt-get update && apt-get install -y cron vim dos2unix
+RUN mkdir -p /tmp/log
