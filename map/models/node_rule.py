@@ -23,4 +23,4 @@ class NodeCompleteRule(models.Model):
         verbose_name_plural = 'Node 해금 규칙'
 
     def __str__(self):
-        return f"{self.map.name} - {self.name}"
+        return f'{self.map.name} - {self.name}'
