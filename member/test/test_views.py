@@ -209,7 +209,7 @@ class SocialLoginViewTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
 
         # Check the response data for expected keys
-        mock_raise_if_inaccessible.called_once()
+        mock_raise_if_inaccessible.assert_called_once_with()
         self.assertEqual(response.data['access_token'], 'test_access_token')
         self.assertEqual(response.data['refresh_token'], 'test_refresh_token')
         self.assertEqual(
@@ -814,7 +814,10 @@ class GetOrCreateGuestTokenViewTestCase(TestCase):
                              mock_get_jwt_guest_token,
                              mock_get_jwt_refresh_token):
         # Given:
-        guest = Guest.objects.first()
+        guest = Guest.objects.last()
+        # And: Set the guest member as None
+        guest.member = None
+        guest.save()
         mock_get_request_ip.return_value = guest.ip
         mock_get_jwt_guest_token.return_value = 'test_guest_token'
         mock_get_jwt_refresh_token.return_value = 'test_refresh_token'
@@ -831,8 +834,8 @@ class GetOrCreateGuestTokenViewTestCase(TestCase):
                 'refresh_token': 'test_refresh_token',
             }
         )
-        mock_get_jwt_guest_token.called_once_with(guest)
-        mock_get_jwt_refresh_token.called_once_with(guest)
+        mock_get_jwt_guest_token.assert_called_once_with(guest)
+        mock_get_jwt_refresh_token.assert_called_once_with(guest)
 
     @patch('member.views.get_jwt_refresh_token')
     @patch('member.views.get_jwt_guest_token')
@@ -863,5 +866,5 @@ class GetOrCreateGuestTokenViewTestCase(TestCase):
             }
         )
         guest = Guest.objects.get(ip='111.111.111.111')
-        mock_get_jwt_guest_token.called_once_with(guest)
-        mock_get_jwt_refresh_token.called_once_with(guest)
+        mock_get_jwt_guest_token.assert_called_once_with(guest)
+        mock_get_jwt_refresh_token.assert_called_once_with(guest)
