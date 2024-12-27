@@ -20,7 +20,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: nully
+          POSTGRES_DB: checker
         ports:
           - 5432:5432
 
