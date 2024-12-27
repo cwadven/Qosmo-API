@@ -47,4 +47,4 @@ class Arrow(models.Model):
         verbose_name_plural = '화살표'
 
     def __str__(self):
-        return f"{self.map.name} - {self.start_node.name} -> {self.end_node.name}"
+        return f'{self.map.name} - {self.start_node.name} -> {self.end_node.name}'
