@@ -709,7 +709,7 @@ paths:
               properties:
                 file_name:
                   type: string
-                  description: "파일 이름 확장자까지 ��요"
+                  description: "파일 이름 확장자까지 요"
                   example: "test.png"
       responses:
         "200":
@@ -811,7 +811,7 @@ paths:
                     message: "입력값을 다시 확인해주세요."
                 non_existent_order:
                   value:
-                    message: "존재하지 않는 주문입���다."
+                    message: "존재하지 않는 주문입니다."
 
   /v1/promotion/banners:
     get:
@@ -993,7 +993,7 @@ paths:
       tags:
         - Map
       summary: Map 상세 조회
-      description: 특�� Map의 상세 정보를 조회합니다.
+      description: 특정 Map의 상세 정보를 조회합니다.
       parameters:
         - name: map_id
           in: path
@@ -1144,7 +1144,7 @@ paths:
             type: integer
       responses:
         "200":
-          description: 성공적으로 Arrow 목록을 조회했습니다
+          description: 성공적으로 Arrow 목록을 조회했습��다
           content:
             application/json:
               schema:
@@ -1279,7 +1279,7 @@ paths:
       description: 구독자 수 기준으로 상위 5개의 인기 Map 목록을 조회합니다.
       responses:
         "200":
-          description: 성공적으로 인기 Map 목록을 조회했습니다
+          description: 성공적으로 인기 Map 목록을 ��회했습니다
           content:
             application/json:
               schema:
@@ -1297,6 +1297,76 @@ paths:
                           $ref: "#/components/schemas/MapListItem"
                         maxItems: 5
                         minItems: 5
+
+  /v1/member/profile:
+    get:
+      tags:
+        - Member
+      summary: 내 프로필 조회
+      description: 로그인한 사용자의 프로필 정보를 조회합니다.
+      responses:
+        "200":
+          description: 프로필 조회 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "20000000"
+                  data:
+                    $ref: "#/components/schemas/MemberProfile"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+    patch:
+      tags:
+        - Member
+      summary: 프로필 정보 수정
+      description: 로그인한 사용자의 프로필 정보를 수정합니다.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nickname:
+                  type: string
+                  example: "새로운닉네임"
+                profile_image:
+                  type: string
+                  format: binary
+                  description: "프로필 이미지 파일 (jpg, png만 가능)"
+      responses:
+        "200":
+          description: 프로필 수정 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "20000000"
+                  data:
+                    $ref: "#/components/schemas/MemberProfile"
+        "400":
+          description: |
+            프로필 수정 실패<br>
+            [ error_code ENUM ]<br>
+            invalid-profile-field-value<br>
+            invalid-file-format<br>
+            [ errors ENUM ]<br>
+            nickname<br>
+            profile_image<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
 
 components:
   schemas:
@@ -1807,6 +1877,30 @@ components:
             type: integer
           example: [2]
 
+    MemberProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        nickname:
+          type: string
+          example: "John"
+        profile_image:
+          type: string
+          example: "s3/path/to/profile/image.jpg"
+        subscribed_map_count:
+          type: integer
+          example: 5
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-01T00:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2024-01-01T00:00:00Z"
+
   responses:
     UnauthorizedError:
       description: 인증되지 않은 사용자
@@ -1843,7 +1937,7 @@ components:
                 example: {}
 
     NodeForbiddenError:
-      description: Node 접근 권한 없음
+      description: Node 접근 ���한 없음
       content:
         application/json:
           schema:
