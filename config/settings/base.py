@@ -9,6 +9,8 @@ logger = logging.getLogger('django')
 
 DEBUG = True
 
+DJANGO_SETTINGS_MODULE = os.environ.get('DJANGO_SETTINGS_MODULE')
+
 ALLOWED_HOSTS = ['*']
 
 DJANGO_APPS = [
@@ -29,6 +31,7 @@ THIRD_APPS = [
     'django_celery_results',
     'cacheops',
     'constance',
+    'drf_yasg',
 ]
 
 PROJECT_APPS = [
@@ -80,7 +83,10 @@ AUTH_USER_MODEL = 'member.Member'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [
+            BASE_DIR / 'templates',
+            BASE_DIR / 'docs',
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -224,4 +230,11 @@ CONSTANCE_FILE_ROOT = 'constance'
 
 CONSTANCE_ADDITIONAL_FIELDS = {
     'image_field': ['django.forms.ImageField', {}]
+}
+
+SWAGGER_SETTINGS = {
+    'USE_SESSION_AUTH': False,
+    'SECURITY_DEFINITIONS': None,
+    'VALIDATOR_URL': None,
+    'SPEC_URL': '/swagger.yaml',
 }
