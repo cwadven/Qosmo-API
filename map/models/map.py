@@ -13,7 +13,7 @@ class Map(models.Model):
         Member, 
         on_delete=models.DO_NOTHING,
         related_name='created_maps',
-        help_text="작성자 ID"
+        help_text='작성자 ID'
     )
     is_private = models.BooleanField(default=True, help_text='나만의 Map 여부')
     is_deleted = models.BooleanField(default=False)

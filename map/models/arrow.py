@@ -1,49 +1,48 @@
 from django.db import models
-from .map import Map
-from .node import Node
-from .node_active_rule import NodeActiveRule
+from map.models.map import Map
+from map.models.node import Node
+from map.models.node_rule import NodeCompleteRule
 
 
 class Arrow(models.Model):
     map = models.ForeignKey(
         Map, 
-        on_delete=models.CASCADE,
-        related_name='arrows'
+        on_delete=models.DO_NOTHING,
+        related_name='arrows',
     )
     start_node = models.ForeignKey(
         Node,
-        on_delete=models.CASCADE,
+        on_delete=models.DO_NOTHING,
         related_name='starting_arrows',
-        help_text="시작 Node"
+        help_text='시작 Node',
     )
     end_node = models.ForeignKey(
         Node,
-        on_delete=models.CASCADE,
+        on_delete=models.DO_NOTHING,
         related_name='ending_arrows',
-        help_text="타겟 Node"
+        help_text='타겟 Node',
     )
-    active_rule_node = models.ForeignKey(
-        NodeActiveRule,
-        on_delete=models.CASCADE,
+    node_complete_rule = models.ForeignKey(
+        NodeCompleteRule,
+        on_delete=models.DO_NOTHING,
         related_name='arrows',
-        help_text="타겟 ActiveRuleNode"
+        help_text='타겟 Node 해금 규칙',
     )
-    name = models.CharField(max_length=255)
     question = models.ForeignKey(
-        'questions.Question',
-        on_delete=models.SET_NULL,
+        'question.Question',
+        on_delete=models.DO_NOTHING,
         null=True,
         blank=True,
         related_name='arrows',
-        help_text="Arrow 해결 조건을 가진 문제"
+        help_text='Arrow 해결 조건을 가진 문제',
     )
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'arrows'
-        ordering = ['id']
+        verbose_name = '화살표'
+        verbose_name_plural = '화살표'
 
     def __str__(self):
-        return f"{self.map.name} - {self.name}"
+        return f"{self.map.name} - {self.start_node.name} -> {self.end_node.name}"
