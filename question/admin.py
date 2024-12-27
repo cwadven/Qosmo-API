@@ -1,13 +1,17 @@
 from django.contrib import admin
-from django.forms import ModelForm, MultipleChoiceField, CheckboxSelectMultiple
+from django.forms import (
+    CheckboxSelectMultiple,
+    ModelForm,
+    MultipleChoiceField,
+)
+from question.consts import QuestionType
 from question.models import (
     Question,
     QuestionAnswer,
+    QuestionFile,
     UserQuestionAnswer,
     UserQuestionAnswerFile,
-    QuestionFile,
 )
-from question.consts import QuestionType
 
 
 class QuestionAdminForm(ModelForm):

@@ -7,7 +7,7 @@ from map.models import (
 
 class Arrow(models.Model):
     map = models.ForeignKey(
-        Map, 
+        Map,
         on_delete=models.DO_NOTHING,
         related_name='arrows',
     )

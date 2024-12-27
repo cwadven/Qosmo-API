@@ -4,7 +4,7 @@ from map.models import Map
 
 class Node(models.Model):
     map = models.ForeignKey(
-        Map, 
+        Map,
         on_delete=models.DO_NOTHING,
         related_name='nodes'
     )

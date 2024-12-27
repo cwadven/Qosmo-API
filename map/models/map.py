@@ -10,7 +10,7 @@ class Map(models.Model):
     subscriber_count = models.BigIntegerField(default=0, help_text='구독자 수', db_index=True)
     view_count = models.BigIntegerField(default=0, help_text='조회수', db_index=True)
     created_by = models.ForeignKey(
-        Member, 
+        Member,
         on_delete=models.DO_NOTHING,
         related_name='created_maps',
         help_text='작성자 ID'

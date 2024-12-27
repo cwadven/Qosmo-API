@@ -1,13 +1,13 @@
 from django.contrib import admin
 from map.models import (
-    Map,
-    Node,
     Arrow,
-    NodeCompleteRule,
-    NodeCompletedHistory,
     ArrowProgress,
     Category,
+    Map,
     MapCategory,
+    Node,
+    NodeCompleteRule,
+    NodeCompletedHistory,
 )
 
 

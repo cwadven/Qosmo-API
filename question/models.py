@@ -1,7 +1,7 @@
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from member.models import Member
 from map.models import Map
+from member.models import Member
 from question.consts import (
     QuestionType,
     ValidationType,
