@@ -1,6 +1,8 @@
 from django.db import models
-from .map import Map
-from .node import Node
+from map.models import (
+    Map,
+    Node,
+)
 
 
 class NodeCompleteRule(models.Model):

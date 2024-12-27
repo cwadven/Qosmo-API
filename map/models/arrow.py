@@ -1,7 +1,9 @@
 from django.db import models
-from map.models.map import Map
-from map.models.node import Node
-from map.models.node_rule import NodeCompleteRule
+from map.models import (
+    Map,
+    Node,
+    NodeCompleteRule,
+)
 
 
 class Arrow(models.Model):
