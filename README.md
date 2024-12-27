@@ -63,27 +63,269 @@
 
 ## Getting Started
 
+### 설정
+
+1. 환경 설정
+
 ```shell
 # Clone the repository
-git clone https://github.com/your-username/checker-be.git
 
-# Create and activate virtual environment
+# Create a virtual environment in the root directory
 python -m venv venv
-source venv/bin/activate  # Linux
-source venv/Scripts/activate  # Windows
 
-# Install dependencies
+# Activate the virtual environment
+# Windows
+source venv/Scripts/activate
+# Linux
+source venv/bin/activate
+
+# Install the requirements
 pip install -r requirements.txt
 
-# Set environment variables
+# Define settings file
+# local, development, production
+export DJANGO_SETTINGS_MODULE=XXXX.settings.xxxx
+```
+
+2. Django 환경 변수 (.django_env)
+
+```shell
+# Define .django_env file
+fab2 generate-env
+
+-- Below is the example of .django_env file creating --
+
+-----------------0----------------------
+- Input CSRF_TRUSTED_ORIGIN:
+----------------------------------------
+For use CSRF_TRUSTED_ORIGINS, you need to set the host ip.
+
+"CSRF_TRUSTED_ORIGIN" Example: "http://127.0.0.1"
+----------------------------------------
+ 
+-----------------1----------------------
+- Input SECRET_KEY:
+----------------------------------------
+This is a secret key for Django. 
+You can generate it here: https://djecrety.ir/
+
+"SECRET_KEY" Example: "django-insecure-......test..."
+----------------------------------------
+
+----------------2-----------------------
+- Input KAKAO_API_KEY:
+- Input KAKAO_SECRET_KEY:
+- Input KAKAO_REDIRECT_URL:
+----------------------------------------
+You can get it here: https://developers.kakao.com/
+
+[ More Explain ]
+"KAKAO_API_KEY" Example: "4df48d962f....."
+"KAKAO_SECRET_KEY" Example: "sdfaefse....."
+"KAKAO_REDIRECT_URL" Example: "http://...."
+----------------------------------------
+
+----------------3-----------------------
+- Input KAKAO_PAY_CID:
+- Input KAKAO_PAY_SECRET_KEY:
+----------------------------------------
+For Kakao Pay, you need to get a separate key.
+"KAKAO_PAY_CID" Example: "TC0ONETIME"
+"KAKAO_PAY_SECRET_KEY" Example: "897a....."
+----------------------------------------
+
+---------------4------------------------
+- Input NAVER_API_KEY:
+- Input NAVER_SECRET_KEY:
+- Input NAVER_REDIRECT_URL:
+----------------------------------------
+You can get it here: https://developers.naver.com/main/
+"NAVER_API_KEY" Example: "4df48d962f....."
+"NAVER_SECRET_KEY" Example: "sdfaefse....."
+"NAVER_REDIRECT_URL" Example: "http://...."
+----------------------------------------
+
+----------------5-----------------------
+- Input GOOGLE_CLIENT_ID:
+- Input GOOGLE_SECRET_KEY:
+- Input GOOGLE_REDIRECT_URL:
+----------------------------------------
+You can get it here: https://console.cloud.google.com/apis/credentials
+
+"GOOGLE_CLIENT_ID" Example: "346021117315-ikur0p9aeup3i....."
+"GOOGLE_SECRET_KEY" Example: "GOCSPX-i....."
+"GOOGLE_REDIRECT_URL" Example: "http://127.0.0.1:8000/account/login"
+----------------------------------------
+
+----------------6-----------------------
+- Input CHANNEL_HOST:
+- Input CHANNEL_PORT:
+----------------------------------------
+Channels uses Redis as a channel layer.
+
+"CHANNEL_HOST" Example: 127.0.0.1 (if you use docker, you need to set docker container name example 'redis')
+"CHANNEL_PORT" Example: 6379
+----------------------------------------
+
+----------------7-----------------------
+- Input CELERY_BROKER_URL:
+- Input result_backend:
+----------------------------------------
+Celery uses Redis as a message broker.
+Need to install Redis: https://redis.io/
+
+"CELERY_BROKER_URL" Example: redis://localhost:6379/2  (if you use docker, you need to set docker container name example 'redis')
+"result_backend" Example: redis://localhost:6379/2
+----------------------------------------
+
+----------------8-----------------------
+- Input CACHEOPS_REDIS_HOST:
+- Input CACHEOPS_REDIS_PORT:
+- Input CACHEOPS_REDIS_DB:
+----------------------------------------
+Cacheops uses Redis as a cache.
+
+"CACHEOPS_REDIS_HOST" Example: localhost  (if you use docker, you need to set docker container name example 'redis')
+"CACHEOPS_REDIS_PORT" Example: 6379
+"CACHEOPS_REDIS_DB" Example: 10
+(redis db number)
+----------------------------------------
+
+----------------9-----------------------
+- Input CACHES_LOCATION:
+----------------------------------------
+Cache uses location.
+
+"CACHES_LOCATION" Example: redis://localhost:6379/1  (if you use docker, you need to set docker container name example 'redis')
+----------------------------------------
+
+-----------------10----------------------
+- Input DB_ENGINE:
+- Input DB_NAME:
+- Input DB_USER:
+- Input DB_PASSWORD:
+- Input DB_HOST:
+- Input DB_PORT:
+- Input DB_TEST_NAME:
+----------------------------------------
+Database settings.
+
+"DB_ENGINE" Example: django.db.backends.postgresql
+"DB_NAME" Example: nully
+"DB_USER" Example: postgres
+"DB_PASSWORD" Example: postgres
+"DB_HOST" Example: localhost  (if you use docker, you need to set docker container name 'postgresql14')
+"DB_PORT" Example: 5432
+"DB_TEST_NAME" Example: nully_test
+----------------------------------------
+
+------------------11---------------------
+- Input EMAIL_HOST_USER:
+- Input EMAIL_HOST_PASSWORD:
+----------------------------------------
+Host email settings.
+Default Gmail if you want to use other email services, you need to change the settings.
+
+"EMAIL_HOST_USER" Example: nully@gmail.com
+"EMAIL_HOST_PASSWORD" Example: 1234
+----------------------------------------
+
+-----------------12---------------------
+- Input AWS_IAM_ACCESS_KEY:
+- Input AWS_IAM_SECRET_ACCESS_KEY:
+- Input AWS_S3_BUCKET_NAME:
+- Input AWS_SQS_URL:
+----------------------------------------
+AWS settings.
+
+"AWS_IAM_ACCESS_KEY" Example: AKIAYXZ223G...
+"AWS_IAM_SECRET_ACCESS_KEY" Example: AKIAYXZ223G...
+"AWS_S3_BUCKET_NAME" Example: nully
+"AWS_SQS_URL" Example: https://sqs.ap-northeast-2.amazonaws.com/1234/nully
+----------------------------------------
+
+-----------------13---------------------
+- Input CRONTAB_PREFIX_COMMAND:
+----------------------------------------
+"CRONTAB_PREFIX_COMMAND" 
+Example:
+source venv/bin/activate && python manage.py
+or
+cd /app && newrelic-admin run-program python manage.py
+----------------------------------------
+
+
+-----------------14---------------------
+- Input OPENAI_API_KEY:
+----------------------------------------
+openai api key https://platform.openai.com/settings/profile?tab=api-keys
+
+"OPENAI_API_KEY"
+----------------------------------------
+
+
+-----------------15---------------------
+- Input SENTRY_DSN:
+----------------------------------------
+sentry dns for sentry.io of your project
+
+SENTRY_DSN
+----------------------------------------
+
+
+-----------------16---------------------
+- Input SENTRY_ENV:
+----------------------------------------
+sentry environment for sentry.io of your project
+
+SENTRY_ENV
+----------------------------------------
+```
+
+3. Docker 환경 변수 (.env)
+
+```shell
+# Docker Compose를 위한 환경 변수 파일 생성
 cp .env.example .env
-# Edit .env file with your configuration
 
-# Run migrations
+# .env 파일에는 다음 설정들이 포함됩니다:
+POSTGRES_DB=checker
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+PGADMIN_DEFAULT_EMAIL=admin@admin.com
+PGADMIN_DEFAULT_PASSWORD=admin
+FLOWER_USER=admin
+FLOWER_PASSWORD=admin
+```
+
+4. Database 설정
+
+```shell
+# Migrate the database
 python manage.py migrate
+```
 
+5. 서버 실행
+
+```shell
 # Start development server
 python manage.py runserver
+```
+
+6. Celery 실행
+
+```shell
+# Run the celery worker
+celery -A config worker -l INFO -P solo
+````
+
+### Docker Start
+```shell
+# docker-compose.yml file change environment for your DJANGO_SETTINGS_MODULE
+
+# Start the docker container
+chmod +x ./deploy.sh
+./deploy.sh
 ```
 
 ## Project Structure
@@ -131,10 +373,28 @@ coverage report
 ## Contributing
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+2. Create your branch from starting master (`git checkout -b feature/amazing-feature`)
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+5. Open a Pull Request to the `code-review` branch
+6. When Approved by the reviewer, merge the PR
+7. After merging the PR, merge to `integration` branch
+8. After merging to `integration` branch, and finished testing, merge to `master` branch
+
+
+## Extra
+
+### Git Hooks
+
+- pre-commit: Run flake8
+- pre-push: Push with master branch version tag
+
+```shell
+cd project_root
+
+chmod +x ./scripts/set_git_hooks.sh
+./scripts/set_git_hooks.sh
+```
 
 ## License
 
