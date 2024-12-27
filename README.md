@@ -106,10 +106,16 @@ checker-be/
 
 ## API Documentation
 
-API 문서는 Swagger를 통해 제공됩니다.
+API 문서는 Swagger UI를 통해 제공됩니다.
+
+### Swagger UI 접근
 
 - 개발 서버: `http://localhost:8000/swagger/`
-- 운영 서버: `https://api.checker.com/swagger/`
+- API 스키마: `http://localhost:8000/swagger.yaml`
+
+### API 문서 업데이트
+
+API 문서는 `docs/Swagger/swagger.yaml` 파일을 통해 관리됩니다.
 
 ## Testing
 
