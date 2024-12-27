@@ -2,7 +2,6 @@ from django.db import models
 from map.models import (
     Map,
     Node,
-    NodeCompleteRule,
 )
 
 
@@ -25,7 +24,7 @@ class Arrow(models.Model):
         help_text='타겟 Node',
     )
     node_complete_rule = models.ForeignKey(
-        NodeCompleteRule,
+        'map.NodeCompleteRule',
         on_delete=models.DO_NOTHING,
         related_name='arrows',
         help_text='타겟 Node 해금 규칙',
