@@ -15,7 +15,7 @@ class Question(models.Model):
         related_name='questions'
     )
     title = models.CharField(max_length=255)
-    question_type = ArrayField(
+    question_types = ArrayField(
         models.CharField(max_length=20, choices=QuestionType.choices()),
     )
     description = models.TextField()
