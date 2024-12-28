@@ -80,7 +80,7 @@ class PromotionBannerAPITests(TestCase):
             response.json(),
             {
                 'message': '입력값을 다시 확인해주세요.',
-                'error_code': 'missing-mandatory-parameter',
+                'status_code': 'missing-mandatory-parameter',
                 'errors': {
                     'target_layer': ['target_layer 입력값을 확인해주세요.']
                 },

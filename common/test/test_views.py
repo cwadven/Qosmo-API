@@ -37,7 +37,7 @@ class ConstanceTypeViewTest(TestCase):
             response.json(),
             {
                 'message': InvalidPathParameterException.default_detail,
-                'error_code': InvalidPathParameterException.default_code,
+                'status_code': InvalidPathParameterException.default_code,
                 'errors': None,
             },
         )
@@ -74,7 +74,7 @@ class GetPreSignedURLViewTest(APITestCase):
             response.json(),
             {
                 'message': '로그인이 필요합니다.',
-                'error_code': 'login-required',
+                'status_code': 'login-required',
                 'errors': None,
             }
         )
@@ -108,7 +108,7 @@ class GetPreSignedURLViewTest(APITestCase):
             response.json(),
             {
                 'message': '입력값을 다시 한번 확인해주세요.',
-                'error_code': '400-pre_signed_url_input_data-00001',
+                'status_code': '400-pre_signed_url_input_data-00001',
                 'errors': {'file_name': ['문자열 형식으로 입력해주세요.']},
             },
         )
@@ -142,14 +142,16 @@ class GetPreSignedURLViewTest(APITestCase):
             response.json(),
             {
                 'message': InvalidPathParameterException.default_detail,
-                'error_code': InvalidPathParameterException.default_code,
+                'status_code': InvalidPathParameterException.default_code,
                 'errors': None,
             },
         )
 
     @patch('common.views.generate_pre_signed_url_info')
-    def test_get_pre_signed_url_should_return_500_when_external_api_exception_raise(self,
-                                                                                    mock_generate_pre_signed_url_info):
+    def test_get_pre_signed_url_should_return_500_when_external_api_exception_raise(
+            self,
+            mock_generate_pre_signed_url_info,
+    ):
         # Given: Login
         self.client.force_login(self.member)
         # And:
@@ -180,7 +182,7 @@ class GetPreSignedURLViewTest(APITestCase):
             response.json(),
             {
                 'message': '외부 API 통신 중 에러가 발생했습니다.',
-                'error_code': 'external-api-error',
+                'status_code': 'external-api-error',
                 'errors': None,
             },
         )
