@@ -36,3 +36,8 @@ class CursorPaginatorResponse(BaseModel):
     data: list = Field(...)
     next_cursor: Optional[str] = Field(None)
     has_more: bool = Field(...)
+
+
+class BaseFormatResponse(BaseModel):
+    status_code: Any = Field(...)
+    data: Dict[str, Any] = Field(default_factory=dict)

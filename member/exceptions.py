@@ -15,6 +15,12 @@ class LoginRequiredException(CommonAPIException):
     default_code = 'login-required'
 
 
+class GuestTokenRequiredException(CommonAPIException):
+    status_code = 401
+    default_detail = '비정상적인 접근입니다.'
+    default_code = 'guest-token-issue'
+
+
 class NormalLoginFailedException(CommonAPIException):
     status_code = 400
     default_detail = '아이디 및 비밀번호 정보가 일치하지 않습니다.'
