@@ -26,16 +26,7 @@ class MapListView(APIView):
 
     @cursor_pagination(default_size=20, cursor_criteria=[MapListCursorCriteria])
     def get(self, request, decoded_next_cursor: dict, size: int):
-        try:
-            map_list_request = MapListRequestDTO.of(request)
-        except ValidationError as e:
-            raise PydanticAPIException(
-                status_code=400,
-                error_summary=ErrorStatusCode.INVALID_INPUT_HOME_LIST_PARAM_ERROR.label,
-                error_code=ErrorStatusCode.INVALID_INPUT_HOME_LIST_PARAM_ERROR.value,
-                errors=e.errors(),
-            )
-
+        map_list_request = MapListRequestDTO.of(request)
         map_service = MapService(member_id=request.guest.member_id)
         paginated_maps, has_more, next_cursor = map_service.get_map_list(
             search=map_list_request.search,
