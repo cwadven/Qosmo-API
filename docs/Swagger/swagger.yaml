@@ -45,7 +45,7 @@ paths:
         "400":
           description: |
             Login failed<br>
-            [ error_code ENUM ]<br>
+            [ status_code ENUM ]<br>
             missing-mandatory-parameter<br>
             invalid-username-or-password<br>
             [ errors ENUM ]<br>
@@ -96,7 +96,7 @@ paths:
         "400":
           description: |
             Social Login failed<br>
-            [ error_code ENUM ]<br>
+            [ status_code ENUM ]<br>
             missing-mandatory-parameter<br>
             social-token-error<br>
             [ errors ENUM ]<br>
@@ -165,7 +165,7 @@ paths:
         "400":
           description: |
             Social Login failed<br>
-            [ error_code ENUM ]<br>
+            [ status_code ENUM ]<br>
             missing-mandatory-parameter<br>
             social-token-error<br>
             [ errors ENUM ]<br>
@@ -211,7 +211,7 @@ paths:
         "400":
           description: |
             Refresh Token failed<br>
-            [ error_code ENUM ]<br>
+            [ status_code ENUM ]<br>
             missing-mandatory-parameter<br>
             [ errors ENUM ]<br>
             refresh_token<br>
@@ -223,7 +223,7 @@ paths:
         "401":
           description: |
             Social Login failed<br>
-            [ error_code ENUM ]<br>
+            [ status_code ENUM ]<br>
             invalid-refresh-token<br>
             [ errors ENUM ]<br>
           content:
@@ -301,7 +301,7 @@ paths:
         "400":
           description: |
             SignUp Validation failed<br>
-            [ error_code ENUM ]<br>
+            [ status_code ENUM ]<br>
             missing-mandatory-parameter<br>
             invalid-sign-up-field-value<br>
             [ errors ENUM ]<br>
@@ -361,7 +361,7 @@ paths:
         "400":
           description: |
             Error sending verification code or invalid input<br>
-            [ error_code ENUM ]<br>
+            [ status_code ENUM ]<br>
             missing-mandatory-parameter<br>
             sending-email-token-error<br>
             [ errors ENUM ]<br>
@@ -411,7 +411,7 @@ paths:
         "400":
           description: |
             Validation error or registration failure<br>
-            [ error_code ENUM ]<br>
+            [ status_code ENUM ]<br>
             missing-mandatory-parameter<br>
             member-creation-fail<br>
             email-token-macro-error<br>
@@ -1377,7 +1377,7 @@ paths:
         "400":
           description: |
             프로필 수정 실패<br>
-            [ error_code ENUM ]<br>
+            [ status_code ENUM ]<br>
             invalid-profile-field-value<br>
             invalid-file-format<br>
             [ errors ENUM ]<br>
@@ -1488,14 +1488,14 @@ components:
       type: object
       required:
         - message
-        - error_code
+        - status_code
         - errors
       properties:
         message:
           type: string
           description: "큰 에러 범주"
           example: "유효하지 않은 입력값입니다."
-        error_code:
+        status_code:
           type: string
           description: "큰 에러 코드"
           example: "invalid-username-or-password"
