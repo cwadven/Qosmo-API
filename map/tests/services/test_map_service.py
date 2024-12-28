@@ -2,7 +2,6 @@ from unittest.mock import patch
 
 from django.test import TestCase
 from django.utils import timezone
-
 from map.models import Map
 from map.services.map_service import MapService
 from member.models import Member
@@ -10,14 +9,10 @@ from member.models import Member
 
 class MapServiceTest(TestCase):
     def setUp(self):
-        # Given: 테스트에 필요한 기본 데이터 설정
-        # 테스트 사용자 생성
         self.member = Member.objects.create(
             username='test_user',
             nickname='테스트 유저',
         )
-        
-        # 공개 Map 5개 생성
         self.public_maps = []
         for i in range(5):
             self.public_maps.append(
@@ -33,8 +28,6 @@ class MapServiceTest(TestCase):
                     created_at=timezone.now(),
                 )
             )
-        
-        # 비공개 Map 생성
         self.private_map = Map.objects.create(
             name='Private Map',
             description='Private Description',
@@ -43,8 +36,6 @@ class MapServiceTest(TestCase):
             created_by=self.member,
             is_private=True,
         )
-        
-        # 삭제된 Map 생성
         self.deleted_map = Map.objects.create(
             name='Deleted Map',
             description='Deleted Description',
@@ -62,12 +53,12 @@ class MapServiceTest(TestCase):
 
         # When: Map 목록을 조회
         maps, has_more, next_cursor = service.get_map_list(size=3)
-        
+
         # Then: 공개된 Map만 size 만큼 조회되어야 함
         self.assertEqual(len(maps), 3)
         self.assertTrue(has_more)
         self.assertEqual(next_cursor, 'next_cursor')
-        
+
         # Then: 페이지네이션 함수가 올바른 인자로 호출되어야 함
         mock_pagination.assert_called_once()
         queryset_arg = mock_pagination.call_args[0][0]
@@ -83,11 +74,11 @@ class MapServiceTest(TestCase):
 
         # When: 특정 검색어로 Map을 검색
         maps, has_more, next_cursor = service.get_map_list(search='Test Map 1')
-        
+
         # Then: 검색어가 포함된 Map만 반환되어야 함
         self.assertEqual(len(maps), 1)
         self.assertEqual(maps[0].name, 'Test Map 1')
-        
+
         # Then: 페이지네이션 함수가 올바른 검색 조건으로 호출되어야 함
         mock_pagination.assert_called_once()
         queryset_arg = mock_pagination.call_args[0][0]
@@ -97,7 +88,7 @@ class MapServiceTest(TestCase):
         # When: ���재하지 않는 검색어로 검색
         mock_pagination.return_value = ([], False, None)
         maps, has_more, next_cursor = service.get_map_list(search='Non Existing')
-        
+
         # Then: 결과가 없어야 함
         self.assertEqual(len(maps), 0)
 
@@ -109,12 +100,12 @@ class MapServiceTest(TestCase):
 
         # When: 첫 페이지 조회
         first_maps, has_more, next_cursor = service.get_map_list(size=2)
-        
+
         # Then: 첫 페이지가 정상적으로 반환되어야 함
         self.assertEqual(len(first_maps), 2)
         self.assertTrue(has_more)
         self.assertEqual(next_cursor, 'next_cursor')
-        
+
         # Given: 두 번째 페이지 모킹
         mock_pagination.return_value = (self.public_maps[2:4], True, 'next_cursor_2')
 
@@ -123,12 +114,12 @@ class MapServiceTest(TestCase):
             size=2,
             decoded_next_cursor={'id': 'next_cursor'}
         )
-        
+
         # Then: 두 번째 페이지가 정상적으로 반환되어야 함
         self.assertEqual(len(second_maps), 2)
         self.assertTrue(has_more)
         self.assertEqual(next_cursor, 'next_cursor_2')
-        
+
         # Then: 페이지네이션 함수가 커서와 함께 호출되어야 함
         mock_pagination.assert_called_with(
             mock_pagination.call_args[0][0],  # queryset
@@ -143,13 +134,13 @@ class MapServiceTest(TestCase):
 
         # When: 기본 필터링 수행
         queryset = service._filter_map_queryset()
-        
+
         # Then: 공개된 Map만 필터링되어야 함
         self.assertEqual(queryset.count(), 5)
-        
+
         # When: 검색어로 필터링 수행
         queryset = service._filter_map_queryset(search='Test Map 1')
-        
+
         # Then: 검색어가 포함된 Map만 필터링되어야 함
         self.assertEqual(queryset.count(), 1)
         self.assertEqual(queryset.first().name, 'Test Map 1')

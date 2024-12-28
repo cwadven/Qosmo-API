@@ -1,9 +1,7 @@
 from common.common_consts.common_status_codes import (
-    ErrorStatusCode,
     SuccessStatusCode,
 )
 from common.common_decorators.request_decorators import cursor_pagination
-from common.common_exceptions import PydanticAPIException
 from common.dtos.response_dtos import BaseFormatResponse
 from map.cursor_criteria.cursor_criteria import MapListCursorCriteria
 from map.dtos.request_dtos import MapListRequestDTO
@@ -13,7 +11,6 @@ from map.dtos.response_dtos import (
 )
 from map.services.map_service import MapService
 from member.permissions import IsGuestExists
-from pydantic import ValidationError
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
