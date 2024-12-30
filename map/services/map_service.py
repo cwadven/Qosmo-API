@@ -1,9 +1,10 @@
 from typing import (
     List,
     Optional,
-    Tuple,
+    Tuple, Type,
 )
 
+from common.common_criteria.cursor_criteria import CursorCriteria
 from common.common_paginations.cursor_pagination_helpers import get_objects_with_cursor_pagination
 from django.db.models import QuerySet
 from map.cursor_criteria.cursor_criteria import MapListCursorCriteria
@@ -17,6 +18,7 @@ class MapService:
 
     def get_map_list(
         self,
+        cursor_criteria: Type[CursorCriteria],
         search: Optional[str] = None,
         decoded_next_cursor: dict = None,
         size: int = 20,
@@ -24,7 +26,7 @@ class MapService:
         map_qs = self._filter_map_queryset(search)
         paginated_maps, has_more, next_cursor = get_objects_with_cursor_pagination(
             map_qs,
-            MapListCursorCriteria,
+            cursor_criteria,
             decoded_next_cursor,
             size,
         )

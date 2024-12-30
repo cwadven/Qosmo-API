@@ -28,6 +28,7 @@ class MapListView(APIView):
         map_list_request = MapListRequestDTO.of(request)
         map_service = MapService(member_id=request.guest.member_id)
         paginated_maps, has_more, next_cursor = map_service.get_map_list(
+            MapListCursorCriteria,
             search=map_list_request.search,
             decoded_next_cursor=decoded_next_cursor,
             size=size,

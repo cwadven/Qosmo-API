@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 from django.test import TestCase
 from django.utils import timezone
+from map.cursor_criteria.cursor_criteria import MapListCursorCriteria
 from map.exceptions import MapNotFoundException
 from map.models import Map
 from map.services.map_service import MapService
@@ -53,7 +54,7 @@ class MapServiceTest(TestCase):
         mock_pagination.return_value = (self.public_maps[:3], True, 'next_cursor')
 
         # When: Map 목록을 조회
-        maps, has_more, next_cursor = service.get_map_list(size=3)
+        maps, has_more, next_cursor = service.get_map_list(MapListCursorCriteria, size=3)
 
         # Then: 공개된 Map만 size 만큼 조회되어야 함
         self.assertEqual(len(maps), 3)
@@ -74,7 +75,7 @@ class MapServiceTest(TestCase):
         mock_pagination.return_value = ([searched_map], False, None)
 
         # When: 특정 검색어로 Map을 검색
-        maps, has_more, next_cursor = service.get_map_list(search='Test Map 1')
+        maps, has_more, next_cursor = service.get_map_list(MapListCursorCriteria, search='Test Map 1')
 
         # Then: 검색어가 포함된 Map만 반환되어야 함
         self.assertEqual(len(maps), 1)
@@ -88,7 +89,7 @@ class MapServiceTest(TestCase):
 
         # When: 재하지 않는 검색어로 검색
         mock_pagination.return_value = ([], False, None)
-        maps, has_more, next_cursor = service.get_map_list(search='Non Existing')
+        maps, has_more, next_cursor = service.get_map_list(MapListCursorCriteria, search='Non Existing')
 
         # Then: 결과가 없어야 함
         self.assertEqual(len(maps), 0)
@@ -100,7 +101,7 @@ class MapServiceTest(TestCase):
         mock_pagination.return_value = (self.public_maps[:2], True, 'next_cursor')
 
         # When: 첫 페이지 조회
-        first_maps, has_more, next_cursor = service.get_map_list(size=2)
+        first_maps, has_more, next_cursor = service.get_map_list(MapListCursorCriteria, size=2)
 
         # Then: 첫 페이지가 정상적으로 반환되어야 함
         self.assertEqual(len(first_maps), 2)
@@ -112,6 +113,7 @@ class MapServiceTest(TestCase):
 
         # When: 다음 페이지 조회
         second_maps, has_more, next_cursor = service.get_map_list(
+            MapListCursorCriteria,
             size=2,
             decoded_next_cursor={'id': 'next_cursor'}
         )
