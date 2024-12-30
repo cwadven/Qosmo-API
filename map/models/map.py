@@ -13,9 +13,15 @@ class Map(models.Model):
         Member,
         on_delete=models.DO_NOTHING,
         related_name='created_maps',
-        help_text='작성자 ID'
+        help_text='생성자',
     )
-    is_private = models.BooleanField(default=True, help_text='나만의 Map 여부')
+    categories = models.ManyToManyField(
+        'map.Category',
+        through='map.MapCategory',
+        related_name='maps',
+        help_text='맵 카테고리',
+    )
+    is_private = models.BooleanField(default=False, help_text='비공개 여부')
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)

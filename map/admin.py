@@ -11,12 +11,35 @@ from map.models import (
 )
 
 
+class MapCategoryInline(admin.TabularInline):
+    model = MapCategory
+    extra = 1
+    autocomplete_fields = ['category']
+
+
 @admin.register(Map)
 class MapAdmin(admin.ModelAdmin):
     list_display = ('name', 'created_by', 'subscriber_count', 'view_count', 'is_private', 'created_at')
     list_filter = ('is_private', 'is_deleted')
     search_fields = ('name', 'description')
     readonly_fields = ('subscriber_count', 'view_count', 'created_at', 'updated_at')
+    fields = (
+        'name',
+        'description',
+        'icon_image',
+        'background_image',
+        'created_by',
+        'subscriber_count',
+        'view_count',
+        'is_private',
+        'is_deleted',
+        'created_at',
+        'updated_at',
+    )
+    inlines = [MapCategoryInline]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related('categories')
 
 
 @admin.register(Node)
