@@ -82,3 +82,37 @@ class MapListViewTest(TestCase):
         self.assertEqual(maps_data[0]['is_subscribed'], True)
         self.assertEqual(maps_data[1]['is_subscribed'], False)
         self.assertEqual(maps_data[2]['is_subscribed'], True)
+
+    @patch('map.services.map_service.get_objects_with_cursor_pagination')
+    @patch('subscription.services.subscription_service.MapSubscriptionService.get_subscription_status_by_map_ids')
+    @patch('config.middlewares.authentications.DefaultAuthentication.authenticate_credentials')
+    @patch('config.middlewares.authentications.jwt_decode_handler')
+    def test_should_return_fail_when_invalid_category_id(
+            self,
+            mock_jwt_decode,
+            mock_auth_cred,
+            mock_subscription,
+            mock_pagination,
+    ):
+        # Given: 페이지네이션 및 구독 상태 모킹
+        mock_pagination.return_value = (self.maps[:3], True, 'next_cursor')
+        mock_subscription.return_value = {
+            self.maps[0].id: True,
+            self.maps[1].id: False,
+            self.maps[2].id: True,
+        }
+        mock_auth_cred.return_value = self.guest
+        mock_jwt_decode.return_value = {'guest_id': self.guest.id}
+
+        # When: Map category_id 이상하게 목록 API 호출
+        response = self.client.get(
+            reverse('map:map-list'),
+            {'category_id': 'invalid'},
+            HTTP_AUTHORIZATION='jwt some-token'
+        )
+
+        # Then: 응답 검증
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['status_code'], 'invalid-map-list-input')
+        self.assertEqual(response.data['message'], '입력값을 다시 한번 확인해주세요.')
+        self.assertEqual(set(response.data['errors'].keys()), {'category_id'})

@@ -9,5 +9,5 @@ app_name = 'map'
 
 urlpatterns = [
     path('', MapListView.as_view(), name='map-list'),
-    path('<int:map_id>', MapDetailView.as_view(), name='map-detail'),
+    path('/<int:map_id>', MapDetailView.as_view(), name='map-detail'),
 ]
