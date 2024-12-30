@@ -19,6 +19,7 @@ urlpatterns = [
     path('v1/payment', include('payment.urls.v1')),
     path('v1/promotion', include('promotion.urls.v1')),
     path('v1/map', include('map.urls.v1')),
+    path('v1/map-graph', include('map_graph.urls.v1')),
 ]
 
 

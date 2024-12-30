@@ -1132,9 +1132,12 @@ paths:
                     type: string
                     example: "20000000"
                   data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Node"
+                    type: object
+                    properties:
+                      nodes:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Node"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "404":
