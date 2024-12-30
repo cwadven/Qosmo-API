@@ -7,7 +7,6 @@ from typing import (
 from common.common_criteria.cursor_criteria import CursorCriteria
 from common.common_paginations.cursor_pagination_helpers import get_objects_with_cursor_pagination
 from django.db.models import QuerySet
-from map.cursor_criteria.cursor_criteria import MapListCursorCriteria
 from map.exceptions import MapNotFoundException
 from map.models import Map
 
