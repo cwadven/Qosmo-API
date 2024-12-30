@@ -5,5 +5,5 @@ app_name = 'product'
 
 
 urlpatterns = [
-    path('point', PointProductListAPIView.as_view(), name='points'),
+    path('/point', PointProductListAPIView.as_view(), name='points'),
 ]
