@@ -53,7 +53,7 @@ def custom_exception_handler(exc, context):
             errors = None
 
         response.data['message'] = message
-        response.data['error_code'] = error_code
+        response.data['status_code'] = error_code
         response.data['errors'] = errors
         response.data.pop('detail', None)
         return response

@@ -44,6 +44,7 @@ PROJECT_APPS = [
     'promotion',
     'map',
     'question',
+    'subscription',
 ]
 
 PROJECT_SETTING_APPS = []

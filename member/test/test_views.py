@@ -105,10 +105,12 @@ class SocialSignUpViewTestCase(TestCase):
     @patch('member.views.Member.objects.get_or_create_member_by_token')
     @patch('member.views.get_jwt_login_token')
     @patch('member.views.get_jwt_refresh_token')
-    def test_social_sign_up_should_fail_when_already_exists_member(self,
-                                                                   mock_get_jwt_refresh_token,
-                                                                   mock_get_jwt_login_token,
-                                                                   mock_get_or_create_member_by_token):
+    def test_social_sign_up_should_fail_when_already_exists_member(
+            self,
+            mock_get_jwt_refresh_token,
+            mock_get_jwt_login_token,
+            mock_get_or_create_member_by_token
+    ):
         # Given: test data
         mock_get_jwt_login_token.return_value = 'test_access_token'
         mock_get_jwt_refresh_token.return_value = 'test_refresh_token'
@@ -124,7 +126,7 @@ class SocialSignUpViewTestCase(TestCase):
 
         # Check the response data for expected keys
         self.assertEqual(response.data['message'], '이미 가입된 회원입니다.')
-        self.assertEqual(response.data['error_code'], 'already-member-exists')
+        self.assertEqual(response.data['status_code'], 'already-member-exists')
         self.assertEqual(response.data['errors'], None)
         mock_get_or_create_member_by_token.assert_called_once_with(
             self.data['token'],
@@ -137,11 +139,13 @@ class SocialSignUpViewTestCase(TestCase):
     @patch('member.views.get_jwt_login_token')
     @patch('member.views.get_jwt_refresh_token')
     @patch('member.views.SocialSignUpRequest.of')
-    def test_social_sign_up_should_raise_error_when_pydantic_error(self,
-                                                                   mock_of,
-                                                                   mock_get_jwt_refresh_token,
-                                                                   mock_get_jwt_login_token,
-                                                                   mock_get_or_create_member_by_token):
+    def test_social_sign_up_should_raise_error_when_pydantic_error(
+            self,
+            mock_of,
+            mock_get_jwt_refresh_token,
+            mock_get_jwt_login_token,
+            mock_get_or_create_member_by_token
+    ):
         # Given:
         # And: Mock CreateProjectRequest.of to raise a Pydantic error
         mock_of.side_effect = ValidationError.from_exception_data(
@@ -165,7 +169,7 @@ class SocialSignUpViewTestCase(TestCase):
 
         # Check the response data for expected keys
         self.assertEqual(response.data['message'], '입력값을 다시 한번 확인해주세요.')
-        self.assertEqual(response.data['error_code'], '400-invalid_sign_up_input_data-00001')
+        self.assertEqual(response.data['status_code'], '400-invalid_sign_up_input_data-00001')
         self.assertEqual(response.data['errors']['extra_information'], ['에러'])
         mock_get_or_create_member_by_token.assert_not_called()
         mock_get_jwt_login_token.assert_not_called()
@@ -221,11 +225,13 @@ class SocialLoginViewTestCase(TestCase):
     @patch('member.views.Member.raise_if_inaccessible')
     @patch('member.views.get_jwt_login_token')
     @patch('member.views.get_jwt_refresh_token')
-    def test_social_login_when_member_not_exists(self,
-                                                 mock_get_jwt_refresh_token,
-                                                 mock_get_jwt_login_token,
-                                                 mock_raise_if_inaccessible,
-                                                 get_member_by_token):
+    def test_social_login_when_member_not_exists(
+            self,
+            mock_get_jwt_refresh_token,
+            mock_get_jwt_login_token,
+            mock_raise_if_inaccessible,
+            get_member_by_token,
+    ):
         # Given: test data
         data = {
             'provider': 0,
@@ -244,7 +250,7 @@ class SocialLoginViewTestCase(TestCase):
 
         # Check the response data for expected keys and values
         self.assertEqual(response.data['message'], '로그인에 실패했습니다.')
-        self.assertEqual(response.data['error_code'], 'login-error')
+        self.assertEqual(response.data['status_code'], 'login-error')
         self.assertEqual(response.data['errors'], None)
 
 
@@ -297,7 +303,7 @@ class LoginViewTestCase(TestCase):
 
         # Check the response data for expected keys
         self.assertEqual(response.data['message'], '아이디 및 비밀번호 정보가 일치하지 않습니다.')
-        self.assertEqual(response.data['error_code'], 'invalid-username-or-password')
+        self.assertEqual(response.data['status_code'], 'invalid-username-or-password')
 
 
 class RefreshTokenViewViewTestCase(TestCase):

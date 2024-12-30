@@ -1,4 +1,13 @@
+from django.urls import path
+from map.views import (
+    MapDetailView,
+    MapListView,
+)
+
 app_name = 'map'
 
 
-urlpatterns = []
+urlpatterns = [
+    path('', MapListView.as_view(), name='map-list'),
+    path('<int:map_id>', MapDetailView.as_view(), name='map-detail'),
+]
