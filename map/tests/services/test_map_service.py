@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 from django.test import TestCase
 from django.utils import timezone
+from map.exceptions import MapNotFoundException
 from map.models import Map
 from map.services.map_service import MapService
 from member.models import Member
@@ -85,7 +86,7 @@ class MapServiceTest(TestCase):
         self.assertEqual(queryset_arg.count(), 1)
         self.assertEqual(queryset_arg.first().name, 'Test Map 1')
 
-        # When: ���재하지 않는 검색어로 검색
+        # When: 재하지 않는 검색어로 검색
         mock_pagination.return_value = ([], False, None)
         maps, has_more, next_cursor = service.get_map_list(search='Non Existing')
 
@@ -144,3 +145,54 @@ class MapServiceTest(TestCase):
         # Then: 검색어가 포함된 Map만 필터링되어야 함
         self.assertEqual(queryset.count(), 1)
         self.assertEqual(queryset.first().name, 'Test Map 1')
+
+    def test_should_return_map_when_get_map_detail_with_valid_id(self):
+        # Given: 서비스 초기화
+        service = MapService()
+
+        # When: 공개 Map 상세 조회
+        map_obj = service.get_map_detail(self.public_maps[0].id)
+
+        # Then: 요청한 Map이 반환되어야 함
+        self.assertEqual(map_obj.id, self.public_maps[0].id)
+        self.assertEqual(map_obj.name, self.public_maps[0].name)
+
+    def test_should_raise_exception_when_get_map_detail_with_invalid_id(self):
+        # Given: 서비스 초기화
+        service = MapService()
+
+        # When & Then: 존재하지 않는 Map ID로 조회 시 예외 발생
+        with self.assertRaises(MapNotFoundException):
+            service.get_map_detail(99999)
+
+    def test_should_raise_exception_when_get_map_detail_with_deleted_map(self):
+        # Given: 서비스 초기화
+        service = MapService()
+
+        # When & Then: 삭제된 Map 조회 시 예외 발생
+        with self.assertRaises(MapNotFoundException):
+            service.get_map_detail(self.deleted_map.id)
+
+    def test_should_return_private_map_when_get_map_detail_by_owner(self):
+        # Given: 소유자로 서비스 초기화
+        service = MapService(member_id=self.member.id)
+
+        # When: 소유자가 비공개 Map 조회
+        map_obj = service.get_map_detail(self.private_map.id)
+
+        # Then: 비공개 Map이 정상적으로 반환되어야 함
+        self.assertEqual(map_obj.id, self.private_map.id)
+        self.assertTrue(map_obj.is_private)
+
+    def test_should_raise_exception_when_get_private_map_detail_by_other_user(self):
+        # Given: 다른 사용자로 서비스 초기화
+        other_member = Member.objects.create(
+            username='other_user',
+            nickname='다른 유저',
+            member_status_id=1,
+        )
+        service = MapService(member_id=other_member.id)
+
+        # When & Then: 다른 사용자가 비공개 Map 조회 시 예외 발생
+        with self.assertRaises(MapNotFoundException):
+            service.get_map_detail(self.private_map.id)

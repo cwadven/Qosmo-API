@@ -6,6 +6,7 @@ from common.dtos.response_dtos import BaseFormatResponse
 from map.cursor_criteria.cursor_criteria import MapListCursorCriteria
 from map.dtos.request_dtos import MapListRequestDTO
 from map.dtos.response_dtos import (
+    MapDetailDTO,
     MapListItemDTO,
     MapListResponseDTO,
 )
@@ -41,6 +42,22 @@ class MapListView(APIView):
                     next_cursor=next_cursor,
                     has_more=has_more,
                 ).model_dump(),
+            ).model_dump(),
+            status=status.HTTP_200_OK
+        )
+
+
+class MapDetailView(APIView):
+    permission_classes = [IsGuestExists]
+
+    def get(self, request, map_id: int):
+        map_service = MapService(member_id=request.guest.member_id)
+        map_obj = map_service.get_map_detail(map_id)
+
+        return Response(
+            BaseFormatResponse(
+                status_code=SuccessStatusCode.SUCCESS.value,
+                data=MapDetailDTO.from_entity(map_obj).model_dump(),
             ).model_dump(),
             status=status.HTTP_200_OK
         )
