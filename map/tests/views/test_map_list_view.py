@@ -1,13 +1,15 @@
 from unittest.mock import patch
 
+from common.common_consts.common_status_codes import SuccessStatusCode
 from django.test import TestCase
 from django.urls import reverse
+from map.models import Map
+from member.models import (
+    Guest,
+    Member,
+)
 from rest_framework import status
 from rest_framework.test import APIClient
-
-from common.common_consts.common_status_codes import SuccessStatusCode
-from map.models import Map
-from member.models import Member, Guest
 
 
 class MapListViewTest(TestCase):
