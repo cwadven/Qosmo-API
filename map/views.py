@@ -15,6 +15,7 @@ from member.permissions import IsGuestExists
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from subscription.services.subscription_service import MapSubscriptionService
 
 
 class MapListView(APIView):
@@ -31,12 +32,20 @@ class MapListView(APIView):
             decoded_next_cursor=decoded_next_cursor,
             size=size,
         )
+        subscription_service = MapSubscriptionService(member_id=request.guest.member_id)
+        subscription_status = subscription_service.get_subscription_status_by_map_ids(
+            [map_obj.id for map_obj in paginated_maps]
+        )
+
         return Response(
             BaseFormatResponse(
                 status_code=SuccessStatusCode.SUCCESS.value,
                 data=MapListResponseDTO(
                     maps=[
-                        MapListItemDTO.from_entity(_map)
+                        MapListItemDTO.from_entity(
+                            _map,
+                            is_subscribed=subscription_status[_map.id]
+                        )
                         for _map in paginated_maps
                     ],
                     next_cursor=next_cursor,
@@ -53,11 +62,15 @@ class MapDetailView(APIView):
     def get(self, request, map_id: int):
         map_service = MapService(member_id=request.guest.member_id)
         map_obj = map_service.get_map_detail(map_id)
-
+        subscription_service = MapSubscriptionService(member_id=request.guest.member_id)
+        subscription_status = subscription_service.get_subscription_status_by_map_ids([map_id])
         return Response(
             BaseFormatResponse(
                 status_code=SuccessStatusCode.SUCCESS.value,
-                data=MapDetailDTO.from_entity(map_obj).model_dump(),
+                data=MapDetailDTO.from_entity(
+                    map_obj,
+                    is_subscribed=subscription_status[map_id]
+                ).model_dump(),
             ).model_dump(),
             status=status.HTTP_200_OK
         )
