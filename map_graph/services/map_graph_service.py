@@ -11,9 +11,11 @@ from map.models import (
     Map,
     Node,
     NodeCompletedHistory,
+    NodeCompleteRule,
 )
 from map_graph.dtos.graph_arrow import GraphArrow
 from map_graph.dtos.graph_node import GraphNode
+from map_graph.dtos.response_dtos import NodeCompleteRuleDTO
 
 
 class MapGraphService:
@@ -115,6 +117,28 @@ class MapGraphService:
                     completed_node_ids,
                 )
                 for arrow in arrows
+            ]
+        except Map.DoesNotExist:
+            raise MapNotFoundException()
+
+    def get_node_complete_rules(self, map_id: int) -> List[NodeCompleteRuleDTO]:
+        try:
+            map_obj = Map.objects.get(
+                id=map_id,
+                is_deleted=False
+            )
+            if map_obj.is_private and map_obj.created_by_id != self.member_id:
+                raise Map.DoesNotExist()
+
+            rules = NodeCompleteRule.objects.filter(
+                map_id=map_id,
+                is_deleted=False,
+            ).select_related(
+                'node',
+            )
+            return [
+                NodeCompleteRuleDTO.from_rule(rule)
+                for rule in rules
             ]
         except Map.DoesNotExist:
             raise MapNotFoundException()

@@ -44,3 +44,22 @@ class ArrowGraphView(APIView):
             ).model_dump(),
             status=status.HTTP_200_OK
         )
+
+
+class NodeCompleteRuleView(APIView):
+    permission_classes = [IsGuestExists]
+
+    def get(self, request, map_id: int):
+        service = MapGraphService(member_id=request.guest.member_id)
+        return Response(
+            BaseFormatResponse(
+                status_code=SuccessStatusCode.SUCCESS.value,
+                data={
+                    'node_complete_rules': [
+                        rule.model_dump()
+                        for rule in service.get_node_complete_rules(map_id)
+                    ]
+                }
+            ).model_dump(),
+            status=status.HTTP_200_OK
+        )

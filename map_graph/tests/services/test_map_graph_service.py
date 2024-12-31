@@ -354,3 +354,32 @@ class MapGraphServiceTest(TestCase):
 
         # Then: 정상적으로 Arrow가 조회되어야 함
         self.assertEqual(len(arrows), 1)
+
+    def test_should_return_node_complete_rules_when_get_rules(self):
+        # Given: 서비스 초기화
+        service = MapGraphService(member_id=self.member.id)
+
+        # When: NodeCompleteRule 목록 조회
+        rules = service.get_node_complete_rules(self.map.id)
+
+        # Then: Rule 목록이 반환되어야 함
+        self.assertEqual(len(rules), 1)
+        self.assertEqual(rules[0].id, self.node_complete_rule.id)
+        self.assertEqual(rules[0].name, self.node_complete_rule.name)
+        self.assertEqual(rules[0].target_nodes, [self.nodes[0].id])
+
+    def test_should_return_empty_list_when_get_rules_with_no_rules(self):
+        # Given: Rule이 없는 Map 생성
+        empty_map = Map.objects.create(
+            name='Empty Map',
+            description='Empty Description',
+            created_by=self.member,
+            is_private=False,
+        )
+        service = MapGraphService(member_id=self.member.id)
+
+        # When: Rule 목록 조회
+        rules = service.get_node_complete_rules(empty_map.id)
+
+        # Then: 빈 리스트가 반환되어야 함
+        self.assertEqual(len(rules), 0)
