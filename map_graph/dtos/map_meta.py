@@ -19,15 +19,15 @@ class MapThemeDTO(BaseModel):
         },
         "in_progress": {
             "background": "#FFFFFF",
-            "border": "#4CAF50",
-            "text": "#4CAF50",
+            "border": "#2196F3",
+            "text": "#2196F3",
             "icon": "play-circle"
         },
         "locked": {
             "background": "#FFFFFF",
-            "border": "#4CAF50",
-            "text": "#4CAF50",
-            "icon": "lock-circle"
+            "border": "#666666",
+            "text": "#666666",
+            "icon": "lock-closed"
         }
     }
     arrow: Dict = {
