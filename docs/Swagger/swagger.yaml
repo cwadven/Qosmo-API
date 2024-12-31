@@ -1169,9 +1169,11 @@ paths:
                     type: string
                     example: "success"
                   data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Arrow"
+                    properties:
+                      arrows:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Arrow"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "404":
