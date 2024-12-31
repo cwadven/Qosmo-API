@@ -25,3 +25,22 @@ class NodeGraphView(APIView):
             ).model_dump(),
             status=status.HTTP_200_OK
         )
+
+
+class ArrowGraphView(APIView):
+    permission_classes = [IsGuestExists]
+
+    def get(self, request, map_id: int):
+        service = MapGraphService(member_id=request.guest.member_id)
+        return Response(
+            BaseFormatResponse(
+                status_code=SuccessStatusCode.SUCCESS.value,
+                data={
+                    'arrows': [
+                        arrow.model_dump()
+                        for arrow in service.get_arrows(map_id)
+                    ]
+                }
+            ).model_dump(),
+            status=status.HTTP_200_OK
+        )

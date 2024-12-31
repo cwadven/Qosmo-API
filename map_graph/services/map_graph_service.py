@@ -88,6 +88,37 @@ class MapGraphService:
             for node in completed_nodes_dict.values()
         ]
 
+    def get_arrows(self, map_id: int) -> List[GraphArrow]:
+        try:
+            map_obj = Map.objects.get(
+                id=map_id,
+                is_deleted=False
+            )
+            if map_obj.is_private and map_obj.created_by_id != self.member_id:
+                raise Map.DoesNotExist()
+
+            # 화살표 데이터를 가져옵니다.
+            arrows = Arrow.objects.filter(
+                map_id=map_id,
+                is_deleted=False,
+            )
+
+            # 완료된 노드들의 id를 저장합니다.
+            completed_node_ids = {
+                completed_node.id
+                for completed_node in self.get_completed_nodes(map_id)
+            }
+
+            return [
+                GraphArrow.from_arrow(
+                    arrow,
+                    completed_node_ids,
+                )
+                for arrow in arrows
+            ]
+        except Map.DoesNotExist:
+            raise MapNotFoundException()
+
 
 def get_start_node_ids_by_end_node_id(arrows: List[GraphArrow]) -> Dict[int, Set[int]]:
     """
