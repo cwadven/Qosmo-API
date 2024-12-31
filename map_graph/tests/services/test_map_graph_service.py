@@ -67,8 +67,8 @@ class MapGraphServiceTest(TestCase):
 
         # Then: Node 목록이 반환되어야 함
         self.assertEqual(len(nodes), 4)
-        # Then: 첫 번째 노드는 in_progress 상태여야 함
-        self.assertEqual(nodes[0].status, 'in_progress')
+        # Then: 첫 번째 노드는 completed 상태여야 함
+        self.assertEqual(nodes[0].status, 'completed')
         # Then: 나머지 노드들은 locked 상태여야 함
         self.assertEqual(nodes[1].status, 'locked')
         self.assertEqual(nodes[2].status, 'locked')
