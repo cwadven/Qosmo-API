@@ -144,6 +144,21 @@ class GraphNodeTest(TestCase):
         # Then: 진행 중인 노드는 'in_progress' 상태여야 함
         self.assertEqual(status, 'in_progress')
 
+    def test_should_return_in_progress_status_when_start_node_from_get_status(self):
+        # Given: 시작 노드 처럼 만들기
+        completed_node_ids = set()
+        start_node_ids_by_end_node_id = {}
+
+        # When: get_status 호출
+        status = GraphNode.get_status(
+            self.node,
+            completed_node_ids,
+            start_node_ids_by_end_node_id,
+        )
+
+        # Then: 진행 중인 노드는 'in_progress' 상태여야 함
+        self.assertEqual(status, 'in_progress')
+
     def test_should_return_locked_status_from_get_status(self):
         # Given: 테스트 데이터 설정
         start_node_ids_by_end_node_id = {

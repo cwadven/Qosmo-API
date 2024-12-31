@@ -45,7 +45,12 @@ class GraphNode(BaseModel):
             return 'deactivated'
         if node.id in completed_node_ids:
             return 'completed'
-        elif start_node_ids_by_end_node_id.get(node.id, set()) & completed_node_ids:
+        start_node_ids = start_node_ids_by_end_node_id.get(node.id, set())
+        # 처음 Node
+        if not start_node_ids:
+            return 'in_progress'
+        # 중간 Node
+        if start_node_ids & completed_node_ids:
             return 'in_progress'
         else:
             return 'locked'
