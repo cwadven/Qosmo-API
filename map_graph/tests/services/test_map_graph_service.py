@@ -10,6 +10,7 @@ from map.models import (
 from map_graph.dtos.graph_arrow import GraphArrow
 from map_graph.services.map_graph_service import MapGraphService, get_start_node_ids_by_end_node_id
 from member.models import Member
+from subscription.models import MapSubscription
 
 
 class MapGraphServiceTest(TestCase):
@@ -383,3 +384,96 @@ class MapGraphServiceTest(TestCase):
 
         # Then: 빈 리스트가 반환되어야 함
         self.assertEqual(len(rules), 0)
+
+    def test_should_return_map_meta_when_get_map_meta(self):
+        # Given: 서비스 초기화
+        service = MapGraphService(member_id=self.member.id)
+
+        # Given: 구독 정보 생성
+        subscription = MapSubscription.objects.create(
+            map=self.map,
+            member=self.member,
+        )
+
+        # When: Map 메타 정보 조회
+        meta = service.get_map_meta(self.map.id)
+
+        # Then: 기본 정보 검증
+        self.assertEqual(meta.id, self.map.id)
+        self.assertEqual(meta.title, self.map.name)
+        self.assertEqual(meta.description, self.map.description)
+        self.assertEqual(meta.version, self.map.updated_at.strftime("%Y%m%d%H%M%S"))
+
+        # Then: 통계 정보 검증
+        self.assertEqual(meta.stats.total_nodes, 4)  # setUp에서 생성한 노드 수
+        self.assertEqual(meta.stats.completed_nodes, 1)  # setUp에서 완료한 노드 수
+        self.assertEqual(meta.stats.total_questions, 0)
+        self.assertEqual(meta.stats.solved_questions, 0)
+
+        # Then: 학습 기간 검증
+        self.assertIsNotNone(meta.stats.learning_period)
+        self.assertEqual(meta.stats.learning_period.start_date, subscription.created_at)
+        self.assertEqual(meta.stats.learning_period.days, 60)
+
+        # Then: 레이아웃 검증
+        self.assertGreaterEqual(meta.layout.width, 3000)
+        self.assertGreaterEqual(meta.layout.height, 3000)
+        self.assertEqual(meta.layout.grid_size, 20)
+
+        # Then: 테마 검증
+        self.assertEqual(meta.theme.background_color, "#f8f9fa")
+        self.assertEqual(meta.theme.grid_color, "#ddd")
+        self.assertIn("completed", meta.theme.node)
+        self.assertIn("in_progress", meta.theme.node)
+        self.assertIn("locked", meta.theme.node)
+        self.assertIn("completed", meta.theme.arrow)
+        self.assertIn("locked", meta.theme.arrow)
+
+    def test_should_return_map_meta_without_learning_period_when_not_subscribed(self):
+        # Given: 서비스 초기화
+        service = MapGraphService(member_id=self.member.id)
+
+        # When: Map 메타 정보 조회
+        meta = service.get_map_meta(self.map.id)
+
+        # Then: 학습 기간이 None이어야 함
+        self.assertIsNone(meta.stats.learning_period)
+
+    def test_should_return_map_meta_with_correct_layout_dimensions(self):
+        # Given: 서비스 초기화
+        service = MapGraphService(member_id=self.member.id)
+
+        # Given: 노드 위치 수정
+        self.nodes[0].position_x = 4000
+        self.nodes[0].position_y = 5000
+        self.nodes[0].save()
+
+        # When: Map 메타 정보 조회
+        meta = service.get_map_meta(self.map.id)
+
+        # Then: 레이아웃 크기가 노드 위치를 포함할 만큼 커야 함
+        self.assertGreaterEqual(meta.layout.width, 4000 * 1.2)  # 20% 여유 공간
+        self.assertGreaterEqual(meta.layout.height, 5000 * 1.2)
+
+    def test_should_raise_exception_when_get_map_meta_with_private_map(self):
+        # Given: 비공개 Map 생성
+        private_map = Map.objects.create(
+            name='Private Map',
+            description='Private Description',
+            created_by=self.member,
+            is_private=True,
+        )
+
+        # Given: 비회원으로 서비스 초기화
+        service = MapGraphService()
+
+        # When & Then: 비공개 Map의 메타 정보 조회 시 예외 발생
+        with self.assertRaises(MapNotFoundException):
+            service.get_map_meta(private_map.id)
+
+        # When: 소유자로 서비스 초기화
+        service = MapGraphService(member_id=self.member.id)
+        meta = service.get_map_meta(private_map.id)
+
+        # Then: 정상적으로 조회되어야 함
+        self.assertEqual(meta.id, private_map.id)

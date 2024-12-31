@@ -16,6 +16,8 @@ from map.models import (
 from map_graph.dtos.graph_arrow import GraphArrow
 from map_graph.dtos.graph_node import GraphNode
 from map_graph.dtos.response_dtos import NodeCompleteRuleDTO
+from map_graph.dtos.map_meta import MapMetaDTO
+from subscription.models import MapSubscription
 
 
 class MapGraphService:
@@ -140,6 +142,44 @@ class MapGraphService:
                 NodeCompleteRuleDTO.from_rule(rule)
                 for rule in rules
             ]
+        except Map.DoesNotExist:
+            raise MapNotFoundException()
+
+    def get_map_meta(self, map_id: int) -> MapMetaDTO:
+        try:
+            map_obj = Map.objects.get(
+                id=map_id,
+                is_deleted=False
+            )
+            if map_obj.is_private and map_obj.created_by_id != self.member_id:
+                raise Map.DoesNotExist()
+
+            nodes = list(
+                Node.objects.filter(
+                    map_id=map_id,
+                    is_deleted=False,
+                )
+            )
+            completed_nodes = self.get_completed_nodes(map_id)
+
+            start_date = None
+            if self.member_id:
+                first_completion = MapSubscription.objects.filter(
+                    map_id=map_obj,
+                    member_id=self.member_id,
+                    is_deleted=False,
+                ).order_by(
+                    '-created_at',
+                ).first()
+                if first_completion:
+                    start_date = first_completion.created_at
+
+            return MapMetaDTO.from_map(
+                map_obj=map_obj,
+                nodes=nodes,
+                completed_nodes=completed_nodes,
+                start_date=start_date,
+            )
         except Map.DoesNotExist:
             raise MapNotFoundException()
 

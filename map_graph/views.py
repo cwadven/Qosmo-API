@@ -63,3 +63,17 @@ class NodeCompleteRuleView(APIView):
             ).model_dump(),
             status=status.HTTP_200_OK
         )
+
+
+class MapMetaView(APIView):
+    permission_classes = [IsGuestExists]
+
+    def get(self, request, map_id: int):
+        service = MapGraphService(member_id=request.guest.member_id)
+        return Response(
+            BaseFormatResponse(
+                status_code=SuccessStatusCode.SUCCESS.value,
+                data=service.get_map_meta(map_id).model_dump(),
+            ).model_dump(),
+            status=status.HTTP_200_OK
+        )

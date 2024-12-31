@@ -1828,9 +1828,6 @@ components:
                 completed:
                   type: string
                   example: "#4CAF50"
-                in_progress:
-                  type: string
-                  example: "#2196F3"
                 locked:
                   type: string
                   example: "#666666"
