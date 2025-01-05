@@ -1,6 +1,9 @@
 ### Local ###
 local_production.py
 
+### Python ###
+.python-version
+
 ### Django ###
 *.log
 *.pot
