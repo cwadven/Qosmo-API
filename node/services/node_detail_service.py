@@ -205,6 +205,13 @@ class NodeDetailService:
 
         # 통계 데이터 조회
         activated_count, completed_count = self._get_node_statistics(node)
+        completed_question_count = len(
+            [
+                question_dto
+                for question_dto in question_dtos
+                if question_dto.status == 'completed'
+            ]
+        )
         return NodeDetailDTO(
             id=node.id,
             name=node.name,
@@ -221,9 +228,9 @@ class NodeDetailService:
                     id=rule.id,
                     name=rule.name,
                     progress=RuleProgressDTO(
-                        completed_questions=len(member_completed_question_ids),
-                        total_questions=len(questions),
-                        percentage=int(len(member_completed_question_ids) / len(questions) * 100) if questions else 0,
+                        completed_questions=completed_question_count,
+                        total_questions=len(question_dtos),
+                        percentage=int(completed_question_count / len(question_dtos) * 100) if questions else 0,
                     ),
                     questions=question_dtos,
                 )
