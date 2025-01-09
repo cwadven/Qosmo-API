@@ -1054,7 +1054,7 @@ paths:
         "404":
           $ref: "#/components/responses/NodeNotFoundError"
 
-  /v1/question/{question_id}/answers:
+  /v1/question/{question_id}/answer/submit:
     post:
       tags:
         - Question

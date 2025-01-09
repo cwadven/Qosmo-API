@@ -1,5 +1,6 @@
 ### Local ###
 local_production.py
+pgadmin
 
 ### Python ###
 .python-version

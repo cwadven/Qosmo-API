@@ -17,3 +17,19 @@ class ValidationType(StrValueLabel):
     TEXT_CONTAINS = ('text_contains', '텍스트 포함')
     REGEX = ('regex', '정규식')
     MANUAL = ('manual', '관리자 수동 평가')
+
+
+class QuestionInvalidInputResponseErrorStatus(StrValueLabel):
+    """
+    Question 입력값 검증 실패 응답 코드
+    """
+    INVALID_INPUT_ANSWER_PARAM_ERROR_400 = ('40040002', '필수 값이 누락되었습니다')
+
+
+class AnswerStatus(StrValueLabel):
+    """
+    답변 상태
+    """
+    SUCCESS = ('success', '정답')
+    FAILED = ('failed', '오답')
+    PENDING = ('pending', '검토중')
