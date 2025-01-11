@@ -11,7 +11,6 @@ from question.consts import QuestionInvalidInputResponseErrorStatus
 from question.dtos.answer import (
     AnswerRequestDto,
     MemberAnswerDataDto,
-    MemberAnswerResponseDto,
 )
 from question.services.member_answer_service import MemberAnswerService
 from question.models import Question
@@ -62,7 +61,13 @@ class AnswerSubmitView(APIView):
 
         response_dto = BaseFormatResponse(
             status_code='20100000',
-            data=MemberAnswerDataDto.by_member_answer(member_answer).model_dump()
+            data=MemberAnswerDataDto.by_member_answer(
+                member_answer,
+                [
+                    int(completed_node_history.node_id)
+                    for completed_node_history in member_answer_service.node_completion_result.new_completed_node_histories
+                ],
+            ).model_dump()
         )
 
         return Response(response_dto.model_dump(), status=status.HTTP_200_OK)

@@ -54,7 +54,7 @@ class MemberAnswerDataDto(BaseModel):
     activated_node_ids = Field(default=[])
 
     @classmethod
-    def by_member_answer(cls, member_answer: UserQuestionAnswer) -> 'MemberAnswerDataDto':
+    def by_member_answer(cls, member_answer: UserQuestionAnswer, activated_node_ids: List[int]) -> 'MemberAnswerDataDto':
         status = (
             AnswerStatus.SUCCESS.value if member_answer.is_correct is True
             else AnswerStatus.FAILED.value if member_answer.is_correct is False
@@ -67,7 +67,8 @@ class MemberAnswerDataDto(BaseModel):
             submitted_at=member_answer.created_at,
             validation_type=member_answer.question.answer_validation_type,
             status=status,
-            feedback=member_answer.feedback
+            feedback=member_answer.feedback,
+            activated_node_ids=activated_node_ids,
         )
 
 
