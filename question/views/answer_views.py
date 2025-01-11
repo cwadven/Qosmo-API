@@ -1,11 +1,11 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
 from pydantic import ValidationError
 
 from common.common_exceptions import PydanticAPIException
-from question.exceptions import QuestionNotFoundException, AnswerPermissionDeniedException
+from member.permissions import IsMemberLogin
+from question.exceptions import QuestionNotFoundException
 from question.consts import QuestionInvalidInputResponseErrorStatus
 from question.dtos.answer import (
     AnswerRequestDto,
@@ -17,7 +17,9 @@ from question.models import Question
 
 
 class AnswerSubmitView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [
+        IsMemberLogin,
+    ]
 
     def post(self, request, question_id):
         try:
@@ -29,6 +31,14 @@ class AnswerSubmitView(APIView):
             )
         except Question.DoesNotExist:
             raise QuestionNotFoundException()
+
+        member_answer_service = MemberAnswerService(
+            question=question,
+            member_id=request.member.id
+        )
+
+        # 답변 제출 권한 체크
+        member_answer_service._check_permission()
 
         try:
             AnswerRequestDto.set_question(question)
@@ -44,9 +54,7 @@ class AnswerSubmitView(APIView):
                 errors=e.errors(),
             )
 
-        user_answer = MemberAnswerService.create_answer(
-            question=question,
-            member_id=request.user.id,
+        user_answer = member_answer_service.create_answer(
             answer=request_dto.answer,
             files=request_dto.files
         )

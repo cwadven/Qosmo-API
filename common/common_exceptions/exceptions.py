@@ -57,6 +57,7 @@ class PydanticAPIException(CommonAPIException):
         if not errors:
             return None
         for error in errors:
+            print(error)
             field = error['loc'][0]
             message = error['msg'].split(',', 1)[-1].strip()
             formatted_errors[field].append(ERROR_MESSAGE_CONVERSION.get(message, message))

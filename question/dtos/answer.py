@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional, ClassVar
 
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, Field, field_validator
 
 from question.models import Question, UserQuestionAnswer
 from question.consts import QuestionType, AnswerStatus
@@ -11,33 +11,37 @@ class AnswerRequestDto(BaseModel):
     answer: Optional[str] = Field(None, description="답변 내용")
     files: List[str] = Field(default=[], description="첨부 파일 목록 (S3 file paths)")
     
-    # validator에서 사용하기 위한 question 객체 저장
     _question: ClassVar[Question] = None
     
     @classmethod
     def set_question(cls, question: Question):
         cls._question = question
     
-    @root_validator
-    def validate_by_question_types(cls, values):
+    @field_validator(
+        'answer',
+        mode='before'
+    )
+    def validate_answer(cls, value: Optional[str]) -> Optional[str]:
         if not cls._question:
-            raise ValueError("Question이 설정되지 않았습니다")
+            raise ValueError('Question이 설정되지 않았습니다')
             
-        question_types = cls._question.question_types
-        
-        # text type 검증
-        if QuestionType.TEXT.value in question_types and not values.get('answer'):
-            raise ValueError({
-                'answer': ['텍스트 답변은 필수입니다']
-            })
+        if QuestionType.TEXT.value in cls._question.question_types and not value:
+            raise ValueError('텍스트 답변은 필수입니다')
             
-        # file type 검증
-        if QuestionType.FILE.value in question_types and not values.get('files'):
-            raise ValueError({
-                'files': ['파일 첨부는 필수입니다']
-            })
+        return value
+
+    @field_validator(
+        'files',
+        mode='before'
+    )
+    def validate_files(cls, value: List[str]) -> List[str]:
+        if not cls._question:
+            raise ValueError('Question이 설정되지 않았습니다')
             
-        return values
+        if QuestionType.FILE.value in cls._question.question_types and not value:
+            raise ValueError('파일 첨부는 필수입니다')
+            
+        return value
 
 
 class AnswerDataDto(BaseModel):

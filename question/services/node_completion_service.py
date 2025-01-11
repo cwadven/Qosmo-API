@@ -1,17 +1,15 @@
 from itertools import groupby
-from typing import List, Set, Dict, datetime
+from typing import List, Dict
 from collections import defaultdict, deque
 
 from django.db import transaction
 from django.utils import timezone
-from django.db.models import Prefetch
 
 from map.models.arrow import Arrow
 from map.models.arrow_progress import ArrowProgress
 from map.models.node import Node
 from map.models.node_history import NodeCompletedHistory
 from map.models.node_rule import NodeCompleteRule
-from map.models.node_complete_rule_arrow import NodeCompleteRuleArrow
 
 
 class NodeCompletionService:

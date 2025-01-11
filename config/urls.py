@@ -21,6 +21,7 @@ urlpatterns = [
     path('v1/map', include('map.urls.v1')),
     path('v1/map-graph', include('map_graph.urls.v1')),
     path('v1/node', include('node.urls.v1')),
+    path('v1/question', include('question.urls.v1')),
 ]
 
 

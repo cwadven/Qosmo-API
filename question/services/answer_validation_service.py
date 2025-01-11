@@ -1,6 +1,6 @@
 import re
 from abc import ABC, abstractmethod
-from typing import List, Optional, Iterator
+from typing import List, Optional
 
 from question.models import Question, QuestionAnswer
 from question.models import QuestionType
