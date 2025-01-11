@@ -1,5 +1,5 @@
 from itertools import groupby
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from collections import defaultdict, deque
 
 from django.db import transaction
@@ -10,6 +10,7 @@ from map.models.arrow_progress import ArrowProgress
 from map.models.node import Node
 from map.models.node_history import NodeCompletedHistory
 from map.models.node_rule import NodeCompleteRule
+from question.dtos.node_completion import NodeCompletionResultDto
 
 
 class NodeCompletionService:
@@ -17,18 +18,21 @@ class NodeCompletionService:
         self.member_id = member_id
 
     @transaction.atomic
-    def process_nodes_completion(self, nodes: List[Node]) -> None:
+    def process_nodes_completion(self, nodes: List[Node]) -> NodeCompletionResultDto:
         """
         주어진 노드들부터 시작하여 연쇄적으로 해금 가능한 모든 노드들을 처리합니다.
         """
         if not nodes:
-            return
+            return NodeCompletionResultDto(
+                new_arrow_progresses=[],
+                new_completed_node_histories=[]
+            )
 
         map_id = nodes[0].map_id  # 모든 노드는 같은 map에 속한다고 가정
         map_data = self._fetch_map_data(map_id)
         
         new_arrow_progresses = []
-        new_node_histories = []
+        new_completed_node_histories = []
         now = timezone.now()
         
         nodes_to_process = deque(node.id for node in nodes)
@@ -62,7 +66,7 @@ class NodeCompletionService:
 
             # 해금된 Node들 처리
             for unlocked_node_id, rule in unlocked_nodes:
-                new_node_histories.append(
+                new_completed_node_histories.append(
                     NodeCompletedHistory(
                         map_id=map_data['map_id'],
                         node_id=unlocked_node_id,
@@ -77,8 +81,13 @@ class NodeCompletionService:
         # 모아둔 데이터 한 번에 생성
         if new_arrow_progresses:
             ArrowProgress.objects.bulk_create(new_arrow_progresses)
-        if new_node_histories:
-            NodeCompletedHistory.objects.bulk_create(new_node_histories)
+        if new_completed_node_histories:
+            NodeCompletedHistory.objects.bulk_create(new_completed_node_histories)
+
+        return NodeCompletionResultDto(
+            new_arrow_progresses=new_arrow_progresses,
+            new_completed_node_histories=new_completed_node_histories
+        )
 
     def _fetch_map_data(self, map_id: int) -> Dict:
         """

@@ -55,14 +55,14 @@ class AnswerSubmitView(APIView):
                 errors=e.errors(),
             )
 
-        user_answer = member_answer_service.create_answer(
+        member_answer = member_answer_service.create_answer(
             answer=request_dto.answer,
             files=request_dto.files
         )
 
         response_dto = BaseFormatResponse(
             status_code='20100000',
-            data=MemberAnswerDataDto.by_member_answer(user_answer)
+            data=MemberAnswerDataDto.by_member_answer(member_answer).model_dump()
         )
 
         return Response(response_dto.model_dump(), status=status.HTTP_200_OK)

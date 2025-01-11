@@ -51,6 +51,7 @@ class MemberAnswerDataDto(BaseModel):
     validation_type: str
     status: str
     feedback: Optional[str] = None
+    activated_node_ids = Field(default=[])
 
     @classmethod
     def by_member_answer(cls, member_answer: UserQuestionAnswer) -> 'MemberAnswerDataDto':

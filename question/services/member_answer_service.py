@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.db import transaction
 
 from map.models import ArrowProgress, Node
+from question.dtos.node_completion import NodeCompletionResultDto
 from question.exceptions import AnswerPermissionDeniedException
 from question.models import Question, UserQuestionAnswer, UserQuestionAnswerFile
 from question.services.answer_validation_service import AnswerValidationService
@@ -19,6 +20,8 @@ class MemberAnswerService:
         self.member_id = member_id
         self._permission_checked = False
         self._not_completed_node_names = None
+        self.new_arrow_progresses = []
+        self.new_completed_node_histories = []
 
     def _check_permission(self) -> None:
         """
@@ -157,6 +160,20 @@ class MemberAnswerService:
                     # 모든 Arrow가 completed 상태인 경우 NodeCompletionService 호출
                     if len(rule_arrow_ids) <= len(completed_arrow_ids):
                         node_completion_service = NodeCompletionService(member_id=self.member_id)
-                        node_completion_service.process_nodes_completion(nodes=[arrow.start_node])
+                        completion_result = node_completion_service.process_nodes_completion(nodes=[arrow.start_node])
+                        
+                        # 결과 누적
+                        self.new_arrow_progresses.extend(completion_result.new_arrow_progresses)
+                        self.new_completed_node_histories.extend(completion_result.new_completed_node_histories)
 
             return user_answer
+
+    @property
+    def node_completion_result(self) -> NodeCompletionResultDto:
+        """
+        누적된 노드 완료 결과를 반환합니다.
+        """
+        return NodeCompletionResultDto(
+            new_arrow_progresses=self.new_arrow_progresses,
+            new_completed_node_histories=self.new_completed_node_histories
+        )
