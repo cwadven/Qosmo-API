@@ -139,7 +139,8 @@ class NodeDetailService:
         )
         member_completed_node_ids = get_member_completed_node_ids(
             self.member_id,
-            [arrow.start_node_id for arrow in arrows]
+            # 현재 노드도 포함
+            [arrow.start_node_id for arrow in arrows] + [node_id]
         )
 
         # 현재 조회되는 Node 는 End node
@@ -230,7 +231,7 @@ class NodeDetailService:
                     progress=RuleProgressDTO(
                         completed_questions=completed_question_count,
                         total_questions=len(question_dtos),
-                        percentage=int(completed_question_count / len(question_dtos) * 100) if questions else 0,
+                        percentage=int(completed_question_count / len(question_dtos) * 100) if question_dtos else 0,
                     ),
                     questions=question_dtos,
                 )
@@ -239,14 +240,35 @@ class NodeDetailService:
         )
 
     def _get_node_statistics(self, node: Node) -> Tuple[int, int]:
-        completed_count = NodeCompletedHistory.objects.filter(
-            node=node,
+        completed_count = self._get_node_completed_member_count(node.id)
+        activated_count = self._get_in_progress_member_count(node.id)
+
+        return activated_count, completed_count
+
+    @staticmethod
+    def _get_node_completed_member_count(node_id: int) -> int:
+        return NodeCompletedHistory.objects.filter(
+            node_id=node_id,
         ).values(
             'member',
         ).distinct().count()
 
-        # 활성화된 회원 수는 현재는 완료 회원 수와 동일하게 처리
-        # 추후 노드 접근 기록 등이 추가되면 수정
-        activated_count = completed_count
+    @staticmethod
+    def _get_before_node_solved_member_count(node_id: int) -> int:
+        # 현재 node_id 의 이전 Node 들을 찾습니다.
+        start_node_ids = set(
+            Arrow.objects.filter(
+                end_node_id=node_id,
+            ).values_list(
+                'start_node_id',
+                flat=True,
+            )
+        )
+        return NodeCompletedHistory.objects.filter(
+            node_id__in=start_node_ids,
+        ).values(
+            'member',
+        ).distinct().count()
 
-        return activated_count, completed_count
+    def _get_in_progress_member_count(self, node_id: int) -> int:
+        return self._get_before_node_solved_member_count(node_id) - self._get_node_completed_member_count(node_id)

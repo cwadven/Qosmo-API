@@ -53,7 +53,7 @@ class MyAnswerDTO(BaseModel):
             files=[
                 FileDTO(
                     id=file.id,
-                    file=file.url,
+                    file=file.file,
                 )
                 for file in user_question_answer.files.filter(
                     is_deleted=False,

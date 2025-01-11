@@ -43,7 +43,7 @@ class NodeCompletionService:
             processed_nodes.add(current_node_id)
 
             # 현재 노드에서 출발하는 Arrow들에 대한 ArrowProgress 생성
-            outgoing_arrows = map_data['arrows_by_start_node_id'][current_node_id]
+            outgoing_arrows = map_data['arrows_by_start_node_id'].get(current_node_id, [])
             for arrow in outgoing_arrows:
                 if arrow.id not in map_data['completed_arrows']:
                     new_arrow_progresses.append(
