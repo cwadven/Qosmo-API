@@ -44,8 +44,8 @@ class AnswerRequestDto(BaseModel):
         return value
 
 
-class AnswerDataDto(BaseModel):
-    id: int
+class MemberAnswerDataDto(BaseModel):
+    member_answer_id: int
     answer: str
     submitted_at: datetime
     validation_type: str
@@ -53,23 +53,23 @@ class AnswerDataDto(BaseModel):
     feedback: Optional[str] = None
 
     @classmethod
-    def by_user_answer(cls, user_answer: UserQuestionAnswer) -> 'AnswerDataDto':
+    def by_user_answer(cls, member_answer: UserQuestionAnswer) -> 'AnswerDataDto':
         status = (
-            AnswerStatus.SUCCESS.value if user_answer.is_correct is True
-            else AnswerStatus.FAILED.value if user_answer.is_correct is False
+            AnswerStatus.SUCCESS.value if member_answer.is_correct is True
+            else AnswerStatus.FAILED.value if member_answer.is_correct is False
             else AnswerStatus.PENDING.value
         )
 
         return cls(
-            id=user_answer.id,
-            answer=user_answer.answer,
-            submitted_at=user_answer.created_at,
-            validation_type=user_answer.question.answer_validation_type,
+            member_answer_id=member_answer.id,
+            answer=member_answer.answer,
+            submitted_at=member_answer.created_at,
+            validation_type=member_answer.question.answer_validation_type,
             status=status,
-            feedback=user_answer.feedback
+            feedback=member_answer.feedback
         )
 
 
 class AnswerResponseDto(BaseModel):
     status_code: str = "20100000"
-    data: AnswerDataDto 
+    data: MemberAnswerDataDto

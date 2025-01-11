@@ -10,7 +10,7 @@ from question.consts import QuestionInvalidInputResponseErrorStatus
 from question.dtos.answer import (
     AnswerRequestDto,
     AnswerResponseDto,
-    AnswerDataDto,
+    MemberAnswerDataDto,
 )
 from question.services.member_answer_service import MemberAnswerService
 from question.models import Question
@@ -60,7 +60,7 @@ class AnswerSubmitView(APIView):
         )
 
         response_dto = AnswerResponseDto(
-            data=AnswerDataDto.by_user_answer(user_answer)
+            data=MemberAnswerDataDto.by_user_answer(user_answer)
         )
 
         return Response(response_dto.dict(), status=status.HTTP_200_OK)
