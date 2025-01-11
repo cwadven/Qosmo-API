@@ -53,7 +53,7 @@ class MemberAnswerDataDto(BaseModel):
     feedback: Optional[str] = None
 
     @classmethod
-    def by_user_answer(cls, member_answer: UserQuestionAnswer) -> 'AnswerDataDto':
+    def by_member_answer(cls, member_answer: UserQuestionAnswer) -> 'MemberAnswerDataDto':
         status = (
             AnswerStatus.SUCCESS.value if member_answer.is_correct is True
             else AnswerStatus.FAILED.value if member_answer.is_correct is False
@@ -70,6 +70,6 @@ class MemberAnswerDataDto(BaseModel):
         )
 
 
-class AnswerResponseDto(BaseModel):
+class MemberAnswerResponseDto(BaseModel):
     status_code: str = "20100000"
     data: MemberAnswerDataDto

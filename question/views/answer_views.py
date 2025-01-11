@@ -4,13 +4,14 @@ from rest_framework.views import APIView
 from pydantic import ValidationError
 
 from common.common_exceptions import PydanticAPIException
+from common.dtos.response_dtos import BaseFormatResponse
 from member.permissions import IsMemberLogin
 from question.exceptions import QuestionNotFoundException
 from question.consts import QuestionInvalidInputResponseErrorStatus
 from question.dtos.answer import (
     AnswerRequestDto,
-    AnswerResponseDto,
     MemberAnswerDataDto,
+    MemberAnswerResponseDto,
 )
 from question.services.member_answer_service import MemberAnswerService
 from question.models import Question
@@ -59,8 +60,9 @@ class AnswerSubmitView(APIView):
             files=request_dto.files
         )
 
-        response_dto = AnswerResponseDto(
-            data=MemberAnswerDataDto.by_user_answer(user_answer)
+        response_dto = BaseFormatResponse(
+            status_code='20100000',
+            data=MemberAnswerDataDto.by_member_answer(user_answer)
         )
 
-        return Response(response_dto.dict(), status=status.HTTP_200_OK)
+        return Response(response_dto.model_dump(), status=status.HTTP_200_OK)
