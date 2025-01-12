@@ -77,4 +77,4 @@ class AnswerSubmitView(APIView):
             ).model_dump()
         )
 
-        return Response(response_dto.model_dump(), status=status.HTTP_200_OK)
+        return Response(response_dto.model_dump(), status=status.HTTP_201_CREATED)
