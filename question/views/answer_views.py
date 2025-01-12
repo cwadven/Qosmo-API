@@ -59,10 +59,13 @@ class AnswerSubmitView(APIView):
             answer=request_dto.answer,
             files=request_dto.files
         )
-        going_to_in_progress_node_ids = find_activatable_node_ids_after_completion([
-            node_history.node_id
-            for node_history in member_answer_service.new_completed_node_histories
-        ])
+        going_to_in_progress_node_ids = find_activatable_node_ids_after_completion(
+            request.member.id,
+            [
+                node_history.node_id
+                for node_history in member_answer_service.new_completed_node_histories
+            ]
+        )
 
         response_dto = BaseFormatResponse(
             status_code='20100000',
