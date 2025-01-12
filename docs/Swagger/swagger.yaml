@@ -1754,6 +1754,11 @@ components:
           type: string
           nullable: true
           example: "정답입니다! HTML의 기본 구조를 잘 이해하고 있습니다."
+        going_to_in_progress_node_ids:
+          type: array
+          items:
+            type: integer
+          example: [2, 3]
 
     MapGraphMeta:
       type: object
