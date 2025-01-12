@@ -104,6 +104,7 @@ class MemberAnswerService:
             )
 
             if files:
+                # 추후에 s3에 올리는 로직 필요
                 answer_files = [
                     UserQuestionAnswerFile(
                         map=self.question.map,

@@ -23,7 +23,7 @@ class QuestionInvalidInputResponseErrorStatus(StrValueLabel):
     """
     Question 입력값 검증 실패 응답 코드
     """
-    INVALID_INPUT_ANSWER_PARAM_ERROR_400 = ('40040002', '필수 값이 누락되었습니다')
+    INVALID_INPUT_ANSWER_PARAM_ERROR_400 = ('40040002', '입력값을 확인해주세요.')
 
 
 class AnswerStatus(StrValueLabel):

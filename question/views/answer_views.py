@@ -45,7 +45,7 @@ class AnswerSubmitView(APIView):
             AnswerRequestDto.set_question(question)
             request_dto = AnswerRequestDto(
                 answer=request.data.get('answer'),
-                files=request.data.get('files', [])
+                files=request.FILES.getlist('files'),
             )
         except ValidationError as e:
             raise PydanticAPIException(
@@ -55,6 +55,7 @@ class AnswerSubmitView(APIView):
                 errors=e.errors(),
             )
 
+        # 추후에 s3 올리는 file 로직 필요
         member_answer = member_answer_service.create_answer(
             answer=request_dto.answer,
             files=request_dto.files
