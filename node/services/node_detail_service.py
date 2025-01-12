@@ -152,6 +152,8 @@ class NodeDetailService:
             member_id=self.member_id,
         ).prefetch_related(
             'files',
+        ).order_by(
+            '-created_at',
         )
         my_answers_by_question_id = {}
         for user_question_answer in user_question_answers:
