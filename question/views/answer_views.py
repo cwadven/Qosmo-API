@@ -6,6 +6,7 @@ from pydantic import ValidationError
 from common.common_exceptions import PydanticAPIException
 from common.dtos.response_dtos import BaseFormatResponse
 from member.permissions import IsMemberLogin
+from node.services.node_detail_service import find_activatable_node_ids_after_completion
 from question.exceptions import QuestionNotFoundException
 from question.consts import QuestionInvalidInputResponseErrorStatus
 from question.dtos.answer import (
@@ -58,15 +59,16 @@ class AnswerSubmitView(APIView):
             answer=request_dto.answer,
             files=request_dto.files
         )
+        going_to_in_progress_node_ids = find_activatable_node_ids_after_completion([
+            node_history.node_id
+            for node_history in member_answer_service.new_completed_node_histories
+        ])
 
         response_dto = BaseFormatResponse(
             status_code='20100000',
-            data=MemberAnswerDataDto.by_member_answer(
+            data=MemberAnswerDataDto.of(
                 member_answer,
-                [
-                    int(completed_node_history.node_id)
-                    for completed_node_history in member_answer_service.node_completion_result.new_completed_node_histories
-                ],
+                list(going_to_in_progress_node_ids),
             ).model_dump()
         )
 

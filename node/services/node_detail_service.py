@@ -1,7 +1,9 @@
 from typing import (
     Optional,
-    Tuple, Set, List,
+    Tuple, Set, List, Dict,
 )
+
+from django.db.models import F
 
 from map.models import (
     Arrow,
@@ -74,6 +76,36 @@ def get_member_completed_node_ids(
             flat=True,
         )
     )
+
+
+def find_activatable_node_ids_after_completion(
+        member_id: Optional[int],
+        node_ids: List[int]
+) -> Set[int]:
+    """
+    현재 Node를 완료하면 in_progress가 되는 Node들을 찾습니다.
+    """
+    able_to_in_progress_node_ids = Arrow.objects.filter(
+        start_node_id__in=node_ids,
+        is_deleted=False,
+    ).exclude(
+        start_node_id=F('end_node_id'),
+    ).values_list(
+        'end_node_id',
+        flat=True,
+    )
+    if not member_id:
+        return set(able_to_in_progress_node_ids)
+    member_node_completed_node_ids = set(
+        NodeCompletedHistory.objects.filter(
+            member_id=member_id,
+            node_id__in=able_to_in_progress_node_ids,
+        ).values_list(
+            'node_id',
+            flat=True,
+        )
+    )
+    return able_to_in_progress_node_ids - member_node_completed_node_ids
 
 
 class NodeDetailService:
