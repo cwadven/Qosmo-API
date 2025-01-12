@@ -59,12 +59,13 @@ class AnswerSubmitView(APIView):
             answer=request_dto.answer,
             files=request_dto.files
         )
+        completed_node_ids = [
+            node_history.node_id
+            for node_history in member_answer_service.new_completed_node_histories
+        ]
         going_to_in_progress_node_ids = find_activatable_node_ids_after_completion(
             request.member.id,
-            [
-                node_history.node_id
-                for node_history in member_answer_service.new_completed_node_histories
-            ]
+            completed_node_ids,
         )
 
         response_dto = BaseFormatResponse(
@@ -72,6 +73,7 @@ class AnswerSubmitView(APIView):
             data=MemberAnswerDataDto.of(
                 member_answer,
                 list(going_to_in_progress_node_ids),
+                completed_node_ids,
             ).model_dump()
         )
 

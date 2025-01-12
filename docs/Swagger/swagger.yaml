@@ -1759,6 +1759,11 @@ components:
           items:
             type: integer
           example: [2, 3]
+        completed_node_ids:
+          type: array
+          items:
+              type: integer
+          example: [4, 5]
 
     MapGraphMeta:
       type: object
