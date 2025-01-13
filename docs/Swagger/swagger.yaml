@@ -1764,6 +1764,11 @@ components:
           items:
               type: integer
           example: [4, 5]
+        completed_arrow_ids:
+          type: array
+          items:
+              type: integer
+          example: [1, 2]
 
     MapGraphMeta:
       type: object
