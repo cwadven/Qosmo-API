@@ -64,6 +64,10 @@ class AnswerSubmitView(APIView):
             node_history.node_id
             for node_history in member_answer_service.new_completed_node_histories
         ]
+        completed_arrow_ids = [
+            arrow_progress.arrow_id
+            for arrow_progress in member_answer_service.new_arrow_progresses
+        ]
         going_to_in_progress_node_ids = find_activatable_node_ids_after_completion(
             request.member.id,
             completed_node_ids,
@@ -75,6 +79,7 @@ class AnswerSubmitView(APIView):
                 member_answer,
                 list(going_to_in_progress_node_ids),
                 completed_node_ids,
+                completed_arrow_ids,
             ).model_dump()
         )
 

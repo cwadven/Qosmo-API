@@ -45,13 +45,15 @@ class MemberAnswerDataDto(BaseModel):
     feedback: Optional[str] = None
     going_to_in_progress_node_ids: List[int] = Field(default=[])
     completed_node_ids: List[int] = Field(default=[])
+    completed_arrow_ids: List[int] = Field(default=[])
 
     @classmethod
     def of(
             cls,
             member_answer: UserQuestionAnswer,
             going_to_in_progress_node_ids: List[int],
-            completed_node_ids: List[int]
+            completed_node_ids: List[int],
+            completed_arrow_ids: List[int],
     ) -> 'MemberAnswerDataDto':
         status = (
             AnswerStatus.SUCCESS.value if member_answer.is_correct is True
@@ -68,6 +70,7 @@ class MemberAnswerDataDto(BaseModel):
             feedback=member_answer.feedback,
             going_to_in_progress_node_ids=going_to_in_progress_node_ids,
             completed_node_ids=completed_node_ids,
+            completed_arrow_ids=completed_arrow_ids,
         )
 
 
