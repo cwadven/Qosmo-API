@@ -131,13 +131,17 @@ class NodeCompletionService:
         for rule in rules:
             rules_by_node_id[rule.node_id].append(rule)
 
+        # arrows_by_start_node_id 구성
+        arrows_by_start_node_id = {}
+        for arrow in arrows:
+            if arrow.start_node_id not in arrows_by_start_node_id:
+                arrows_by_start_node_id[arrow.start_node_id] = []
+            arrows_by_start_node_id[arrow.start_node_id].append(arrow)
+
         # 데이터 구조화
         return {
             'map_id': map_id,
-            'arrows_by_start_node_id': {
-                node_id: list(group) for node_id, group in 
-                groupby(arrows, key=lambda x: x.start_node_id)
-            },
+            'arrows_by_start_node_id': arrows_by_start_node_id,
             'rules_by_node_id': rules_by_node_id,
             'arrows_by_rule_id': arrows_by_rule_id,
             'completed_arrows': {p.arrow_id for p in existing_progresses},
