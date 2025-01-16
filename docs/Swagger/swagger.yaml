@@ -1329,9 +1329,8 @@ paths:
     get:
       tags:
         - Member
-      summary: "[TODO] 내 프로필 조회"
+      summary: "내 프로필 조회"
       description: |
-        Status: Not Implemented
         로그인한 사용자의 프로필 정보를 조회합니다.
       responses:
         "200":
@@ -1947,10 +1946,10 @@ components:
             properties:
               status_code:
                 type: string
-                example: "40110001"
+                example: "login-required"
               message:
                 type: string
-                example: "로그인이 필요한 서비스입니다"
+                example: "로그인이 필요합니다."
               errors:
                 type: object
                 example: {}
