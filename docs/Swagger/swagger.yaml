@@ -1936,14 +1936,6 @@ components:
         subscribed_map_count:
           type: integer
           example: 5
-        created_at:
-          type: string
-          format: date-time
-          example: "2024-01-01T00:00:00Z"
-        updated_at:
-          type: string
-          format: date-time
-          example: "2024-01-01T00:00:00Z"
 
   responses:
     UnauthorizedError:

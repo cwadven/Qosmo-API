@@ -6,6 +6,7 @@ from member.models import (
     MemberExtraLink,
     MemberInformation,
 )
+from subscription.services.subscription_service import MapSubscriptionService
 
 
 def check_username_exists(username) -> bool:
@@ -54,3 +55,17 @@ def get_active_member_information_qs(member_id: int):
 
 def get_active_member_extra_link_qa(member_id: int):
     return MemberExtraLink.objects.filter(member_id=member_id, is_deleted=False)
+
+
+def get_member_profile(member_id: int) -> dict:
+    """회원의 프로필 정보를 조회합니다."""
+    member = Member.objects.get(id=member_id)
+    subscription_service = MapSubscriptionService(member_id=member_id)
+    subscribed_map_count = subscription_service.get_member_subscription_count()
+    
+    return {
+        "id": member.id,
+        "nickname": member.nickname,
+        "profile_image": member.profile_image_url,
+        "subscribed_map_count": subscribed_map_count,
+    }

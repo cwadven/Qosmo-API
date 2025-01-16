@@ -1,5 +1,6 @@
 import jwt
 from common.common_consts.common_error_messages import InvalidInputResponseErrorStatus
+from common.common_consts.common_status_codes import SuccessStatusCode
 from common.common_decorators.request_decorators import mandatories
 from common.common_exceptions import PydanticAPIException
 from common.common_utils import (
@@ -15,6 +16,7 @@ from common.common_utils.cache_utils import (
     get_cache_value_by_key,
     increase_cache_int_value_by_key,
 )
+from common.dtos.response_dtos import BaseFormatResponse
 from config.middlewares.authentications import jwt_decode_handler
 from django.contrib.auth import (
     authenticate,
@@ -41,7 +43,7 @@ from member.dtos.response_dtos import (
     GuestTokenGetOrCreateResponse,
     NormalLoginResponse,
     RefreshTokenResponse,
-    SocialLoginResponse,
+    SocialLoginResponse, ProfileData,
 )
 from member.exceptions import (
     AlreadyMemberExistsErrorException,
@@ -63,12 +65,14 @@ from member.services import (
     check_email_exists,
     check_nickname_exists,
     check_username_exists,
+    get_member_profile,
 )
 from member.tasks import send_one_time_token_email
 from member.validators.sign_up_validators import SignUpPayloadValidator
 from pydantic import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from member.permissions import IsMemberLogin
 
 
 class LoginView(APIView):
@@ -296,3 +300,22 @@ class GetOrCreateGuestTokenView(APIView):
             refresh_token=get_jwt_refresh_token(guest),
         )
         return Response(guest_token_get_or_create_response.model_dump(), status=200)
+
+
+class ProfileView(APIView):
+    permission_classes = [IsMemberLogin]
+    
+    def get(self, request):
+        profile_data = get_member_profile(request.member.id)
+        return Response(
+            BaseFormatResponse(
+                status_code=SuccessStatusCode.SUCCESS.value,
+                data=ProfileData(
+                    id=profile_data['id'],
+                    nickname=profile_data['nickname'],
+                    profile_image=profile_data['profile_image'],
+                    subscribed_map_count=profile_data['subscribed_map_count'],
+                ).model_dump(),
+            ).model_dump(),
+            status=200,
+        )

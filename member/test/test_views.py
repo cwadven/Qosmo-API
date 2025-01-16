@@ -24,6 +24,8 @@ from member.models import (
     Member,
 )
 from pydantic import ValidationError
+from common.common_consts.common_status_codes import SuccessStatusCode
+from rest_framework.test import APITestCase
 
 
 class SocialSignUpViewTestCase(TestCase):
@@ -874,3 +876,47 @@ class GetOrCreateGuestTokenViewTestCase(TestCase):
         guest = Guest.objects.get(ip='111.111.111.111')
         mock_get_jwt_guest_token.assert_called_once_with(guest)
         mock_get_jwt_refresh_token.assert_called_once_with(guest)
+
+
+class ProfileViewTestCase(APITestCase):
+    def setUp(self):
+        self.url = reverse('member:profile')
+        self.member = Member.objects.create_user(
+            username='test_user',
+            nickname='테스트 유저',
+            profile_image_url='test/image.jpg'
+        )
+
+    def test_profile_view_should_return_401_when_not_logged_in(self):
+        # When: 비로그인 상태로 프로필 조회
+        response = self.client.get(self.url)
+
+        # Then: 401 에러 반환
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.data['status_code'], 'login-required')
+        self.assertEqual(response.data['message'], '로그인이 필요합니다.')
+
+    @patch('member.views.get_member_profile')
+    def test_profile_view_should_return_profile_data_when_logged_in(self, mock_get_member_profile):
+        # Given: 프로필 데이터 모킹
+        mock_profile_data = {
+            'id': self.member.id,
+            'nickname': self.member.nickname,
+            'profile_image': self.member.profile_image_url,
+            'subscribed_map_count': 5
+        }
+        mock_get_member_profile.return_value = mock_profile_data
+
+        # Given: Login
+        self.client.force_login(self.member)
+
+        # When: 프로필 조회
+        response = self.client.get(self.url)
+
+        # Then: 프로필 데이터가 올바르게 반환되어야 함
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['status_code'], SuccessStatusCode.SUCCESS.value)
+        self.assertEqual(response.data['data'], mock_profile_data)
+
+        # And: get_member_profile이 올바른 인자로 호출되었는지 확인
+        mock_get_member_profile.assert_called_once_with(self.member.id)

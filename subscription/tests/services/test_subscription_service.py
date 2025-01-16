@@ -79,3 +79,39 @@ class MapSubscriptionServiceTest(TestCase):
         self.assertEqual(subscription_status[self.maps[0].id], False)
         self.assertEqual(subscription_status[self.maps[1].id], False)
         self.assertEqual(subscription_status[self.maps[2].id], True)
+
+    def test_should_return_zero_when_member_id_is_none(self):
+        # Given: 비회원으로 서비스 초기화
+        service = MapSubscriptionService()
+
+        # When: 구독 개수 조회
+        subscription_count = service.get_member_subscription_count()
+
+        # Then: 구독 개수가 0이어야 함
+        self.assertEqual(subscription_count, 0)
+
+    def test_should_return_correct_subscription_count(self):
+        # Given: 회원으로 서비스 초기화
+        service = MapSubscriptionService(member_id=self.member.id)
+
+        # When: 구독 개수 조회
+        subscription_count = service.get_member_subscription_count()
+
+        # Then: 구독 개수가 2여야 함 (setUp에서 2개의 맵을 구독)
+        self.assertEqual(subscription_count, 2)
+
+    def test_should_exclude_deleted_subscriptions_from_count(self):
+        # Given: 첫 번째 Map 구독 삭제
+        MapSubscription.objects.filter(
+            member=self.member,
+            map=self.maps[0]
+        ).update(is_deleted=True)
+
+        # Given: 회원으로 서비스 초기화
+        service = MapSubscriptionService(member_id=self.member.id)
+
+        # When: 구독 개수 조회
+        subscription_count = service.get_member_subscription_count()
+
+        # Then: 삭제된 구독을 제외한 개수(1)가 반환되어야 함
+        self.assertEqual(subscription_count, 1)
