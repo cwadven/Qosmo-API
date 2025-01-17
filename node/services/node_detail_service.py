@@ -256,8 +256,8 @@ class NodeDetailService:
             if not is_incoming_node_all_completed:
                 for question_dto in question_dtos:
                     if question_dto.id is not None:
-                        question_dto.title = '???'
-                        question_dto.description = '???'
+                        question_dto.title = '문제: ???'
+                        question_dto.description = '설명: ???'
                         question_dto.status = 'locked'
 
         # 통계 데이터 조회
