@@ -141,7 +141,7 @@ class NodeDetailService:
         # Rule별 Question 매핑
         questions_by_rule_id = {}
         questions = []
-        question_dtos = []
+        is_question_can_be_solved_by_rule_id = {}
         member_completed_arrow_ids = get_member_completed_arrow_ids(
             self.member_id,
             [arrow.id for arrow in arrows]
@@ -164,7 +164,6 @@ class NodeDetailService:
             )
 
         is_start_node = all([arrow.start_node_id == arrow.end_node_id for arrow in arrows])
-
         for arrow in arrows:
             if arrow.question:
                 questions.append(arrow.question)
@@ -178,6 +177,7 @@ class NodeDetailService:
             # 현재 노드도 포함
             [arrow.start_node_id for arrow in arrows] + [node_id]
         )
+        question_dtos_by_rule_id = {}
 
         # 현재 조회되는 Node 는 End node
         # Arrows 중에서 completed 된게 하나라도 있으면 in_progress
@@ -193,6 +193,9 @@ class NodeDetailService:
             node_status = 'in_progress'
 
         for arrow in arrows:
+            if arrow.node_complete_rule_id not in question_dtos_by_rule_id:
+                question_dtos_by_rule_id[arrow.node_complete_rule_id] = []
+
             question_status = 'locked'
             if arrow.question_id in member_completed_question_ids:
                 question_status = 'completed'
@@ -200,11 +203,12 @@ class NodeDetailService:
                 question_status = 'in_progress'
             elif arrow.start_node_id in member_completed_node_ids:
                 question_status = 'in_progress'
+            # Rule 안에 있에서 통해서 오는 것들이 전부다 해결이 됐어야 문제를 풀수 있도록 해야함
             elif arrow.start_node_id == arrow.end_node_id and node_status == 'in_progress':
                 question_status = 'in_progress'
 
             if arrow.question:
-                question_dtos.append(
+                question_dtos_by_rule_id[arrow.node_complete_rule_id].append(
                     QuestionDTO(
                         id=arrow.question.id,
                         arrow_id=arrow.id,
@@ -222,7 +226,7 @@ class NodeDetailService:
                     questions_by_rule_id[arrow.node_complete_rule_id] = []
                 questions_by_rule_id[arrow.node_complete_rule_id].append(arrow.question)
             else:
-                question_dtos.append(
+                question_dtos_by_rule_id[arrow.node_complete_rule_id].append(
                     QuestionDTO(
                         id=None,
                         arrow_id=arrow.id,
@@ -240,15 +244,24 @@ class NodeDetailService:
                     )
                 )
 
+        # Rule 안에 있에서 통해서 오는 것들이 전부다 해결이 됐어야 문제를 풀수 있도록 해야함
+        for rule_id, question_dtos in question_dtos_by_rule_id.items():
+            is_incoming_node_all_completed = all(
+                [
+                    question_dto.status == 'completed'
+                    for question_dto in question_dtos
+                    if question_dto.id is None
+                ]
+            )
+            if not is_incoming_node_all_completed:
+                for question_dto in question_dtos:
+                    if question_dto.id is not None:
+                        question_dto.title = '???'
+                        question_dto.description = '???'
+                        question_dto.status = 'locked'
+
         # 통계 데이터 조회
         activated_count, completed_count = self._get_node_statistics(node)
-        completed_question_count = len(
-            [
-                question_dto
-                for question_dto in question_dtos
-                if question_dto.status == 'completed'
-            ]
-        )
         return NodeDetailDTO(
             id=node.id,
             name=node.name,
@@ -265,11 +278,27 @@ class NodeDetailService:
                     id=rule.id,
                     name=rule.name,
                     progress=RuleProgressDTO(
-                        completed_questions=completed_question_count,
-                        total_questions=len(question_dtos),
-                        percentage=int(completed_question_count / len(question_dtos) * 100) if question_dtos else 0,
+                        completed_questions=len(
+                            [
+                                question_dto
+                                for question_dto in question_dtos_by_rule_id.get(rule.id, [])
+                                if question_dto.status == 'completed'
+                            ]
+                        ),
+                        total_questions=len(question_dtos_by_rule_id.get(rule.id, [])),
+                        percentage=int(
+                            len(
+                                [
+                                    question_dto
+                                    for question_dto in question_dtos_by_rule_id.get(rule.id, [])
+                                    if question_dto.status == 'completed'
+                                ]
+                            ) / len(question_dtos_by_rule_id.get(rule.id, [])) * 100
+                        )
+                        if question_dtos_by_rule_id.get(rule.id, [])
+                        else 0,
                     ),
-                    questions=question_dtos,
+                    questions=question_dtos_by_rule_id.get(rule.id, []),
                 )
                 for rule in rules
             ],
