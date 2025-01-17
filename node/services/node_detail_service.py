@@ -191,6 +191,23 @@ class NodeDetailService:
         elif is_start_node:
             node_status = 'in_progress'
 
+        # 통계 데이터 조회
+        activated_count, completed_count = self._get_node_statistics(node)
+        if node_status == 'locked':
+            return NodeDetailDTO(
+                id=node.id,
+                name=node.name,
+                title=node.title,
+                description='???',
+                status=node_status,
+                background_image=None,
+                statistic=NodeStatisticDTO(
+                    activated_member_count=activated_count,
+                    completed_member_count=completed_count,
+                ),
+                active_rules=[],
+            )
+
         for arrow in arrows:
             if arrow.node_complete_rule_id not in question_dtos_by_rule_id:
                 question_dtos_by_rule_id[arrow.node_complete_rule_id] = []
@@ -259,8 +276,6 @@ class NodeDetailService:
                         question_dto.description = '설명: ???'
                         question_dto.status = 'locked'
 
-        # 통계 데이터 조회
-        activated_count, completed_count = self._get_node_statistics(node)
         return NodeDetailDTO(
             id=node.id,
             name=node.name,
