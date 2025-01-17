@@ -223,8 +223,11 @@ class NodeDetailService:
             elif arrow.start_node_id == arrow.end_node_id and node_status == 'in_progress':
                 question_status = 'in_progress'
 
+            answer_submittable = bool(self.member_id and question_status == 'in_progress')
+
             if arrow.question:
                 question_dtos_by_rule_id[arrow.node_complete_rule_id].append(
+                    # QuestionDTO 안에 문제를 해결할 수 있는 버튼 만들기 혹은 아니기 만들기 (비회원 및 나중을 위해)
                     QuestionDTO(
                         id=arrow.question.id,
                         arrow_id=arrow.id,
@@ -234,6 +237,7 @@ class NodeDetailService:
                         by_node_id=arrow.start_node_id,
                         answer_submit_with_text=QuestionType.TEXT.value in arrow.question.question_types,
                         answer_submit_with_file=QuestionType.FILE.value in arrow.question.question_types,
+                        answer_submittable=answer_submittable,
                         my_answers=my_answers_by_question_id.get(arrow.question_id, []),
                     )
                 )
@@ -256,6 +260,7 @@ class NodeDetailService:
                         by_node_id=arrow.start_node_id,
                         answer_submit_with_text=False,
                         answer_submit_with_file=False,
+                        answer_submittable=answer_submittable,
                         my_answers=[],
                     )
                 )
@@ -275,6 +280,7 @@ class NodeDetailService:
                         question_dto.title = '문제: ???'
                         question_dto.description = '설명: ???'
                         question_dto.status = 'locked'
+                        question_dto.answer_submittable = False
 
         return NodeDetailDTO(
             id=node.id,

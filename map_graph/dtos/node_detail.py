@@ -71,6 +71,7 @@ class QuestionDTO(BaseModel):
     by_node_id: Optional[int]
     answer_submit_with_text: bool
     answer_submit_with_file: bool
+    answer_submittable: bool
     my_answers: List[MyAnswerDTO]
 
 
