@@ -141,7 +141,6 @@ class NodeDetailService:
         # Rule별 Question 매핑
         questions_by_rule_id = {}
         questions = []
-        is_question_can_be_solved_by_rule_id = {}
         member_completed_arrow_ids = get_member_completed_arrow_ids(
             self.member_id,
             [arrow.id for arrow in arrows]
