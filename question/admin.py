@@ -129,6 +129,12 @@ class UserQuestionAnswerAdmin(admin.ModelAdmin):
             messages.error(request, '해당 답변을 찾을 수 없습니다.')
             return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
+        # 연관된 파일들 조회
+        answer_files = UserQuestionAnswerFile.objects.filter(
+            user_question_answer=user_answer,
+            is_deleted=False,
+        )
+
         if request.method == 'POST':
             form = FeedbackForm(request.POST, instance=user_answer)
             if form.is_valid():
@@ -166,6 +172,7 @@ class UserQuestionAnswerAdmin(admin.ModelAdmin):
             'opts': self.model._meta,
             'form': form,
             'original': user_answer,
+            'answer_files': answer_files,  # 파일 목록 추가
             'title': '문제 피드백',
         }
         

@@ -21,6 +21,24 @@
             padding: 20px 0 0 0;
             border-top: 1px solid #eee;
         }
+        .answer-files {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .file-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+        .file-item img {
+            max-width: 200px;
+            height: auto;
+            margin-top: 10px;
+        }
     </style>
 {% endblock %}
 
@@ -35,6 +53,20 @@
         <p><strong>제출된 답변:</strong></p>
         <pre>{{ original.answer }}</pre>
     </div>
+
+    {% if answer_files %}
+    <div class="answer-files">
+        <h3>첨부된 파일</h3>
+        {% for file in answer_files %}
+        <div class="file-item">
+            <p><strong>파일:</strong> <a href="{{ file.file.url }}" target="_blank">{{ file.file.name }}</a></p>
+            {% if file.file.name|lower|slice:"-3:" in "jpg,png,gif,bmp" %}
+                <img src="{{ file.file.url }}" alt="첨부 이미지">
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 
     <form method="post">
         {% csrf_token %}
