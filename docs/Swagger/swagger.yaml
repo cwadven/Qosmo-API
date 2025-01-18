@@ -1662,6 +1662,10 @@ components:
         description:
           type: string
           example: "HTML의 기본 구조와 태그들의 의미를 이해합니다"
+        question_files:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestionFile"
         status:
           type: string
           enum: ["completed", "in_progress", "locked"]
@@ -1717,6 +1721,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/QuestionAnswerFile"
+
+    QuestionFile:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        file:
+          type: string
+          example: "s3/path/to/file.html"
 
     QuestionAnswerFile:
       type: object

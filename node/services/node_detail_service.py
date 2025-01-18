@@ -12,10 +12,10 @@ from map.models import (
     NodeCompletedHistory, ArrowProgress,
 )
 from map_graph.dtos.node_detail import NodeDetailDTO, NodeStatisticDTO, NodeCompleteRuleDetailDTO, RuleProgressDTO, \
-    QuestionDTO, MyAnswerDTO
+    QuestionDTO, MyAnswerDTO, FileDTO
 from node.exceptions import NodeNotFoundException
 from question.consts import QuestionType
-from question.models import UserQuestionAnswer
+from question.models import UserQuestionAnswer, QuestionFile
 
 
 def get_member_completed_question_ids(
@@ -167,9 +167,10 @@ class NodeDetailService:
             if arrow.question:
                 questions.append(arrow.question)
 
+        question_ids = [question.id for question in questions]
         member_completed_question_ids = get_member_completed_question_ids(
             self.member_id,
-            [question.id for question in questions]
+            question_ids
         )
         member_completed_node_ids = get_member_completed_node_ids(
             self.member_id,
@@ -208,6 +209,16 @@ class NodeDetailService:
                 active_rules=[],
             )
 
+        question_files_by_question_id = {}
+        question_files = QuestionFile.objects.filter(
+            question_id__in=question_ids,
+            is_deleted=False,
+        )
+        for question_file in question_files:
+            if question_file.question_id not in question_files_by_question_id:
+                question_files_by_question_id[question_file.question_id] = []
+            question_files_by_question_id[question_file.question_id].append(question_file)
+
         for arrow in arrows:
             if arrow.node_complete_rule_id not in question_dtos_by_rule_id:
                 question_dtos_by_rule_id[arrow.node_complete_rule_id] = []
@@ -233,6 +244,13 @@ class NodeDetailService:
                         arrow_id=arrow.id,
                         title=arrow.question.title,
                         description=arrow.question.description,
+                        question_files=[
+                            FileDTO(
+                                id=file.id,
+                                file=file.file,
+                            )
+                            for file in question_files_by_question_id.get(arrow.question_id, [])
+                        ],
                         status=question_status,
                         by_node_id=arrow.start_node_id,
                         answer_submit_with_text=QuestionType.TEXT.value in arrow.question.question_types,
@@ -252,6 +270,7 @@ class NodeDetailService:
                         arrow_id=arrow.id,
                         title=f'"{arrow.start_node.name}"를 완료해주세요.',
                         description=f'"{arrow.start_node.name}" 를 완료해주세요.',
+                        question_files=[],
                         status=(
                             'completed'
                             if (arrow.start_node_id in member_completed_node_ids)

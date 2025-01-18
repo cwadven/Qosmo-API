@@ -67,6 +67,7 @@ class QuestionDTO(BaseModel):
     arrow_id: Optional[int]
     title: str
     description: str
+    question_files: List[FileDTO]
     status: str
     by_node_id: Optional[int]
     answer_submit_with_text: bool
