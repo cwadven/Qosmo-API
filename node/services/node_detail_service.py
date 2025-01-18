@@ -212,7 +212,6 @@ class NodeDetailService:
         question_files_by_question_id = {}
         question_files = QuestionFile.objects.filter(
             question_id__in=question_ids,
-            is_deleted=False,
         )
         for question_file in question_files:
             if question_file.question_id not in question_files_by_question_id:
