@@ -10,6 +10,8 @@ class NodeGraphDTO(BaseModel):
     name: str
     position_x: float
     position_y: float
+    width: float
+    height: float
     status: str
 
     @staticmethod
@@ -19,6 +21,8 @@ class NodeGraphDTO(BaseModel):
             name=node.name,
             position_x=node.position_x,
             position_y=node.position_y,
+            width=node.width,
+            height=node.height,
             status=node.status
         )
 
