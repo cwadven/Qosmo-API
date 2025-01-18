@@ -13,6 +13,7 @@ from question.models import UserQuestionAnswer, UserQuestionAnswerFile
 class FileDTO(BaseModel):
     id: int
     file: str
+    name: Optional[str]
 
 
 class ReviewerDTO(BaseModel):
@@ -53,6 +54,7 @@ class MyAnswerDTO(BaseModel):
             files=[
                 FileDTO(
                     id=file.id,
+                    name=file.name,
                     file=file.file,
                 )
                 for file in user_question_answer.files.filter(
