@@ -13,6 +13,8 @@ class GraphNode(BaseModel):
     name: str
     position_x: float
     position_y: float
+    width: float
+    height: float
     status: Literal['completed', 'in_progress', 'locked', 'deactivated'] = 'locked'
 
     @classmethod
@@ -27,6 +29,8 @@ class GraphNode(BaseModel):
             name=node.name,
             position_x=node.position_x,
             position_y=node.position_y,
+            width=node.width,
+            height=node.height,
             status=cls.get_status(
                 node,
                 completed_node_ids,

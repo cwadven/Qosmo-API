@@ -1894,6 +1894,12 @@ components:
         position_y:
           type: number
           example: 100
+        width:
+          type: number
+          example: 100
+        height:
+          type: number
+          example: 100
         status:
           type: string
           enum: ["completed", "in_progress", "locked"]
