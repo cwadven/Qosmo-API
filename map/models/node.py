@@ -15,6 +15,8 @@ class Node(models.Model):
     is_active = models.BooleanField(default=False, help_text='관리자의 활성화 여부')
     position_x = models.FloatField(db_index=True)
     position_y = models.FloatField(db_index=True)
+    width = models.FloatField(default=100)
+    height = models.FloatField(default=100)
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
