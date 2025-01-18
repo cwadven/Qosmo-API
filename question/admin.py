@@ -1,9 +1,16 @@
 from django.contrib import admin
+from django.contrib import messages
 from django.forms import (
     CheckboxSelectMultiple,
     ModelForm,
     MultipleChoiceField,
 )
+from django.urls import reverse
+from django.utils.html import format_html
+from django.template.response import TemplateResponse
+from django.utils import timezone
+
+from map.models import Arrow
 from question.consts import QuestionType
 from question.models import (
     Question,
@@ -12,6 +19,10 @@ from question.models import (
     UserQuestionAnswer,
     UserQuestionAnswerFile,
 )
+from question.forms import FeedbackForm
+from django.http import HttpResponseRedirect
+from question.services.node_completion_service import NodeCompletionService
+from django.db import transaction
 
 
 class QuestionAdminForm(ModelForm):
@@ -88,7 +99,81 @@ class UserQuestionAnswerAdmin(admin.ModelAdmin):
         'member__nickname',
         'answer',
     )
-    readonly_fields = ('created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at', 'feedback_button')
+    
+    def feedback_button(self, obj):
+        if obj.pk:  # 객체가 저장되어 있을 때만 버튼 표시
+            url = reverse('admin:question_userquestionanswer_feedback', args=[obj.pk])
+            return format_html(
+                '<a class="button" href="{}">문제 피드백하기</a>',
+                url
+            )
+        return ""
+    feedback_button.short_description = ""  # 필드 라벨 제거
+
+    def get_urls(self):
+        from django.urls import path
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                '<path:object_id>/feedback/',
+                self.admin_site.admin_view(self.feedback_view),
+                name='question_userquestionanswer_feedback'
+            ),
+        ]
+        return custom_urls + urls
+
+    def feedback_view(self, request, object_id):
+        user_answer = self.get_object(request, object_id)
+        if not user_answer:
+            messages.error(request, '해당 답변을 찾을 수 없습니다.')
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+        if request.method == 'POST':
+            form = FeedbackForm(request.POST, instance=user_answer)
+            if form.is_valid():
+                with transaction.atomic():
+                    feedback_obj = form.save(commit=False)
+                    feedback_obj.reviewed_by = request.user
+                    feedback_obj.reviewed_at = timezone.now()
+                    feedback_obj.save()
+
+                    # 정답인 경우 노드 완료 처리
+                    if feedback_obj.is_correct:
+                        # Question과 연결된 Arrow의 start_node 찾기
+                        # 지금은 무조건 1개의 arrow 는 1개의 question 가정
+                        arrow = Arrow.objects.filter(
+                            question=user_answer.question,
+                            is_deleted=False
+                        ).first()
+                        
+                        if arrow and arrow.start_node:
+                            node_completion_service = NodeCompletionService(
+                                member_id=user_answer.member_id
+                            )
+                            node_completion_service.process_nodes_completion(
+                                nodes=[arrow.start_node]
+                            )
+                messages.success(request, '피드백이 성공적으로 저장되었습니다.')
+                return HttpResponseRedirect(
+                    reverse('admin:question_userquestionanswer_change', args=[object_id])
+                )
+        else:
+            form = FeedbackForm(instance=user_answer)
+
+        context = {
+            **self.admin_site.each_context(request),
+            'opts': self.model._meta,
+            'form': form,
+            'original': user_answer,
+            'title': '문제 피드백',
+        }
+        
+        return TemplateResponse(
+            request,
+            'admin/question/userquestionanswer/feedback.html',
+            context,
+        )
 
 
 @admin.register(UserQuestionAnswerFile)
