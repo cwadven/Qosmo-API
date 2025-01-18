@@ -11,6 +11,7 @@ from common.common_utils import generate_pre_signed_url_info, upload_file_to_pre
 from common.dtos.response_dtos import BaseFormatResponse
 from member.permissions import IsMemberLogin
 from node.services.node_detail_service import find_activatable_node_ids_after_completion
+from question.dtos.member_answer_file import MemberAnswerFileDto
 from question.exceptions import QuestionNotFoundException
 from question.consts import QuestionInvalidInputResponseErrorStatus
 from question.dtos.answer import (
@@ -88,7 +89,13 @@ class AnswerSubmitView(APIView):
                 response['fields'],
                 file.read(),
             )
-            files.append(response['url'] + response['fields']['key'])
+            files.append(
+                MemberAnswerFileDto(
+                    id=None,
+                    name=file.name,
+                    url=response['url'] + response['fields']['key'],
+                )
+            )
 
         # 추후에 s3 올리는 file 로직 필요
         member_answer = member_answer_service.create_answer(

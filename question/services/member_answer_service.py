@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.db import transaction
 
 from map.models import ArrowProgress, Node
+from question.dtos.member_answer_file import MemberAnswerFileDto
 from question.dtos.node_completion import NodeCompletionResultDto
 from question.exceptions import AnswerPermissionDeniedException
 from question.models import Question, UserQuestionAnswer, UserQuestionAnswerFile
@@ -74,7 +75,7 @@ class MemberAnswerService:
                 error_summary=f"Node '{', '.join(self._not_completed_node_names)}'가 완료되지 않아 답변을 제출할 수 없습니다."
             )
 
-    def create_answer(self, answer: Optional[str], files: List[str]) -> UserQuestionAnswer:
+    def create_answer(self, answer: Optional[str], files: List[MemberAnswerFileDto]) -> UserQuestionAnswer:
         self._check_permission()
 
         # 정답 검증
@@ -110,9 +111,10 @@ class MemberAnswerService:
                         map=self.question.map,
                         question=self.question,
                         user_question_answer=user_answer,
-                        file=file_path
+                        name=file.name,
+                        file=file.url,
                     )
-                    for file_path in files
+                    for file in files
                 ]
                 UserQuestionAnswerFile.objects.bulk_create(answer_files)
 
