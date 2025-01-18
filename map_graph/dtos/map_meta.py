@@ -37,8 +37,12 @@ class MapThemeDTO(BaseModel):
 
 
 class MapLayoutDTO(BaseModel):
-    width: int
-    height: int
+    min_x: float
+    max_x: float
+    min_y: float
+    max_y: float
+    width: float
+    height: float
     grid_size: int = 20
 
 
@@ -73,10 +77,18 @@ class MapMetaDTO(BaseModel):
             start_date: Optional[datetime] = None,
     ) -> 'MapMetaDTO':
         # 레이아웃 계산
-        max_x = max((node.position_x for node in nodes), default=0)
-        max_y = max((node.position_y for node in nodes), default=0)
-        width = max(3000, int(max_x * 1.2))  # 여유 공간 20% 추가
-        height = max(3000, int(max_y * 1.2))
+        min_position_x_node = min(nodes, key=lambda node: node.position_x, default=None)
+        min_position_y_node = min(nodes, key=lambda node: node.position_y, default=None)
+        max_position_x_node = max(nodes, key=lambda node: node.position_x, default=None)
+        max_position_y_node = max(nodes, key=lambda node: node.position_y, default=None)
+        min_x = min_position_x_node.position_x
+        # width 추가
+        max_x = max_position_x_node.position_x + getattr(max_position_x_node.position_x, 'width', 100)
+        min_y = min_position_y_node.position_y
+        max_y = max_position_y_node.position_y + getattr(max_position_y_node.position_y, 'height', 100)
+
+        width = abs(max_y - min_y)
+        height = abs(max_x - min_x)
 
         if not start_date:
             learning_period = None
@@ -96,6 +108,10 @@ class MapMetaDTO(BaseModel):
                 learning_period=learning_period,
             ),
             layout=MapLayoutDTO(
+                min_x=min_x,
+                max_x=max_x,
+                min_y=min_y,
+                max_y=max_y,
                 width=width,
                 height=height,
                 grid_size=20,
