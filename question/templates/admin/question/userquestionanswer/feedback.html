@@ -59,9 +59,9 @@
         <h3>첨부된 파일</h3>
         {% for file in answer_files %}
         <div class="file-item">
-            <p><strong>파일:</strong> <a href="{{ file.file.url }}" target="_blank">{{ file.file.name }}</a></p>
-            {% if file.file.name|lower|slice:"-3:" in "jpg,png,gif,bmp" %}
-                <img src="{{ file.file.url }}" alt="첨부 이미지">
+            <p><strong>파일:</strong> <a href="{{ file.file }}" target="_blank"></a></p>
+            {% if file.file|lower|slice:"-3:" in "jpg,png,gif,bmp" %}
+                <img src="{{ file.file }}" alt="첨부 이미지">
             {% endif %}
         </div>
         {% endfor %}
