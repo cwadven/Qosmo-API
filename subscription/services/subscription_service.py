@@ -33,7 +33,7 @@ class MapSubscriptionService:
         """회원이 구독한 맵의 개수를 반환합니다."""
         if not self.member_id:
             return 0
-            
+
         return MapSubscription.objects.filter(
             member_id=self.member_id,
             is_deleted=False
