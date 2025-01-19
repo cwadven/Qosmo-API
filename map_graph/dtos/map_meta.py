@@ -81,11 +81,11 @@ class MapMetaDTO(BaseModel):
         min_position_y_node = min(nodes, key=lambda node: node.position_y, default=None)
         max_position_x_node = max(nodes, key=lambda node: node.position_x, default=None)
         max_position_y_node = max(nodes, key=lambda node: node.position_y, default=None)
-        min_x = min_position_x_node.position_x
+        min_x = getattr(min_position_x_node, 'position_x', 0)  # width 추가
         # width 추가
-        max_x = max_position_x_node.position_x + max_position_x_node.position_x
-        min_y = min_position_y_node.position_y
-        max_y = max_position_y_node.position_y + max_position_y_node.position_y
+        max_x = getattr(max_position_x_node, 'position_x', 0) + min_x
+        min_y = getattr(min_position_y_node, 'position_y', 0)
+        max_y = getattr(max_position_y_node, 'position_y', 0) + min_y
 
         width = abs(max_y - min_y)
         height = abs(max_x - min_x)
