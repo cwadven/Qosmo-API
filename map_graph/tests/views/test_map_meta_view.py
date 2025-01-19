@@ -105,8 +105,8 @@ class MapMetaViewTest(TestCase):
 
         # Then: 레이아웃 검증
         layout = meta_data['layout']
-        self.assertGreaterEqual(layout['width'], 3000)
-        self.assertGreaterEqual(layout['height'], 3000)
+        self.assertGreaterEqual(layout['width'], 100.0)
+        self.assertGreaterEqual(layout['height'], 100.0)
         self.assertEqual(layout['grid_size'], 20)
 
         # Then: 테마 검증

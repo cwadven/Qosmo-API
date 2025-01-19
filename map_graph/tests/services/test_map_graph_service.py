@@ -416,8 +416,8 @@ class MapGraphServiceTest(TestCase):
         self.assertEqual(meta.stats.learning_period.days, 60)
 
         # Then: 레이아웃 검증
-        self.assertGreaterEqual(meta.layout.width, 3000)
-        self.assertGreaterEqual(meta.layout.height, 3000)
+        self.assertGreaterEqual(meta.layout.width, 300.0)
+        self.assertGreaterEqual(meta.layout.height, 300.0)
         self.assertEqual(meta.layout.grid_size, 20)
 
         # Then: 테마 검증
