@@ -164,7 +164,7 @@ class NodeCompletionService:
                 if rule.id in map_data['completed_node_rule_ids']:
                     continue
 
-                rule_arrows = map_data['arrows_by_rule_id'][rule.id]
+                rule_arrows = map_data['arrows_by_rule_id'].get(rule.id, [])
                 if all(arrow.id in map_data['completed_arrows'] for arrow in rule_arrows):
                     going_to_completed.append((node_id, rule))
         
