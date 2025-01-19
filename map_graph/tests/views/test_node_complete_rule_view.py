@@ -25,7 +25,7 @@ class NodeCompleteRuleViewTest(TestCase):
             ip='127.0.0.1',
             email='test@test.com',
         )
-        
+
         # Given: 테스트 Map 생성
         self.map = Map.objects.create(
             name='Test Map',
@@ -33,7 +33,7 @@ class NodeCompleteRuleViewTest(TestCase):
             created_by=self.member,
             is_private=False,
         )
-        
+
         # Given: 테스트 Node 생성
         self.node = Node.objects.create(
             map=self.map,
@@ -76,7 +76,7 @@ class NodeCompleteRuleViewTest(TestCase):
         # Then: 데이터 검증
         rules_data = response.data['data']['node_complete_rules']
         self.assertEqual(len(rules_data), 1)
-        
+
         # Then: Rule 데이터 검증
         rule_data = rules_data[0]
         self.assertEqual(rule_data['id'], self.rule.id)
@@ -102,4 +102,4 @@ class NodeCompleteRuleViewTest(TestCase):
 
         # Then: 404 응답 검증
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data['status_code'], 'map-not-found') 
+        self.assertEqual(response.data['status_code'], 'map-not-found')

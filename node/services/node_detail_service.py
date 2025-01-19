@@ -1,21 +1,34 @@
 from typing import (
+    List,
     Optional,
-    Tuple, Set, List, Dict,
+    Tuple,
+    Set,
 )
 
 from django.db.models import F
 
 from map.models import (
     Arrow,
+    ArrowProgress,
     Node,
     NodeCompleteRule,
-    NodeCompletedHistory, ArrowProgress,
+    NodeCompletedHistory,
 )
-from map_graph.dtos.node_detail import NodeDetailDTO, NodeStatisticDTO, NodeCompleteRuleDetailDTO, RuleProgressDTO, \
-    QuestionDTO, MyAnswerDTO, FileDTO
+from map_graph.dtos.node_detail import (
+    FileDTO,
+    MyAnswerDTO,
+    NodeCompleteRuleDetailDTO,
+    NodeDetailDTO,
+    NodeStatisticDTO,
+    QuestionDTO,
+    RuleProgressDTO,
+)
 from node.exceptions import NodeNotFoundException
 from question.consts import QuestionType
-from question.models import UserQuestionAnswer, QuestionFile
+from question.models import (
+    QuestionFile,
+    UserQuestionAnswer,
+)
 
 
 def get_member_completed_question_ids(

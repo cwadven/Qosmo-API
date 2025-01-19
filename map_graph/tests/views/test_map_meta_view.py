@@ -27,7 +27,7 @@ class MapMetaViewTest(TestCase):
             ip='127.0.0.1',
             email='test@test.com',
         )
-        
+
         # Given: 테스트 Map 생성
         self.map = Map.objects.create(
             name='Test Map',
@@ -35,7 +35,7 @@ class MapMetaViewTest(TestCase):
             created_by=self.member,
             is_private=False,
         )
-        
+
         # Given: 테스트 Node 생성
         self.node = Node.objects.create(
             map=self.map,

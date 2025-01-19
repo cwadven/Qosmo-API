@@ -25,7 +25,7 @@ class ArrowGraphViewTest(TestCase):
             ip='127.0.0.1',
             email='test@test.com',
         )
-        
+
         # Given: 테스트 Map 생성
         self.map = Map.objects.create(
             name='Test Map',
@@ -33,7 +33,7 @@ class ArrowGraphViewTest(TestCase):
             created_by=self.member,
             is_private=False,
         )
-        
+
         # Given: 테스트 Node 생성
         self.nodes = []
         for i in range(3):
@@ -96,7 +96,7 @@ class ArrowGraphViewTest(TestCase):
         # Then: 데이터 검증
         arrows_data = response.data['data']['arrows']
         self.assertEqual(len(arrows_data), 1)
-        
+
         # Then: Arrow 데이터 검증
         arrow_data = arrows_data[0]
         self.assertEqual(arrow_data['id'], self.arrow.id)

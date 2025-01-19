@@ -40,7 +40,7 @@ class MemberAnswerService:
             question=self.question,
             is_deleted=False
         ).select_related(
-            'start_node', 
+            'start_node',
             'end_node',
         ).first()
 
@@ -53,7 +53,7 @@ class MemberAnswerService:
         ).exclude(
             end_node_id=F('start_node_id'),
         )
-        
+
         from_before_arrows_node_completed_ids = NodeCompletedHistory.objects.filter(
             map_id=self.question.map_id,
             node_id__in=from_before_arrows.values_list('start_node_id', flat=True),
@@ -61,9 +61,9 @@ class MemberAnswerService:
         ).values_list('node_id', flat=True)
 
         not_completed_node_ids = set(from_before_arrows.values_list('start_node_id', flat=True)) - set(from_before_arrows_node_completed_ids)
-        
+
         self._permission_checked = True
-        
+
         if not_completed_node_ids:
             self._not_completed_node_names = list(Node.objects.filter(
                 id__in=not_completed_node_ids
@@ -84,7 +84,7 @@ class MemberAnswerService:
         # feedback과 reviewed_at 설정
         feedback = None
         reviewed_at = None
-        
+
         if is_correct is not None:
             reviewed_at = timezone.now()
             if is_correct:
@@ -126,7 +126,7 @@ class MemberAnswerService:
                     question=self.question,
                     is_deleted=False
                 ).select_related(
-                    'start_node', 
+                    'start_node',
                     'node_complete_rule',
                 ).first()
 
@@ -164,7 +164,7 @@ class MemberAnswerService:
                     if len(rule_arrow_ids) <= len(completed_arrow_ids):
                         node_completion_service = NodeCompletionService(member_id=self.member_id)
                         completion_result = node_completion_service.process_nodes_completion(nodes=[arrow.start_node])
-                        
+
                         # 결과 누적
                         self.new_arrow_progresses.extend(completion_result.new_arrow_progresses)
                         self.new_completed_node_histories.extend(completion_result.new_completed_node_histories)

@@ -1,6 +1,7 @@
-from datetime import datetime
-from pydantic import BaseModel, Field
-from common.dtos.response_dtos import BaseFormatResponse
+from pydantic import (
+    BaseModel,
+    Field,
+)
 
 
 class NormalLoginResponse(BaseModel):

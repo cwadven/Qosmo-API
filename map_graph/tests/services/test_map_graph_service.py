@@ -123,7 +123,7 @@ class MapGraphServiceTest(TestCase):
     def test_should_return_empty_dict_when_no_arrows(self):
         # When: 화살표가 없을 때 매핑 생성
         result = get_start_node_ids_by_end_node_id([])
-        
+
         # Then: 빈 딕셔너리가 반환되어야 함
         self.assertEqual(len(result), 0)
 
@@ -141,10 +141,10 @@ class MapGraphServiceTest(TestCase):
             active_rule_id=node_complete_rule.id,
             status='locked',
         )
-        
+
         # When: 매핑 생성
         result = get_start_node_ids_by_end_node_id([arrow])
-        
+
         # Then: 올바른 매핑이 생성되어야 함
         self.assertEqual(len(result), 1)
         self.assertEqual(result[self.nodes[1].id], {self.nodes[0].id})
@@ -172,10 +172,10 @@ class MapGraphServiceTest(TestCase):
                 status='locked',
             ),
         ]
-        
+
         # When: 매핑 생성
         result = get_start_node_ids_by_end_node_id(arrows)
-        
+
         # Then: 올바른 매핑이 생성되어야 함
         self.assertEqual(len(result), 1)
         self.assertEqual(
@@ -197,10 +197,10 @@ class MapGraphServiceTest(TestCase):
             active_rule_id=node_complete_rule.id,
             status='locked',
         )
-        
+
         # When: 매핑 생성
         result = get_start_node_ids_by_end_node_id([arrow])
-        
+
         # Then: self-referencing 화살표는 무시되어야 함
         self.assertEqual(len(result), 0)
 
@@ -254,10 +254,10 @@ class MapGraphServiceTest(TestCase):
                 status='locked',
             ),
         ]
-        
+
         # When: 매핑 생성
         result = get_start_node_ids_by_end_node_id(arrows)
-        
+
         # Then: 올바른 매핑이 생성되어야 함
         self.assertEqual(len(result), 2)  # node1, node2를 가리키는 매핑만 있어야 함
         self.assertEqual(result[self.nodes[1].id], {self.nodes[0].id})

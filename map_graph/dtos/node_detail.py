@@ -1,13 +1,12 @@
 from datetime import datetime
-from typing import List, Optional
-
-from map.models import (
-    Node,
-    NodeCompleteRule,
+from typing import (
+    List,
+    Optional,
 )
+
 from pydantic import BaseModel
 
-from question.models import UserQuestionAnswer, UserQuestionAnswerFile
+from question.models import UserQuestionAnswer
 
 
 class FileDTO(BaseModel):

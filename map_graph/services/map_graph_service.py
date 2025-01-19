@@ -80,7 +80,7 @@ class MapGraphService:
             'completed_at',
         )
         completed_nodes_dict = {
-            history.node.id: history.node 
+            history.node.id: history.node
             for history in completed_histories
         }
         return [

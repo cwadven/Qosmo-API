@@ -1,6 +1,11 @@
-from itertools import groupby
-from typing import List, Dict, Tuple
-from collections import defaultdict, deque
+from typing import (
+    Dict,
+    List,
+)
+from collections import (
+    defaultdict,
+    deque,
+)
 
 from django.db import transaction
 from django.utils import timezone
@@ -30,20 +35,20 @@ class NodeCompletionService:
 
         map_id = nodes[0].map_id  # 모든 노드는 같은 map에 속한다고 가정
         map_data = self._fetch_map_data(map_id)
-        
+
         new_arrow_progresses = []
         new_completed_node_histories = []
         now = timezone.now()
-        
+
         nodes_to_process = deque(node.id for node in nodes)
         processed_nodes = set()
 
         while nodes_to_process:
             current_node_id = nodes_to_process.popleft()
-            
+
             if current_node_id in processed_nodes:
                 continue
-            
+
             processed_nodes.add(current_node_id)
 
             # 현재 노드에서 출발하는 Arrow들에 대한 ArrowProgress 생성

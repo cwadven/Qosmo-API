@@ -61,14 +61,14 @@ class AnswerValidationService:
             question=question,
             is_deleted=False
         )
-        
+
         if not correct_answers.exists():
             return None
 
         validation_type = question.answer_validation_type
         strategy = cls._strategies.get(validation_type)
-        
+
         if not strategy:
             return None
-            
+
         return strategy.validate(user_answer, correct_answers)

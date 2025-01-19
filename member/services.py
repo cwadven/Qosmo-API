@@ -62,7 +62,7 @@ def get_member_profile(member_id: int) -> dict:
     member = Member.objects.get(id=member_id)
     subscription_service = MapSubscriptionService(member_id=member_id)
     subscribed_map_count = subscription_service.get_member_subscription_count()
-    
+
     return {
         "id": member.id,
         "nickname": member.nickname,

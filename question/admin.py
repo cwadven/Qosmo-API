@@ -100,7 +100,7 @@ class UserQuestionAnswerAdmin(admin.ModelAdmin):
         'answer',
     )
     readonly_fields = ('created_at', 'updated_at', 'feedback_button')
-    
+
     def feedback_button(self, obj):
         if obj.pk:  # 객체가 저장되어 있을 때만 버튼 표시
             url = reverse('admin:question_userquestionanswer_feedback', args=[obj.pk])
@@ -152,7 +152,7 @@ class UserQuestionAnswerAdmin(admin.ModelAdmin):
                             question=user_answer.question,
                             is_deleted=False
                         ).first()
-                        
+
                         if arrow and arrow.start_node:
                             node_completion_service = NodeCompletionService(
                                 member_id=user_answer.member_id
@@ -175,7 +175,7 @@ class UserQuestionAnswerAdmin(admin.ModelAdmin):
             'answer_files': answer_files,  # 파일 목록 추가
             'title': '문제 피드백',
         }
-        
+
         return TemplateResponse(
             request,
             'admin/question/userquestionanswer/feedback.html',

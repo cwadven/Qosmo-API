@@ -304,7 +304,7 @@ class GetOrCreateGuestTokenView(APIView):
 
 class ProfileView(APIView):
     permission_classes = [IsMemberLogin]
-    
+
     def get(self, request):
         profile_data = get_member_profile(request.member.id)
         return Response(
