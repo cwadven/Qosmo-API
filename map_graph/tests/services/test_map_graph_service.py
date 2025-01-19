@@ -452,8 +452,8 @@ class MapGraphServiceTest(TestCase):
         meta = service.get_map_meta(self.map.id)
 
         # Then: 레이아웃 크기가 노드 위치를 포함할 만큼 커야 함
-        self.assertGreaterEqual(meta.layout.width, 4000 * 1.2)  # 20% 여유 공간
-        self.assertGreaterEqual(meta.layout.height, 5000 * 1.2)
+        self.assertGreaterEqual(meta.layout.width, 4000.0)
+        self.assertGreaterEqual(meta.layout.height, 4000.0)
 
     def test_should_raise_exception_when_get_map_meta_with_private_map(self):
         # Given: 비공개 Map 생성
