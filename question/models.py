@@ -130,6 +130,12 @@ class UserQuestionAnswerFile(models.Model):
         on_delete=models.DO_NOTHING,
         related_name='files'
     )
+    name = models.CharField(
+        max_length=255,
+        help_text='파일 이름',
+        null=True,
+        blank=True,
+    )
     file = models.CharField(
         max_length=255,
         help_text='S3 file path'
@@ -156,6 +162,12 @@ class QuestionFile(models.Model):
         Question,
         on_delete=models.DO_NOTHING,
         related_name='files'
+    )
+    name = models.CharField(
+        max_length=255,
+        help_text='파일 이름',
+        null=True,
+        blank=True,
     )
     file = models.CharField(
         max_length=255,

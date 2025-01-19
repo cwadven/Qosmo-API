@@ -1,0 +1,92 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <style>
+        .feedback-form {
+            max-width: 800px;
+            margin: 20px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .feedback-form textarea {
+            width: 100%;
+            margin: 10px 0;
+        }
+        .feedback-form .submit-row {
+            margin: 20px 0 0 0;
+            padding: 20px 0 0 0;
+            border-top: 1px solid #eee;
+        }
+        .answer-files {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .file-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+        .file-item img {
+            max-width: 200px;
+            height: auto;
+            margin-top: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="feedback-form">
+    <h2>문제 피드백</h2>
+    
+    <div class="answer-info">
+        <h3>답변 정보</h3>
+        <p><strong>문제:</strong> {{ original.question.title }}</p>
+        <p><strong>학습자:</strong> {{ original.member.nickname }}</p>
+        <p><strong>제출된 답변:</strong></p>
+        <pre>{{ original.answer }}</pre>
+    </div>
+
+    {% if answer_files %}
+    <div class="answer-files">
+        <h3>첨부된 파일</h3>
+        {% for file in answer_files %}
+        <div class="file-item">
+            <p><strong>파일:</strong> <a href="{{ file.file }}" target="_blank"></a></p>
+            {% if file.file|lower|slice:"-3:" in "jpg,png,gif,bmp" %}
+                <img src="{{ file.file }}" alt="첨부 이미지">
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-row">
+            {{ form.feedback.errors }}
+            <label for="{{ form.feedback.id_for_label }}">{{ form.feedback.label }}:</label>
+            {{ form.feedback }}
+            <div class="help">{{ form.feedback.help_text }}</div>
+        </div>
+        
+        <div class="form-row">
+            {{ form.is_correct.errors }}
+            <label for="{{ form.is_correct.id_for_label }}">정답 여부:</label>
+            {{ form.is_correct }}
+        </div>
+
+        <div class="submit-row">
+            <input type="submit" value="피드백 저장" class="default">
+            <a href="{% url 'admin:question_userquestionanswer_change' original.pk %}" class="button cancel-link">취소</a>
+        </div>
+    </form>
+</div>
+{% endblock %} 

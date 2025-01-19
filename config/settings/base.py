@@ -43,8 +43,10 @@ PROJECT_APPS = [
     'payment',
     'promotion',
     'map',
+    'map_graph',
     'question',
     'subscription',
+    'node',
 ]
 
 PROJECT_SETTING_APPS = []

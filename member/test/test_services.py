@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from common.models import (
     BlackListSection,
@@ -19,6 +19,7 @@ from member.services import (
     check_username_exists,
     get_active_member_extra_link_qa,
     get_active_member_information_qs,
+    get_member_profile,
 )
 
 
@@ -142,3 +143,63 @@ class GetActiveMemberExtraLinkQuerySetTestCase(TestCase):
         mock_filter.assert_called_once_with(
             member_id=self.member1.id, is_deleted=False
         )
+
+
+class GetMemberProfileTestCase(TestCase):
+    def setUp(self):
+        self.member = Member.objects.create_user(
+            username='test_user',
+            nickname='테스트 유저',
+            profile_image_url='test/image.jpg'
+        )
+
+    @patch('member.services.MapSubscriptionService')
+    def test_get_member_profile_should_return_correct_profile_data(self, mock_subscription_service):
+        # Given: MapSubscriptionService 모킹 설정
+        mock_service_instance = MagicMock()
+        mock_service_instance.get_member_subscription_count.return_value = 5
+        mock_subscription_service.return_value = mock_service_instance
+
+        # When: 프로필 정보 조회
+        profile_data = get_member_profile(self.member.id)
+
+        # Then: MapSubscriptionService가 올바른 인자로 호출되었는지 확인
+        mock_subscription_service.assert_called_once_with(member_id=self.member.id)
+        mock_service_instance.get_member_subscription_count.assert_called_once_with()
+
+        # Then: 반환된 프로필 데이터가 올바른지 확인
+        self.assertEqual(profile_data, {
+            'id': self.member.id,
+            'nickname': self.member.nickname,
+            'profile_image': self.member.profile_image_url,
+            'subscribed_map_count': 5
+        })
+
+    @patch('member.services.MapSubscriptionService')
+    def test_get_member_profile_should_handle_none_profile_image(self, mock_subscription_service):
+        # Given: 프로필 이미지가 없는 회원
+        member_without_image = Member.objects.create_user(
+            username='no_image_user',
+            nickname='이미지없는유저',
+            profile_image_url=None
+        )
+
+        # Given: MapSubscriptionService 모킹 설정
+        mock_service_instance = MagicMock()
+        mock_service_instance.get_member_subscription_count.return_value = 0
+        mock_subscription_service.return_value = mock_service_instance
+
+        # When: 프로필 정보 조회
+        profile_data = get_member_profile(member_without_image.id)
+
+        # Then: MapSubscriptionService가 올바른 인자로 호출되었는지 확인
+        mock_subscription_service.assert_called_once_with(member_id=member_without_image.id)
+        mock_service_instance.get_member_subscription_count.assert_called_once_with()
+
+        # Then: 반환된 프로필 데이터가 올바른지 확인
+        self.assertEqual(profile_data, {
+            'id': member_without_image.id,
+            'nickname': member_without_image.nickname,
+            'profile_image': None,
+            'subscribed_map_count': 0
+        })

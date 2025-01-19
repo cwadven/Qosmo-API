@@ -978,7 +978,7 @@ paths:
                 properties:
                   status_code:
                     type: string
-                    example: "20000000"
+                    example: "success"
                   data:
                     type: object
                     properties:
@@ -1014,7 +1014,7 @@ paths:
                 properties:
                   status_code:
                     type: string
-                    example: "20000000"
+                    example: "success"
                   data:
                     $ref: "#/components/schemas/MapDetail"
         "401":
@@ -1046,7 +1046,7 @@ paths:
                 properties:
                   status_code:
                     type: string
-                    example: "20000000"
+                    example: "success"
                   data:
                     $ref: "#/components/schemas/NodeDetail"
         "403":
@@ -1054,7 +1054,7 @@ paths:
         "404":
           $ref: "#/components/responses/NodeNotFoundError"
 
-  /v1/question/{question_id}/answers:
+  /v1/question/{question_id}/answer/submit:
     post:
       tags:
         - Question
@@ -1130,11 +1130,14 @@ paths:
                 properties:
                   status_code:
                     type: string
-                    example: "20000000"
+                    example: "success"
                   data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Node"
+                    type: object
+                    properties:
+                      nodes:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Node"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "404":
@@ -1164,24 +1167,26 @@ paths:
                 properties:
                   status_code:
                     type: string
-                    example: "20000000"
+                    example: "success"
                   data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Arrow"
+                    properties:
+                      arrows:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Arrow"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "404":
           $ref: "#/components/responses/MapNotFoundError"
 
-  /v1/map-graph/active-rule/{map_id}:
+  /v1/map-graph/node-complete-rule/{map_id}:
     get:
       tags:
         - MapGraph
-      summary: "[TODO] Map의 ActiveRule 목록 조회"
+      summary: "[TODO] Map의 CompleteRule 목록 조회"
       description: |
         Status: Not Implemented
-        특정 Map에 속한 모든 ActiveRule 정보를 조회합니다.
+        특정 Map에 속한 모든 CompleteRule 정보를 조회합니다.
       parameters:
         - name: map_id
           in: path
@@ -1190,7 +1195,7 @@ paths:
             type: integer
       responses:
         "200":
-          description: 성공적으로 ActiveRule 목록을 조회했습니다
+          description: 성공적으로 CompleteRule 목록을 조회했습니다
           content:
             application/json:
               schema:
@@ -1198,11 +1203,13 @@ paths:
                 properties:
                   status_code:
                     type: string
-                    example: "20000000"
+                    example: "success"
                   data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/ActiveRule"
+                    properties:
+                      node_complete_rules:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/CompleteRule"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "404":
@@ -1232,7 +1239,7 @@ paths:
                 properties:
                   status_code:
                     type: string
-                    example: "20000000"
+                    example: "success"
                   message:
                     type: string
                     example: "성공"
@@ -1275,7 +1282,7 @@ paths:
                 properties:
                   status_code:
                     type: string
-                    example: "20000000"
+                    example: "success"
                   data:
                     type: object
                     properties:
@@ -1307,7 +1314,7 @@ paths:
                 properties:
                   status_code:
                     type: string
-                    example: "20000000"
+                    example: "success"
                   data:
                     type: object
                     properties:
@@ -1322,9 +1329,8 @@ paths:
     get:
       tags:
         - Member
-      summary: "[TODO] 내 프로필 조회"
+      summary: "내 프로필 조회"
       description: |
-        Status: Not Implemented
         로그인한 사용자의 프로필 정보를 조회합니다.
       responses:
         "200":
@@ -1336,7 +1342,7 @@ paths:
                 properties:
                   status_code:
                     type: string
-                    example: "20000000"
+                    example: "success"
                   data:
                     $ref: "#/components/schemas/MemberProfile"
         "401":
@@ -1371,7 +1377,7 @@ paths:
                 properties:
                   status_code:
                     type: string
-                    example: "20000000"
+                    example: "success"
                   data:
                     $ref: "#/components/schemas/MemberProfile"
         "400":
@@ -1616,9 +1622,9 @@ components:
         active_rules:
           type: array
           items:
-            $ref: "#/components/schemas/NodeActiveRule"
+            $ref: "#/components/schemas/NodeCompleteRule"
 
-    NodeActiveRule:
+    NodeCompleteRule:
       type: object
       properties:
         id:
@@ -1656,6 +1662,10 @@ components:
         description:
           type: string
           example: "HTML의 기본 구조와 태그들의 의미를 이해합니다"
+        question_files:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestionFile"
         status:
           type: string
           enum: ["completed", "in_progress", "locked"]
@@ -1712,6 +1722,16 @@ components:
           items:
             $ref: "#/components/schemas/QuestionAnswerFile"
 
+    QuestionFile:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        file:
+          type: string
+          example: "s3/path/to/file.html"
+
     QuestionAnswerFile:
       type: object
       properties:
@@ -1747,6 +1767,21 @@ components:
           type: string
           nullable: true
           example: "정답입니다! HTML의 기본 구조를 잘 이해하고 있습니다."
+        going_to_in_progress_node_ids:
+          type: array
+          items:
+            type: integer
+          example: [2, 3]
+        completed_node_ids:
+          type: array
+          items:
+              type: integer
+          example: [4, 5]
+        completed_arrow_ids:
+          type: array
+          items:
+              type: integer
+          example: [1, 2]
 
     MapGraphMeta:
       type: object
@@ -1821,9 +1856,6 @@ components:
                 completed:
                   type: string
                   example: "#4CAF50"
-                in_progress:
-                  type: string
-                  example: "#2196F3"
                 locked:
                   type: string
                   example: "#666666"
@@ -1862,6 +1894,12 @@ components:
         position_y:
           type: number
           example: 100
+        width:
+          type: number
+          example: 100
+        height:
+          type: number
+          example: 100
         status:
           type: string
           enum: ["completed", "in_progress", "locked"]
@@ -1887,7 +1925,7 @@ components:
           enum: ["completed", "in_progress", "locked"]
           example: "completed"
 
-    ActiveRule:
+    CompleteRule:
       type: object
       properties:
         id:
@@ -1917,14 +1955,6 @@ components:
         subscribed_map_count:
           type: integer
           example: 5
-        created_at:
-          type: string
-          format: date-time
-          example: "2024-01-01T00:00:00Z"
-        updated_at:
-          type: string
-          format: date-time
-          example: "2024-01-01T00:00:00Z"
 
   responses:
     UnauthorizedError:
@@ -1936,10 +1966,10 @@ components:
             properties:
               status_code:
                 type: string
-                example: "40110001"
+                example: "login-required"
               message:
                 type: string
-                example: "로그인이 필요한 서비스입니다"
+                example: "로그인이 필요합니다."
               errors:
                 type: object
                 example: {}

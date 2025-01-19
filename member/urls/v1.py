@@ -2,6 +2,7 @@ from django.urls import path
 from member.views import (
     GetOrCreateGuestTokenView,
     LoginView,
+    ProfileView,
     RefreshTokenView,
     SignUpEmailTokenSendView,
     SignUpEmailTokenValidationEndView,
@@ -23,4 +24,5 @@ urlpatterns = [
     path('/sign-up-validation', SignUpValidationView.as_view(), name='sign_up_validation'),
     path('/sign-up-check', SignUpEmailTokenSendView.as_view(), name='sign_up_check'),
     path('/sign-up-validate-token', SignUpEmailTokenValidationEndView.as_view(), name='sign_up_token_validation'),
+    path('/profile', ProfileView.as_view(), name='profile'),
 ]
