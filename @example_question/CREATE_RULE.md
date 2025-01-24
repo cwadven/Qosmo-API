@@ -52,7 +52,7 @@ INSERT INTO map_map (
 
 **필수 필드:**
 - map_id: 맵 식별자
-- name: 노드의 고유 식별자 (영문)
+- name: 노드의 고유 식별자 (한글)
 - title: 표시될 제목
 - description: 설명
 - background_image: 노드 배경 이미지 URL
@@ -70,16 +70,22 @@ INSERT INTO map_map (
 - 노드가 많을 경우 y축 값을 300px 간격으로 구분하여 그룹화
 - 한 줄(y축)에 너무 많은 노드가 있을 경우 가독성을 위해 분리 권장
 
+**name 필드 작성 규칙:**
+- 한글로 작성
+- 의미를 명확히 전달할 수 있는 이름 사용
+- 동일 맵 내에서 중복되지 않도록 주의
+- 가능한 간단명료하게 작성
+
 예제:
 ```sql
 WITH map_id AS (
   SELECT id FROM map_map WHERE name = 'Process Guide Map'
 )
 INSERT INTO map_node (map_id, name, title, description, background_image, position_x, position_y, width, height, is_deleted, created_at, updated_at) VALUES
-((SELECT id FROM map_id), 'start_point', '시작 지점', '프로세스의 시작점입니다.', 'https://placehold.co/600x400', 100, 100, 150, 100, false, NOW(), NOW()),
-((SELECT id FROM map_id), 'next_point', '다음 지점', '두 번째 단계입니다.', 'https://placehold.co/600x400', 400, 100, 150, 100, false, NOW(), NOW()),
-((SELECT id FROM map_id), 'group1_node1', '그룹1 노드1', '첫 번째 그룹의 노드입니다.', 'https://placehold.co/600x400', 700, 100, 150, 100, false, NOW(), NOW()),
-((SELECT id FROM map_id), 'group2_node1', '그룹2 노드1', '두 번째 그룹의 노드입니다.', 'https://placehold.co/600x400', 100, 400, 150, 100, false, NOW(), NOW());
+((SELECT id FROM map_id), '시작_지점', '시작 지점', '프로세스의 시작점입니다.', 'https://placehold.co/600x400', 100, 100, 150, 100, false, NOW(), NOW()),
+((SELECT id FROM map_id), '다음_지점', '다음 지점', '두 번째 단계입니다.', 'https://placehold.co/600x400', 400, 100, 150, 100, false, NOW(), NOW()),
+((SELECT id FROM map_id), '그룹1_노드1', '그룹1 노드1', '첫 번째 그룹의 노드입니다.', 'https://placehold.co/600x400', 700, 100, 150, 100, false, NOW(), NOW()),
+((SELECT id FROM map_id), '그룹2_노드1', '그룹2 노드1', '두 번째 그룹의 노드입니다.', 'https://placehold.co/600x400', 100, 400, 150, 100, false, NOW(), NOW());
 ```
 
 ### 2. 02_node_complete_rules.sql
@@ -126,11 +132,15 @@ INSERT INTO map_nodecompleterule (map_id, name, description, is_deleted, created
 
 **질문 작성 규칙:**
 - 모든 노드는 최소 1개 이상의 질문을 가져야 함
+- 모든 노드는 반드시 자신의 완료를 검증하기 위한 질문을 가져야 함 (필수)
+- 노드의 개수만큼 질문이 존재해야 함 (1:1 매칭)
+- 04_self_arrows.sql 에 적용될 수 있게 질문 제목은 해당 노드의 title과 연관성 있게 작성
 - 질문은 해당 노드의 완료 조건을 검증할 수 있어야 함
 - 모든 질문은 반드시 text와 file 두 가지 입력 타입 포함 (ARRAY['text', 'file'])
 - answer_validation_type은 'manual'로 설정 (영문 소문자)
 - description은 한글로 작성
 - 피드백 메시지는 긍정적이고 명확하게 작성
+- 질문 제목은 해당 노드의 title과 연관성 있게 작성
 
 예제:
 ```sql
@@ -154,18 +164,28 @@ INSERT INTO question_question (map_id, title, description, question_types, answe
 - is_deleted: 삭제 여부
 - created_at, updated_at: 생성/수정 시간
 
+**Self-arrows 생성 규칙:**
+- 모든 노드는 반드시 자신을 가리키는 self-arrow를 가져야 함 (필수)
+- 노드의 개수만큼 self-arrow가 존재해야 함 (1:1 매칭)
+- 각 self-arrow는 해당 노드의 완료 규칙과 검증 질문을 반드시 연결해야 함
+- start_node_id와 end_node_id는 동일한 노드를 가리켜야 함
+- question_id는 반드시 지정되어야 함 (null 불가)
+- 해당 노드의 완료 조건을 검증하는 질문과 연결되어야 함
+
 예제:
 ```sql
 WITH map_id AS (
   SELECT id FROM map_map WHERE name = 'Process Guide Map'
 )
+-- 모든 노드에 대해 self-arrow를 생성해야 함
 INSERT INTO map_arrow (map_id, start_node_id, end_node_id, node_complete_rule_id, question_id, is_deleted, created_at, updated_at) VALUES
 ((SELECT id FROM map_id),
- (SELECT id FROM map_node WHERE map_id = (SELECT id FROM map_id) AND name = 'start_point'),
- (SELECT id FROM map_node WHERE map_id = (SELECT id FROM map_id) AND name = 'start_point'),
+ (SELECT id FROM map_node WHERE map_id = (SELECT id FROM map_id) AND name = '시작_지점'),
+ (SELECT id FROM map_node WHERE map_id = (SELECT id FROM map_id) AND name = '시작_지점'),
  (SELECT id FROM map_nodecompleterule WHERE map_id = (SELECT id FROM map_id) AND name = '초기 설정 완료'),
  (SELECT id FROM question_question WHERE map_id = (SELECT id FROM map_id) AND title = '초기 설정 확인'),
- false, NOW(), NOW());
+ false, NOW(), NOW()),
+... (다른 모든 노드들에 대해서도 동일하게 생성);
 ```
 
 ### 5. 05_path_arrows.sql
@@ -187,8 +207,8 @@ WITH map_id AS (
 )
 INSERT INTO map_arrow (map_id, start_node_id, end_node_id, node_complete_rule_id, question_id, is_deleted, created_at, updated_at) VALUES
 ((SELECT id FROM map_id),
- (SELECT id FROM map_node WHERE map_id = (SELECT id FROM map_id) AND name = 'start_point'),
- (SELECT id FROM map_node WHERE map_id = (SELECT id FROM map_id) AND name = 'next_point'),
+ (SELECT id FROM map_node WHERE map_id = (SELECT id FROM map_id) AND name = '시작_지점'),
+ (SELECT id FROM map_node WHERE map_id = (SELECT id FROM map_id) AND name = '다음_지점'),
  (SELECT id FROM map_nodecompleterule WHERE map_id = (SELECT id FROM map_id) AND name = '다음 단계 준비'),
  null,
  false, NOW(), NOW());
@@ -231,6 +251,14 @@ psql -U postgres -d checker_database -f /home/초보자NoSQL마스터하기/02_n
 psql -U postgres -d checker_database -f /home/초보자NoSQL마스터하기/03_questions.sql
 psql -U postgres -d checker_database -f /home/초보자NoSQL마스터하기/04_self_arrows.sql
 psql -U postgres -d checker_database -f /home/초보자NoSQL마스터하기/05_path_arrows.sql
+
+psql -U qosmo_be -d qosmo_database -f 00_map.sql
+psql -U qosmo_be -d qosmo_database -f 01_nodes.sql
+psql -U qosmo_be -d qosmo_database -f 02_node_complete_rules.sql
+psql -U qosmo_be -d qosmo_database -f 03_questions.sql
+psql -U qosmo_be -d qosmo_database -f 04_self_arrows.sql
+psql -U qosmo_be -d qosmo_database -f 05_path_arrows.sql
+
 
 [ 초기화 ]
 
