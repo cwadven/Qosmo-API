@@ -141,6 +141,7 @@ INSERT INTO map_nodecompleterule (map_id, name, description, is_deleted, created
 - description은 한글로 작성
 - 피드백 메시지는 긍정적이고 명확하게 작성
 - 질문 제목은 해당 노드의 title과 연관성 있게 작성
+- description 안에 있는 질문은 1개의 질문으로 구성
 
 예제:
 ```sql
@@ -243,21 +244,21 @@ INSERT INTO map_arrow (map_id, start_node_id, end_node_id, node_complete_rule_id
 
 [ 생성 ]
 
-docker cp ./@example_question/초보자NoSQL마스터하기 checker_postgresql14:/home/
+docker cp ./@example_question/파이썬초보탈출 checker_postgresql14:/home/
 
-psql -U postgres -d checker_database -f /home/초보자NoSQL마스터하기/00_map.sql
-psql -U postgres -d checker_database -f /home/초보자NoSQL마스터하기/01_nodes.sql
-psql -U postgres -d checker_database -f /home/초보자NoSQL마스터하기/02_node_complete_rules.sql
-psql -U postgres -d checker_database -f /home/초보자NoSQL마스터하기/03_questions.sql
-psql -U postgres -d checker_database -f /home/초보자NoSQL마스터하기/04_self_arrows.sql
-psql -U postgres -d checker_database -f /home/초보자NoSQL마스터하기/05_path_arrows.sql
+psql -U postgres -d checker_database -f /home/파이썬초보탈출/00_map.sql
+psql -U postgres -d checker_database -f /home/파이썬초보탈출/01_nodes.sql
+psql -U postgres -d checker_database -f /home/파이썬초보탈출/02_node_complete_rules.sql
+psql -U postgres -d checker_database -f /home/파이썬초보탈출/03_questions.sql
+psql -U postgres -d checker_database -f /home/파이썬초보탈출/04_self_arrows.sql
+psql -U postgres -d checker_database -f /home/파이썬초보탈출/05_arrows.sql
 
-psql -U qosmo_be -d qosmo_database -f 00_map.sql
-psql -U qosmo_be -d qosmo_database -f 01_nodes.sql
-psql -U qosmo_be -d qosmo_database -f 02_node_complete_rules.sql
-psql -U qosmo_be -d qosmo_database -f 03_questions.sql
-psql -U qosmo_be -d qosmo_database -f 04_self_arrows.sql
-psql -U qosmo_be -d qosmo_database -f 05_path_arrows.sql
+psql -U postgres -d qosmo_database -f 00_map.sql
+psql -U postgres -d qosmo_database -f 01_nodes.sql
+psql -U postgres -d qosmo_database -f 02_node_complete_rules.sql
+psql -U postgres -d qosmo_database -f 03_questions.sql
+psql -U postgres -d qosmo_database -f 04_self_arrows.sql
+psql -U postgres -d qosmo_database -f 05_arrows.sql
 
 
 [ 초기화 ]
