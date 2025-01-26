@@ -79,8 +79,8 @@ class MapMetaDTO(BaseModel):
         # 레이아웃 계산
         min_position_x_node = min(nodes, key=lambda node: node.position_x, default=None)
         min_position_y_node = min(nodes, key=lambda node: node.position_y, default=None)
-        max_position_x_node = max(nodes, key=lambda node: node.position_x + max_position_x_node.width, default=None)
-        max_position_y_node = max(nodes, key=lambda node: node.position_y + max_position_y_node.height, default=None)
+        max_position_x_node = max(nodes, key=lambda node: node.position_x + node.width, default=None)
+        max_position_y_node = max(nodes, key=lambda node: node.position_y + node.height, default=None)
         min_x = getattr(min_position_x_node, 'position_x', 0)
         max_x = getattr(max_position_x_node, 'position_x', 0) + max_position_x_node.width
         min_y = getattr(min_position_y_node, 'position_y', 0)
