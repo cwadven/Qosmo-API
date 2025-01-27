@@ -222,9 +222,10 @@ paths:
 
         "401":
           description: |
-            Social Login failed<br>
+            Refresh Token failed<br>
             [ status_code ENUM ]<br>
             invalid-refresh-token<br>
+            no-member-token<br>
             [ errors ENUM ]<br>
           content:
             application/json:
