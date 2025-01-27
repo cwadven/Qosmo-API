@@ -20,7 +20,7 @@ class HealthCheckResponse(BaseModel):
 
 
 class ConstanceTypeResponse(BaseModel):
-    data: List[ConstanceType] = Field(default_factory=list, description='Constance type list')
+    data: List[Any] = Field(default_factory=list, description='Constance type list')
 
 
 class ConstanceDetailTypeResponse(BaseModel):
