@@ -51,6 +51,7 @@ from member.exceptions import (
     InvalidValueForSignUpFieldErrorException,
     LoginFailedException,
     MemberCreationErrorException,
+    NoMemberRefreshTokenErrorException,
     NormalLoginFailedException,
     SignUpEmailTokenErrorException,
     SignUpEmailTokenExpiredErrorException,
@@ -167,8 +168,10 @@ class RefreshTokenView(APIView):
                 access_token=get_jwt_login_token(member),
                 refresh_token=get_jwt_refresh_token(member.guest),
             )
-        except (Member.DoesNotExist, jwt.InvalidTokenError):
+        except jwt.InvalidTokenError:
             raise InvalidRefreshTokenErrorException()
+        except Member.DoesNotExist:
+            raise NoMemberRefreshTokenErrorException()
         return Response(refresh_token_response.model_dump(), status=200)
 
 

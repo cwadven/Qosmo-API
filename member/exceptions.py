@@ -39,6 +39,12 @@ class InvalidRefreshTokenErrorException(CommonAPIException):
     default_code = 'invalid-refresh-token'
 
 
+class NoMemberRefreshTokenErrorException(CommonAPIException):
+    status_code = 401
+    default_detail = '회원이 아닌 리프레시 토큰입니다.'
+    default_code = 'no-member-token'
+
+
 class InvalidValueForSignUpFieldErrorException(CommonAPIException):
     status_code = 400
     default_detail = '입력값을 다시 확인해주세요.'
