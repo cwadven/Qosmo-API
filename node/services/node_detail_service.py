@@ -29,6 +29,7 @@ from question.models import (
     QuestionFile,
     UserQuestionAnswer,
 )
+from subscription.services.subscription_service import MapSubscriptionService
 
 
 def get_member_completed_question_ids(
@@ -222,6 +223,9 @@ class NodeDetailService:
                 active_rules=[],
             )
 
+        subscription_service = MapSubscriptionService(member_id=self.member_id)
+        is_subscribed = subscription_service.get_subscription_status_by_map_ids([node.map_id])[node.map_id]
+
         question_files_by_question_id = {}
         question_files = QuestionFile.objects.filter(
             question_id__in=question_ids,
@@ -246,7 +250,11 @@ class NodeDetailService:
             elif arrow.start_node_id == arrow.end_node_id and node_status == 'in_progress':
                 question_status = 'in_progress'
 
-            answer_submittable = bool(self.member_id and question_status == 'in_progress')
+            answer_submittable = bool(
+                self.member_id
+                and question_status == 'in_progress'
+                and is_subscribed
+            )
 
             if arrow.question:
                 question_dtos_by_rule_id[arrow.node_complete_rule_id].append(
