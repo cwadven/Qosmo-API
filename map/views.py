@@ -91,7 +91,7 @@ class MapDetailView(APIView):
         if is_subscribed:
             completed_node_histories = list(
                 get_member_completed_node_histories(request.guest.member_id, map_id).order_by(
-                    'completed_at',
+                    '-completed_at',
                 )
             )
             completed_node_count = len({history.node.id for history in completed_node_histories})
