@@ -57,11 +57,17 @@ class MapListResponseDTO(BaseModel):
     has_more: bool
 
 
+class MapDetailRecentActivatedNodeDTO(BaseModel):
+    id: int
+    name: str
+    activated_at: datetime
+
+
 class MapDetailProgressDTO(BaseModel):
     completed_node_count: int
     total_node_count: int
     percentage: int
-    recent_activated_nodes: List[dict]
+    recent_activated_nodes: List[MapDetailRecentActivatedNodeDTO]
 
     @staticmethod
     def from_map(map_obj: 'Map') -> 'MapDetailProgressDTO':
@@ -88,7 +94,7 @@ class MapDetailDTO(BaseModel):
     created_at: datetime
 
     @staticmethod
-    def from_entity(map_obj: 'Map', is_subscribed: bool = False) -> 'MapDetailDTO':
+    def from_entity(map_obj: 'Map', progress: MapDetailProgressDTO, is_subscribed: bool = False) -> 'MapDetailDTO':
         return MapDetailDTO(
             id=map_obj.id,
             name=map_obj.name,
@@ -99,6 +105,6 @@ class MapDetailDTO(BaseModel):
             icon_image=map_obj.icon_image,
             background_image=map_obj.background_image,
             created_by=MapListCreatedBy.from_entity(map_obj.created_by),
-            progress=MapDetailProgressDTO.from_map(map_obj),
+            progress=progress,
             created_at=map_obj.created_at
         )

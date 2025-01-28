@@ -9,14 +9,16 @@ from map.exceptions import MapNotFoundException
 from map.models import (
     Arrow,
     Map,
-    Node,
-    NodeCompletedHistory,
     NodeCompleteRule,
 )
 from map_graph.dtos.graph_arrow import GraphArrow
 from map_graph.dtos.graph_node import GraphNode
 from map_graph.dtos.response_dtos import NodeCompleteRuleDTO
 from map_graph.dtos.map_meta import MapMetaDTO
+from node.services.node_services import (
+    get_nodes_by_map_id,
+    get_member_completed_node_histories,
+)
 from subscription.models import MapSubscription
 
 
@@ -28,18 +30,13 @@ class MapGraphService:
         try:
             map_obj = Map.objects.get(
                 id=map_id,
-                is_deleted=False
+                is_deleted=False,
             )
             if map_obj.is_private and map_obj.created_by_id != self.member_id:
                 raise Map.DoesNotExist()
 
             # 맵에 속한 노드들을 가져옵니다.
-            nodes = Node.objects.filter(
-                map_id=map_id,
-                is_deleted=False,
-            ).select_related(
-                'map',
-            )
+            nodes = get_nodes_by_map_id(map_id)
 
             # 화살표 데이터를 가져와서 시작 노드 매핑을 생성합니다.
             arrows = Arrow.objects.filter(
@@ -71,12 +68,7 @@ class MapGraphService:
     def get_completed_nodes(self, map_id: int) -> List[GraphNode]:
         if not self.member_id:
             return []
-        completed_histories = NodeCompletedHistory.objects.filter(
-            map_id=map_id,
-            member_id=self.member_id,
-        ).select_related(
-            'node__map',
-        ).order_by(
+        completed_histories = get_member_completed_node_histories(self.member_id, map_id).order_by(
             'completed_at',
         )
         completed_nodes_dict = {
@@ -154,12 +146,7 @@ class MapGraphService:
             if map_obj.is_private and map_obj.created_by_id != self.member_id:
                 raise Map.DoesNotExist()
 
-            nodes = list(
-                Node.objects.filter(
-                    map_id=map_id,
-                    is_deleted=False,
-                )
-            )
+            nodes = list(get_nodes_by_map_id(map_id))
             completed_nodes = self.get_completed_nodes(map_id)
 
             start_date = None

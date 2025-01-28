@@ -8,8 +8,9 @@ from map.cursor_criteria.cursor_criteria import MapListCursorCriteria
 from map.dtos.request_dtos import MapListRequestDTO
 from map.dtos.response_dtos import (
     MapDetailDTO,
+    MapDetailProgressDTO,
     MapListItemDTO,
-    MapListResponseDTO,
+    MapListResponseDTO, MapDetailRecentActivatedNodeDTO,
 )
 from map.error_messages import MapInvalidInputResponseErrorStatus
 from map.services.map_service import MapService
@@ -18,6 +19,11 @@ from pydantic import ValidationError
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from node.services.node_services import (
+    get_member_completed_node_histories,
+    get_nodes_by_map_id,
+)
 from subscription.services.subscription_service import MapSubscriptionService
 
 
@@ -77,12 +83,46 @@ class MapDetailView(APIView):
         map_obj = map_service.get_map_detail(map_id)
         subscription_service = MapSubscriptionService(member_id=request.guest.member_id)
         subscription_status = subscription_service.get_subscription_status_by_map_ids([map_id])
+        is_subscribed = subscription_status[map_id]
+        nodes = get_nodes_by_map_id(map_id)
+        total_node_count = len(nodes)
+
+        # 추후에 Service Layer로 이동
+        if is_subscribed:
+            completed_node_histories = list(
+                get_member_completed_node_histories(request.guest.member_id, map_id).order_by(
+                    'completed_at',
+                )
+            )
+            completed_node_count = len({history.node.id for history in completed_node_histories})
+            map_detail_progress = MapDetailProgressDTO(
+                completed_node_count=completed_node_count,
+                total_node_count=total_node_count,
+                percentage=int((completed_node_count/total_node_count) * 100) if total_node_count else 0,
+                recent_activated_nodes=[
+                    MapDetailRecentActivatedNodeDTO(
+                        id=completed_node_history.node.id,
+                        name=completed_node_history.node.name,
+                        activated_at=completed_node_history.completed_at,
+                    )
+                    for completed_node_history in completed_node_histories[-3:]
+                ],
+            )
+        else:
+            map_detail_progress = MapDetailProgressDTO(
+                completed_node_count=0,
+                total_node_count=total_node_count,
+                percentage=0,
+                recent_activated_nodes=[],
+            )
+
         return Response(
             BaseFormatResponse(
                 status_code=SuccessStatusCode.SUCCESS.value,
                 data=MapDetailDTO.from_entity(
                     map_obj,
-                    is_subscribed=subscription_status[map_id]
+                    is_subscribed=is_subscribed,
+                    progress=map_detail_progress,
                 ).model_dump(),
             ).model_dump(),
             status=status.HTTP_200_OK
