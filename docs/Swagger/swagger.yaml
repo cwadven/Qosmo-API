@@ -1326,6 +1326,46 @@ paths:
                         maxItems: 5
                         minItems: 5
 
+  /v1/subscription/map/{map_id}:
+    post:
+      tags:
+        - Subscription
+      summary: "구독하기"
+      description: |
+        특정 Map 을 구독합니다.
+      parameters:
+        - name: map_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 구독 완료
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/MapNotFoundError"
+    delete:
+      tags:
+        - Subscription
+      summary: "구독 취소 하기"
+      description: |
+        특정 Map 을 구독 취소합니다.
+      parameters:
+        - name: map_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 구독 취소
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/MapNotFoundError"
+
   /v1/member/profile:
     get:
       tags:
