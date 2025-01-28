@@ -1342,6 +1342,17 @@ paths:
       responses:
         "200":
           description: 구독 완료
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    example: {}
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "404":
@@ -1361,6 +1372,17 @@ paths:
       responses:
         "200":
           description: 구독 취소
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    example: { }
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "404":
