@@ -4,8 +4,8 @@ from common.common_consts.common_status_codes import (
 from common.common_decorators.request_decorators import cursor_pagination
 from common.common_exceptions import PydanticAPIException
 from common.dtos.response_dtos import BaseFormatResponse
-from map.cursor_criteria.cursor_criteria import MapListCursorCriteria
-from map.dtos.request_dtos import MapListRequestDTO
+from map.cursor_criteria.cursor_criteria import MapListCursorCriteria, MapSubscriptionListCursorCriteria
+from map.dtos.request_dtos import MapListRequestDTO, MapSubscribedListRequestDTO
 from map.dtos.response_dtos import (
     MapDetailDTO,
     MapDetailProgressDTO,
@@ -123,6 +123,49 @@ class MapDetailView(APIView):
                     map_obj,
                     is_subscribed=is_subscribed,
                     progress=map_detail_progress,
+                ).model_dump(),
+            ).model_dump(),
+            status=status.HTTP_200_OK
+        )
+
+
+class MapSubscribedListView(APIView):
+    permission_classes = [
+        IsGuestExists,
+    ]
+
+    @cursor_pagination(default_size=20, cursor_criteria=[MapSubscriptionListCursorCriteria])
+    def get(self, request, decoded_next_cursor: dict, size: int):
+        try:
+            map_subscribed_list_request = MapSubscribedListRequestDTO.of(request)
+        except ValidationError as e:
+            raise PydanticAPIException(
+                status_code=400,
+                error_summary=MapInvalidInputResponseErrorStatus.INVALID_INPUT_MAP_LIST_PARAM_ERROR_400.label,
+                error_code=MapInvalidInputResponseErrorStatus.INVALID_INPUT_MAP_LIST_PARAM_ERROR_400.value,
+                errors=e.errors(),
+            )
+        map_service = MapService(member_id=request.guest.member_id)
+        paginated_map_subscriptions, has_more, next_cursor = map_service.get_map_subscription_list(
+            MapSubscriptionListCursorCriteria,
+            search=map_subscribed_list_request.search,
+            category_id=map_subscribed_list_request.category_id,
+            decoded_next_cursor=decoded_next_cursor,
+            size=size,
+        )
+        return Response(
+            BaseFormatResponse(
+                status_code=SuccessStatusCode.SUCCESS.value,
+                data=MapListResponseDTO(
+                    maps=[
+                        MapListItemDTO.from_entity(
+                            _map_subscription.map,
+                            is_subscribed=True,
+                        )
+                        for _map_subscription in paginated_map_subscriptions
+                    ],
+                    next_cursor=next_cursor,
+                    has_more=has_more,
                 ).model_dump(),
             ).model_dump(),
             status=status.HTTP_200_OK

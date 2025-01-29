@@ -9,6 +9,7 @@ from common.common_paginations.cursor_pagination_helpers import get_objects_with
 from django.db.models import QuerySet
 from map.exceptions import MapNotFoundException
 from map.models import Map
+from subscription.models import MapSubscription
 
 
 class MapService:
@@ -35,8 +36,52 @@ class MapService:
         )
         return paginated_maps, has_more, next_cursor
 
+    def get_map_subscription_list(
+        self,
+        cursor_criteria: Type[CursorCriteria],
+        search: Optional[str] = None,
+        category_id: Optional[int] = None,
+        decoded_next_cursor: dict = None,
+        size: int = 20,
+    ) -> Tuple[List[MapSubscription], bool, Optional[str]]:
+        map_subscription_qs = self._filter_subscribed_map_queryset(
+            search,
+            category_id,
+        )
+        paginated_map_subscriptions, has_more, next_cursor = get_objects_with_cursor_pagination(
+            map_subscription_qs,
+            cursor_criteria,
+            decoded_next_cursor,
+            size,
+        )
+        return paginated_map_subscriptions, has_more, next_cursor
+
+    def _filter_subscribed_map_queryset(
+        self,
+        search: Optional[str] = None,
+        category_id: Optional[int] = None,
+    ) -> QuerySet:
+        if not self.member_id:
+            return Map.objects.none()
+        queryset = MapSubscription.objects.select_related(
+            'map',
+        ).filter(
+            member_id=self.member_id,
+            is_deleted=False,
+        )
+        if category_id:
+            queryset = queryset.filter(
+                map__categories__id=category_id,
+            )
+        if search:
+            queryset = queryset.filter(
+                map__name__icontains=search
+            )
+        return queryset.distinct('map')
+
     def _filter_map_queryset(
-            self, search: Optional[str] = None,
+            self,
+            search: Optional[str] = None,
             category_id: Optional[int] = None,
     ) -> QuerySet:
         queryset = Map.objects.select_related(
