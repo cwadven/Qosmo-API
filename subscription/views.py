@@ -4,10 +4,15 @@ from rest_framework.views import APIView
 
 from common.common_consts.common_status_codes import SuccessStatusCode
 from common.dtos.response_dtos import BaseFormatResponse
+from member.permissions import IsMemberLogin
 from subscription.services.subscription_service import MapSubscriptionService
 
 
 class MapSubscriptionView(APIView):
+    permission_classes = [
+        IsMemberLogin,
+    ]
+
     def post(self, request, map_id):
         MapSubscriptionService(member_id=request.guest.member_id).subscribe_map_by_map_id(map_id)
         return Response(
