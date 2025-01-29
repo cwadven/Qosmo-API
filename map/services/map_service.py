@@ -6,7 +6,7 @@ from typing import (
 
 from common.common_criteria.cursor_criteria import CursorCriteria
 from common.common_paginations.cursor_pagination_helpers import get_objects_with_cursor_pagination
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Max, Subquery, OuterRef, F
 from map.exceptions import MapNotFoundException
 from map.models import Map
 from subscription.models import MapSubscription
@@ -62,12 +62,32 @@ class MapService:
         category_id: Optional[int] = None,
     ) -> QuerySet:
         if not self.member_id:
-            return Map.objects.none()
-        queryset = MapSubscription.objects.select_related(
-            'map',
-        ).filter(
-            member_id=self.member_id,
-            is_deleted=False,
+            return MapSubscription.objects.none()
+        latest_updated_at_subquery = (
+            MapSubscription.objects.filter(
+                map_id=OuterRef('map_id'),
+                member_id=self.member_id,
+                is_deleted=False
+            ).order_by(
+                '-updated_at',
+            ).values(
+                'updated_at',
+            )[:1]
+        )
+        queryset = (
+            MapSubscription.objects.select_related(
+                'map',
+                'map__created_by',
+            ).filter(
+                member_id=self.member_id,
+                is_deleted=False
+            )
+            .annotate(
+                latest_updated_at=Subquery(latest_updated_at_subquery),
+            )
+            .filter(
+                updated_at=F('latest_updated_at'),
+            )
         )
         if category_id:
             queryset = queryset.filter(
@@ -77,7 +97,7 @@ class MapService:
             queryset = queryset.filter(
                 map__name__icontains=search
             )
-        return queryset.distinct('map')
+        return queryset
 
     def _filter_map_queryset(
             self,

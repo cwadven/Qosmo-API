@@ -14,6 +14,7 @@ from map.dtos.response_dtos import (
 )
 from map.error_messages import MapInvalidInputResponseErrorStatus
 from map.services.map_service import MapService
+from member.exceptions import LoginRequiredException
 from member.permissions import IsGuestExists
 from pydantic import ValidationError
 from rest_framework import status
@@ -145,7 +146,9 @@ class MapSubscribedListView(APIView):
                 error_code=MapInvalidInputResponseErrorStatus.INVALID_INPUT_MAP_LIST_PARAM_ERROR_400.value,
                 errors=e.errors(),
             )
-        map_service = MapService(member_id=request.guest.member_id)
+        if not request.guest.member_id:
+            raise LoginRequiredException()
+        map_service = MapService(member_id=1)
         paginated_map_subscriptions, has_more, next_cursor = map_service.get_map_subscription_list(
             MapSubscriptionListCursorCriteria,
             search=map_subscribed_list_request.search,
