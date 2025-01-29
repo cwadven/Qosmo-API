@@ -105,7 +105,7 @@ class MapDetailView(APIView):
                         name=completed_node_history.node.name,
                         activated_at=completed_node_history.completed_at,
                     )
-                    for completed_node_history in completed_node_histories[-3:]
+                    for completed_node_history in completed_node_histories[:3]
                 ],
             )
         else:
