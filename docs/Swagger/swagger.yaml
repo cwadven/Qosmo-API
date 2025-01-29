@@ -942,7 +942,7 @@ paths:
         Status: Not Implemented
         Map 목록을 페이지네이션하여 조회합니다.
       parameters:
-        - name: cursor
+        - name: next_cursor
           in: query
           description: base64로 인코딩된 커서 값
           required: false
@@ -1259,7 +1259,7 @@ paths:
       description: |
         사용자가 구독 중인 Map 목록을 페이지네이션하여 조회합니다.
       parameters:
-        - name: cursor
+        - name: next_cursor
           in: query
           description: base64로 인코딩된 커서 값
           required: false
