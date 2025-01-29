@@ -8,7 +8,7 @@ from rest_framework.permissions import BasePermission
 class IsMemberLogin(BasePermission):
 
     def has_permission(self, request, view):
-        if bool(request.guest.member and request.guest.member.is_authenticated):
+        if bool(request.guest and request.guest.member and request.guest.member.is_authenticated):
             return True
         raise LoginRequiredException()
 
