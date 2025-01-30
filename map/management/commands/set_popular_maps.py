@@ -21,30 +21,26 @@ class Command(BaseCommand):
         parser.add_argument('type', type=str, help='daily, monthly')
 
     def _get_popular_map_subscription_qs(self) -> QuerySet[Dict]:
+        queryset = MapSubscription.objects.filter(
+            is_deleted=False,
+            map__is_deleted=False,
+            map__is_private=False,
+        )
         if self.type == 'daily':
-            queryset = MapSubscription.objects.filter(
-                is_deleted=False,
-                map__is_deleted=False,
-                map__is_private=False,
+            queryset = queryset.filter(
                 updated_at__date=datetime.now().date()
-            ).values('map_id').annotate(
-                subscriber_count=Count('member_id', distinct=True)
-            ).order_by(
-                '-subscriber_count'
             )
         elif self.type == 'monthly':
-            queryset = MapSubscription.objects.filter(
-                is_deleted=False,
-                map__is_deleted=False,
-                map__is_private=False,
+            queryset = queryset.filter(
                 updated_at__month=datetime.now().month
-            ).values('map_id').annotate(
-                subscriber_count=Count('member_id', distinct=True)
-            ).order_by(
-                '-subscriber_count'
             )
         else:
             queryset = MapSubscription.objects.none()
+        queryset = queryset.values('map_id').annotate(
+            subscriber_count=Count('member_id', distinct=True)
+        ).order_by(
+            '-subscriber_count'
+        )
         return queryset
 
     def handle(self, *args, **options):
