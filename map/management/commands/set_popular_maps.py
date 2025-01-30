@@ -2,9 +2,15 @@ from datetime import datetime
 from typing import Dict
 
 from django.core.management.base import BaseCommand
-from django.db.models import Count, QuerySet
+from django.db.models import (
+    Count,
+    QuerySet,
+)
 
-from map.models import PopularMap, Map
+from map.models import (
+    Map,
+    PopularMap,
+)
 from subscription.models import MapSubscription
 
 
