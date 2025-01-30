@@ -10,7 +10,7 @@ from map.dtos.response_dtos import (
     MapDetailDTO,
     MapDetailProgressDTO,
     MapListItemDTO,
-    MapListResponseDTO, MapDetailRecentActivatedNodeDTO,
+    MapListResponseDTO, MapDetailRecentActivatedNodeDTO, MapPopularListResponseDTO,
 )
 from map.error_messages import MapInvalidInputResponseErrorStatus
 from map.services.map_service import MapService
@@ -169,6 +169,64 @@ class MapSubscribedListView(APIView):
                     ],
                     next_cursor=next_cursor,
                     has_more=has_more,
+                ).model_dump(),
+            ).model_dump(),
+            status=status.HTTP_200_OK
+        )
+
+
+class MapPopularDailyListView(APIView):
+    permission_classes = [
+        IsGuestExists,
+    ]
+
+    def get(self, request):
+        daily_popular_maps = MapService(member_id=request.guest.member_id).get_daily_popular_maps()
+        subscription_service = MapSubscriptionService(member_id=request.guest.member_id)
+        subscription_status = subscription_service.get_subscription_status_by_map_ids(
+            [map_obj.id for map_obj in daily_popular_maps]
+        )
+
+        return Response(
+            BaseFormatResponse(
+                status_code=SuccessStatusCode.SUCCESS.value,
+                data=MapPopularListResponseDTO(
+                    maps=[
+                        MapListItemDTO.from_entity(
+                            _map,
+                            is_subscribed=subscription_status[_map.id]
+                        )
+                        for _map in daily_popular_maps
+                    ],
+                ).model_dump(),
+            ).model_dump(),
+            status=status.HTTP_200_OK
+        )
+
+
+class MapPopularMonthlyListView(APIView):
+    permission_classes = [
+        IsGuestExists,
+    ]
+
+    def get(self, request):
+        monthly_popular_maps = MapService(member_id=request.guest.member_id).get_monthly_popular_maps()
+        subscription_service = MapSubscriptionService(member_id=request.guest.member_id)
+        subscription_status = subscription_service.get_subscription_status_by_map_ids(
+            [map_obj.id for map_obj in monthly_popular_maps]
+        )
+
+        return Response(
+            BaseFormatResponse(
+                status_code=SuccessStatusCode.SUCCESS.value,
+                data=MapPopularListResponseDTO(
+                    maps=[
+                        MapListItemDTO.from_entity(
+                            _map,
+                            is_subscribed=subscription_status[_map.id]
+                        )
+                        for _map in monthly_popular_maps
+                    ],
                 ).model_dump(),
             ).model_dump(),
             status=status.HTTP_200_OK

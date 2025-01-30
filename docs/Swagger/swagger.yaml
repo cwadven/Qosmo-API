@@ -1251,6 +1251,58 @@ paths:
         "404":
           $ref: "#/components/responses/MapNotFoundError"
 
+  /v1/map/popular/daily:
+    get:
+      tags:
+        - Map
+      summary: "인기 일별 순"
+      description: |
+        인기 일별 순
+      responses:
+        "200":
+          description: 인기 일별 순
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      maps:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/MapListItem"
+
+  /v1/map/popular/monthly:
+    get:
+      tags:
+        - Map
+      summary: "인기 월별 순"
+      description: |
+        인기 월별 순
+      responses:
+        "200":
+          description: 인기 월별 순
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      maps:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/MapListItem"
+
   /v1/map/subscribed:
     get:
       tags:

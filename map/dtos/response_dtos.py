@@ -57,6 +57,10 @@ class MapListResponseDTO(BaseModel):
     has_more: bool
 
 
+class MapPopularListResponseDTO(BaseModel):
+    maps: List[MapListItemDTO]
+
+
 class MapDetailRecentActivatedNodeDTO(BaseModel):
     id: int
     name: str

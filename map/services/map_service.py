@@ -7,8 +7,10 @@ from typing import (
 from common.common_criteria.cursor_criteria import CursorCriteria
 from common.common_paginations.cursor_pagination_helpers import get_objects_with_cursor_pagination
 from django.db.models import QuerySet, Max, Subquery, OuterRef, F
+
+from map.consts import PopularMapType
 from map.exceptions import MapNotFoundException
-from map.models import Map
+from map.models import Map, PopularMap
 from subscription.models import MapSubscription
 
 
@@ -135,3 +137,27 @@ class MapService:
             return map_obj
         except Map.DoesNotExist:
             raise MapNotFoundException()
+
+    @staticmethod
+    def _get_popular_map_qs(_type: str) -> QuerySet[PopularMap]:
+        return PopularMap.objects.select_related(
+            'map',
+            'map__created_by',
+        ).filter(
+            is_deleted=False,
+            type=_type,
+        ).order_by(
+            '-subscriber_count',
+        )
+
+    def get_daily_popular_maps(self) -> List[Map]:
+        return [
+            popular_map.map
+            for popular_map in self._get_popular_map_qs(PopularMapType.DAILY.value)[:5]
+        ]
+
+    def get_monthly_popular_maps(self) -> List[Map]:
+        return [
+            popular_map.map
+            for popular_map in self._get_popular_map_qs(PopularMapType.MONTHLY.value)[:5]
+        ]
