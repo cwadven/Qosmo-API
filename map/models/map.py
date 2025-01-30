@@ -7,8 +7,8 @@ from member.models import Member
 class Map(models.Model):
     name = models.CharField(max_length=255, help_text='맵 이름')
     description = models.TextField(help_text='맵 설명')
-    icon_image = models.CharField(max_length=255, help_text='아이콘 이미지')
-    background_image = models.CharField(max_length=255, help_text='배경 이미지')
+    icon_image = models.CharField(max_length=2048, help_text='아이콘 이미지')
+    background_image = models.CharField(max_length=2048, help_text='배경 이미지')
     subscriber_count = models.BigIntegerField(default=0, help_text='구독자 수', db_index=True)
     view_count = models.BigIntegerField(default=0, help_text='조회수', db_index=True)
     created_by = models.ForeignKey(
