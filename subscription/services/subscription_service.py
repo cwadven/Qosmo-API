@@ -39,7 +39,7 @@ class MapSubscriptionService:
 
         if subscription.is_deleted:
             subscription.is_deleted = False
-            subscription.save()
+            subscription.save(update_fields=['is_deleted', 'updated_at'])
             self.increase_map_subscriber_count(map_id)
 
         return True
