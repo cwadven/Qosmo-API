@@ -53,6 +53,7 @@ class PopularMap(models.Model):
         help_text='데이터 생성 시 조회 수',
         db_index=True,
     )
+    is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
