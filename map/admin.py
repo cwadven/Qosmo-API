@@ -8,6 +8,7 @@ from map.models import (
     Node,
     NodeCompleteRule,
     NodeCompletedHistory,
+    PopularMap,
 )
 
 
@@ -40,6 +41,12 @@ class MapAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).prefetch_related('categories')
+
+
+@admin.register(PopularMap)
+class PopularMapAdmin(admin.ModelAdmin):
+    list_display = ('map', 'type', 'created_at')
+    list_filter = ('type', 'created_at')
 
 
 @admin.register(Node)

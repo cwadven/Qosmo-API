@@ -1,4 +1,6 @@
 from django.db import models
+
+from map.consts import PopularMapType
 from member.models import Member
 
 
@@ -32,3 +34,27 @@ class Map(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class PopularMap(models.Model):
+    map = models.ForeignKey(Map, on_delete=models.DO_NOTHING, related_name='popular_maps')
+    type = models.CharField(
+        max_length=255,
+        help_text='인기 맵 타입',
+        choices=PopularMapType.choices(),
+    )
+    subscriber_count = models.BigIntegerField(
+        default=0,
+        help_text='데이터 생성 시 구독자 수',
+        db_index=True,
+    )
+    view_count = models.BigIntegerField(
+        default=0,
+        help_text='데이터 생성 시 조회 수',
+        db_index=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        verbose_name = '인기 맵'
+        verbose_name_plural = '인기 맵'
