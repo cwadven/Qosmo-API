@@ -27,17 +27,21 @@ class MapSubscriptionService:
         if not self.member_id:
             return False
 
-        subscription, _ = MapSubscription.objects.get_or_create(
+        subscription, is_created = MapSubscription.objects.get_or_create(
             member_id=self.member_id,
             map_id=map_detail.id,
             defaults={
                 'is_deleted': False
             }
         )
+        if is_created:
+            self.increase_map_subscriber_count(map_id)
+
         if subscription.is_deleted:
             subscription.is_deleted = False
             subscription.save()
-        self.increase_map_subscriber_count(map_id)
+            self.increase_map_subscriber_count(map_id)
+
         return True
 
     def unsubscribe_map_by_map_id(self, map_id: int) -> bool:
