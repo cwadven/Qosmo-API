@@ -319,6 +319,19 @@ python manage.py runserver
 celery -A config worker -l INFO -P solo
 ````
 
+7. Crontab 적용
+```shell
+# 로그 디렉토리 생성
+mkdir -p /tmp/log
+# Run the crontab
+fab2 update-crontab
+# 필요에 따라 dos2unix 설치
+dos2unix command.cron
+chmod 0644 command.cron
+cat command.cron | crontab -
+service cron restart
+```
+
 ### Docker Start
 ```shell
 # docker-compose.yml file change environment for your DJANGO_SETTINGS_MODULE
