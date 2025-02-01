@@ -309,7 +309,7 @@ class ProfileView(APIView):
     permission_classes = [IsMemberLogin]
 
     def get(self, request):
-        profile_data = get_member_profile(request.member.id)
+        profile_data = get_member_profile(request.guest.member_id)
         return Response(
             BaseFormatResponse(
                 status_code=SuccessStatusCode.SUCCESS.value,
@@ -322,3 +322,6 @@ class ProfileView(APIView):
             ).model_dump(),
             status=200,
         )
+
+    def put(self, request):
+        pass
