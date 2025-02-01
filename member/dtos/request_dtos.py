@@ -4,14 +4,12 @@ from typing import (
     Optional, Any,
 )
 
-from pydantic_core.core_schema import ValidationInfo
-
 from common.common_consts.common_error_messages import ErrorMessage
 from django.http import QueryDict
 from pydantic import (
     BaseModel,
     Field,
-    field_validator,
+    field_validator, model_validator,
 )
 
 from member.consts import MemberCreationExceptionMessage, NICKNAME_MIN_LENGTH, NICKNAME_MAX_LENGTH
@@ -128,13 +126,15 @@ class ChangeProfileRequest(BaseModel):
             )
         return v
 
-    @field_validator('nickname', 'profile_image', mode='after')
-    def check_nickname_and_profile_image(cls, v, info: ValidationInfo):
-        profile_image = info.data.get('profile_image')
-        if v is None and not profile_image:
+    @model_validator(mode='after')
+    def check_nickname_and_profile_image(cls, values):
+        nickname = values.nickname
+        profile_image = values.profile_image
+
+        if nickname is None and not profile_image:
             raise ValueError(
                 ErrorMessage.INVALID_INPUT_DEPENDENCIES_ERROR.label.format(
-                    'nickname, profile_image 둘중 하나는 필수 입니다.',
+                    'nickname, profile_image 둘중 하나는 필수 입니다.'
                 )
             )
-        return v
+        return values
