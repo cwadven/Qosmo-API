@@ -101,10 +101,11 @@ class MapService:
             )
         return queryset
 
+    @staticmethod
     def _filter_map_queryset(
-            self,
             search: Optional[str] = None,
             category_id: Optional[int] = None,
+            with_private: Optional[bool] = False,
     ) -> QuerySet:
         queryset = Map.objects.select_related(
             'created_by',
@@ -112,8 +113,11 @@ class MapService:
             'categories',
         ).filter(
             is_deleted=False,
-            is_private=False,
         )
+        if not with_private:
+            queryset = queryset.filter(
+                is_private=False,
+            )
         if category_id:
             queryset = queryset.filter(
                 categories__id=category_id,
@@ -173,6 +177,7 @@ class MapService:
         map_qs = self._filter_map_queryset(
             search,
             category_id,
+            with_private=True,
         ).filter(
             created_by_id=self.member_id,
         )
