@@ -1470,7 +1470,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
               properties:
@@ -1480,7 +1480,7 @@ paths:
                 profile_image:
                   type: string
                   format: binary
-                  description: "프로필 이미지 파일 (jpg, png만 가능)"
+                  description: "프로필 이미지 파일 (jpg, png, webp, gif 만 가능)"
       responses:
         "200":
           description: 프로필 수정 성공

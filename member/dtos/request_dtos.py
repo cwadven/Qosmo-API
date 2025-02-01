@@ -1,8 +1,10 @@
 from datetime import date
 from typing import (
     List,
-    Optional,
+    Optional, Any,
 )
+
+from pydantic_core.core_schema import ValidationInfo
 
 from common.common_consts.common_error_messages import ErrorMessage
 from django.http import QueryDict
@@ -11,6 +13,9 @@ from pydantic import (
     Field,
     field_validator,
 )
+
+from member.consts import MemberCreationExceptionMessage, NICKNAME_MIN_LENGTH, NICKNAME_MAX_LENGTH
+from member.services import check_nickname_valid, check_nickname_exists, check_only_korean_english_alphanumeric
 
 
 class NormalLoginRequest(BaseModel):
@@ -79,3 +84,57 @@ class SignUpValidationRequest(BaseModel):
     email: str = Field(...)
     password1: str = Field(...)
     password2: str = Field(...)
+
+
+class ChangeProfileRequest(BaseModel):
+    nickname: Optional[str] = Field(...)
+    profile_image: Any = Field(...)
+
+    @field_validator(
+        'nickname',
+        mode='before'
+    )
+    def check_nickname(cls, v):
+        if v is None:
+            return v
+
+        if not check_nickname_valid(v):
+            raise ValueError(MemberCreationExceptionMessage.NICKNAME_BLACKLIST.label)
+        if check_nickname_exists(v):
+            raise ValueError(MemberCreationExceptionMessage.NICKNAME_EXISTS.label)
+        if not (NICKNAME_MIN_LENGTH <= len(v) <= NICKNAME_MAX_LENGTH):
+            raise ValueError(
+                MemberCreationExceptionMessage.NICKNAME_LENGTH_INVALID.label.format(
+                    NICKNAME_MIN_LENGTH,
+                    NICKNAME_MAX_LENGTH,
+                )
+            )
+        if not check_only_korean_english_alphanumeric(v):
+            raise ValueError(MemberCreationExceptionMessage.NICKNAME_REG_EXP_INVALID.label)
+        return v
+
+    @field_validator(
+        'profile_image',
+        mode='before'
+    )
+    def check_profile_image(cls, v):
+        if v is None:
+            return v
+        if v.content_type not in {'image/png', 'image/webp', 'image/jpeg', 'image/jpg', 'image/gif'}:
+            raise ValueError(
+                ErrorMessage.INVALID_INPUT_DEPENDENCIES_ERROR.label.format(
+                    '이미지 형식은 png, webp, jpeg, jpg, gif 만 가능합니다.',
+                )
+            )
+        return v
+
+    @field_validator('nickname', 'profile_image', mode='after')
+    def check_nickname_and_profile_image(cls, v, info: ValidationInfo):
+        profile_image = info.data.get('profile_image')
+        if v is None and not profile_image:
+            raise ValueError(
+                ErrorMessage.INVALID_INPUT_DEPENDENCIES_ERROR.label.format(
+                    'nickname, profile_image 둘중 하나는 필수 입니다.',
+                )
+            )
+        return v

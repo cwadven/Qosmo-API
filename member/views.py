@@ -1,14 +1,20 @@
+import boto3
 import jwt
+from botocore.config import Config
+from django.conf import settings
+
 from common.common_consts.common_error_messages import InvalidInputResponseErrorStatus
 from common.common_consts.common_status_codes import SuccessStatusCode
 from common.common_decorators.request_decorators import mandatories
 from common.common_exceptions import PydanticAPIException
 from common.common_utils import (
+    generate_pre_signed_url_info,
     generate_random_string_digits,
     get_jwt_guest_token,
     get_jwt_login_token,
     get_jwt_refresh_token,
     get_request_ip,
+    upload_file_to_pre_signed_url,
 )
 from common.common_utils.cache_utils import (
     delete_cache_value_by_key,
@@ -31,6 +37,7 @@ from member.consts import (
     SIGNUP_MACRO_VALIDATION_KEY,
 )
 from member.dtos.request_dtos import (
+    ChangeProfileRequest,
     NormalLoginRequest,
     RefreshTokenRequest,
     SignUpEmailTokenSendRequest,
@@ -323,5 +330,63 @@ class ProfileView(APIView):
             status=200,
         )
 
-    def put(self, request):
-        pass
+    def patch(self, request):
+        try:
+            request_change_profile = ChangeProfileRequest(
+                nickname=request.data.get('nickname'),
+                profile_image=request.FILES.get('profile_image'),
+            )
+        except ValidationError as e:
+            raise PydanticAPIException(
+                status_code=400,
+                error_summary=InvalidInputResponseErrorStatus.INVALID_PROFILE_CHANGE_INPUT_DATA_400.label,
+                error_code=InvalidInputResponseErrorStatus.INVALID_PROFILE_CHANGE_INPUT_DATA_400.value,
+                errors=e.errors(),
+            )
+
+        try:
+            member = Member.objects.get(id=request.guest.member_id)
+        except Member.DoesNotExist:
+            raise LoginFailedException()
+        member.raise_if_inaccessible()
+
+        update_fields = []
+        if request_change_profile.nickname:
+            member.nickname = request_change_profile.nickname
+            update_fields.append('nickname')
+        if request_change_profile.profile_image:
+            client = boto3.client(
+                's3',
+                region_name='ap-northeast-2',
+                aws_access_key_id=settings.AWS_IAM_ACCESS_KEY,
+                aws_secret_access_key=settings.AWS_IAM_SECRET_ACCESS_KEY,
+                config=Config(signature_version='s3v4')
+            )
+            response = generate_pre_signed_url_info(
+                client,
+                settings.AWS_S3_BUCKET_NAME,
+                request_change_profile.profile_image.name,
+                'member-profile-image',
+                member.id,
+            )
+            upload_file_to_pre_signed_url(
+                response['url'],
+                response['fields'],
+                request_change_profile.profile_image.read(),
+            )
+            member.profile_image_url = response['url'] + response['fields']['key']
+            update_fields.append('profile_image_url')
+        member.save(update_fields=update_fields)
+        profile_data = get_member_profile(member.id)
+        return Response(
+            BaseFormatResponse(
+                status_code=SuccessStatusCode.SUCCESS.value,
+                data=ProfileData(
+                    id=profile_data['id'],
+                    nickname=profile_data['nickname'],
+                    profile_image=profile_data['profile_image'],
+                    subscribed_map_count=profile_data['subscribed_map_count'],
+                ).model_dump(),
+            ).model_dump(),
+            status=200,
+        )
