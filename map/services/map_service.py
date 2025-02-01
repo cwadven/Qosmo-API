@@ -161,3 +161,25 @@ class MapService:
             popular_map.map
             for popular_map in self._get_popular_map_qs(PopularMapType.MONTHLY.value)[:5]
         ]
+
+    def get_my_map_list(
+            self,
+            cursor_criteria: Type[CursorCriteria],
+            search: Optional[str] = None,
+            category_id: Optional[int] = None,
+            decoded_next_cursor: dict = None,
+            size: int = 20,
+    ) -> Tuple[List[Map], bool, Optional[str]]:
+        map_qs = self._filter_map_queryset(
+            search,
+            category_id,
+        ).filter(
+            created_by_id=self.member_id,
+        )
+        paginated_maps, has_more, next_cursor = get_objects_with_cursor_pagination(
+            map_qs,
+            cursor_criteria,
+            decoded_next_cursor,
+            size,
+        )
+        return paginated_maps, has_more, next_cursor

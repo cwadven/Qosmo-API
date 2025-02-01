@@ -4,18 +4,30 @@ from common.common_consts.common_status_codes import (
 from common.common_decorators.request_decorators import cursor_pagination
 from common.common_exceptions import PydanticAPIException
 from common.dtos.response_dtos import BaseFormatResponse
-from map.cursor_criteria.cursor_criteria import MapListCursorCriteria, MapSubscriptionListCursorCriteria
-from map.dtos.request_dtos import MapListRequestDTO, MapSubscribedListRequestDTO
+from map.cursor_criteria.cursor_criteria import (
+    MapListCursorCriteria,
+    MapSubscriptionListCursorCriteria,
+    MyMapListCursorCriteria,
+)
+from map.dtos.request_dtos import (
+    MapListRequestDTO,
+    MapSubscribedListRequestDTO,
+    MyMapListRequestDTO,
+)
 from map.dtos.response_dtos import (
     MapDetailDTO,
     MapDetailProgressDTO,
+    MapDetailRecentActivatedNodeDTO,
     MapListItemDTO,
-    MapListResponseDTO, MapDetailRecentActivatedNodeDTO, MapPopularListResponseDTO,
+    MapListResponseDTO,
+    MapPopularListResponseDTO,
 )
 from map.error_messages import MapInvalidInputResponseErrorStatus
 from map.services.map_service import MapService
-from member.exceptions import LoginRequiredException
-from member.permissions import IsGuestExists
+from member.permissions import (
+    IsGuestExists,
+    IsMemberLogin,
+)
 from pydantic import ValidationError
 from rest_framework import status
 from rest_framework.response import Response
@@ -132,7 +144,7 @@ class MapDetailView(APIView):
 
 class MapSubscribedListView(APIView):
     permission_classes = [
-        IsGuestExists,
+        IsMemberLogin,
     ]
 
     @cursor_pagination(default_size=20, cursor_criteria=[MapSubscriptionListCursorCriteria])
@@ -146,8 +158,6 @@ class MapSubscribedListView(APIView):
                 error_code=MapInvalidInputResponseErrorStatus.INVALID_INPUT_MAP_LIST_PARAM_ERROR_400.value,
                 errors=e.errors(),
             )
-        if not request.guest.member_id:
-            raise LoginRequiredException()
         map_service = MapService(member_id=1)
         paginated_map_subscriptions, has_more, next_cursor = map_service.get_map_subscription_list(
             MapSubscriptionListCursorCriteria,
@@ -226,6 +236,53 @@ class MapPopularMonthlyListView(APIView):
                             is_subscribed=subscription_status[_map.id]
                         )
                         for _map in monthly_popular_maps
+                    ],
+                ).model_dump(),
+            ).model_dump(),
+            status=status.HTTP_200_OK
+        )
+
+
+class MyMapListView(APIView):
+    permission_classes = [
+        IsMemberLogin,
+    ]
+
+    @cursor_pagination(default_size=20, cursor_criteria=[MapSubscriptionListCursorCriteria])
+    def get(self, request, decoded_next_cursor: dict, size: int):
+        try:
+            my_map_list_request = MyMapListRequestDTO.of(request)
+        except ValidationError as e:
+            raise PydanticAPIException(
+                status_code=400,
+                error_summary=MapInvalidInputResponseErrorStatus.INVALID_INPUT_MAP_LIST_PARAM_ERROR_400.label,
+                error_code=MapInvalidInputResponseErrorStatus.INVALID_INPUT_MAP_LIST_PARAM_ERROR_400.value,
+                errors=e.errors(),
+            )
+
+        map_service = MapService(member_id=request.guest.member_id)
+        paginated_my_maps, has_more, next_cursor = map_service.get_my_map_list(
+            MyMapListCursorCriteria,
+            search=my_map_list_request.search,
+            category_id=my_map_list_request.category_id,
+            decoded_next_cursor=decoded_next_cursor,
+            size=size,
+        )
+        subscription_service = MapSubscriptionService(member_id=request.guest.member_id)
+        subscription_status = subscription_service.get_subscription_status_by_map_ids(
+            [map_obj.id for map_obj in paginated_my_maps]
+        )
+
+        return Response(
+            BaseFormatResponse(
+                status_code=SuccessStatusCode.SUCCESS.value,
+                data=MapPopularListResponseDTO(
+                    maps=[
+                        MapListItemDTO.from_entity(
+                            _map,
+                            is_subscribed=subscription_status[_map.id]
+                        )
+                        for _map in paginated_my_maps
                     ],
                 ).model_dump(),
             ).model_dump(),
