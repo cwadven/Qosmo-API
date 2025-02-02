@@ -1,4 +1,6 @@
 from django.contrib import admin
+
+from map.forms.admin_forms import MapAdminForm, NodeAdminForm, CategoryAdminForm
 from map.models import (
     Arrow,
     ArrowProgress,
@@ -24,19 +26,7 @@ class MapAdmin(admin.ModelAdmin):
     list_filter = ('is_private', 'is_deleted')
     search_fields = ('name', 'description')
     readonly_fields = ('subscriber_count', 'view_count', 'created_at', 'updated_at')
-    fields = (
-        'name',
-        'description',
-        'icon_image',
-        'background_image',
-        'created_by',
-        'subscriber_count',
-        'view_count',
-        'is_private',
-        'is_deleted',
-        'created_at',
-        'updated_at',
-    )
+    form = MapAdminForm
     inlines = [MapCategoryInline]
 
     def get_queryset(self, request):
@@ -55,6 +45,7 @@ class NodeAdmin(admin.ModelAdmin):
     list_filter = ('is_active', 'is_deleted')
     search_fields = ('name', 'title', 'description')
     readonly_fields = ('created_at', 'updated_at')
+    form = NodeAdminForm
 
 
 @admin.register(Arrow)
@@ -95,6 +86,7 @@ class CategoryAdmin(admin.ModelAdmin):
     list_filter = ('is_deleted',)
     search_fields = ('name', 'description')
     readonly_fields = ('created_at', 'updated_at')
+    form = CategoryAdminForm
 
 
 @admin.register(MapCategory)
