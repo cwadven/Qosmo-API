@@ -30,6 +30,7 @@ class MapListItemDTO(BaseModel):
     subscriber_count: int
     view_count: int
     is_subscribed: bool
+    is_private: bool
     created_by: MapListCreatedBy
     created_at: datetime
     updated_at: datetime
@@ -45,6 +46,7 @@ class MapListItemDTO(BaseModel):
             subscriber_count=_map.subscriber_count,
             view_count=_map.view_count,
             is_subscribed=is_subscribed,
+            is_private=_map.is_private,
             created_by=MapListCreatedBy.from_entity(_map.created_by),
             created_at=_map.created_at,
             updated_at=_map.updated_at
