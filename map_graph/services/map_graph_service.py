@@ -151,15 +151,15 @@ class MapGraphService:
 
             start_date = None
             if self.member_id:
-                first_completion = MapSubscription.objects.filter(
+                first_subscription = MapSubscription.objects.filter(
                     map_id=map_obj,
                     member_id=self.member_id,
                     is_deleted=False,
                 ).order_by(
                     '-created_at',
                 ).first()
-                if first_completion:
-                    start_date = first_completion.created_at
+                if first_subscription:
+                    start_date = first_subscription.updated_at
 
             return MapMetaDTO.from_map(
                 map_obj=map_obj,

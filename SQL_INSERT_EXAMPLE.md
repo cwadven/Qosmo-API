@@ -15,7 +15,7 @@
 
 [ 생성 ]
 
-docker cp ./nosql_escape/sql/* checker_postgresql14:/home/
+docker cp ./nosql_escape/sql checker_postgresql14:/home/
 
 psql  -U postgres -d checker_database -f 00_map.sql
 psql  -U postgres -d checker_database -f 01_nodes.sql
