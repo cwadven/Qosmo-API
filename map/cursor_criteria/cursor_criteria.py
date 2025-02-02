@@ -18,5 +18,4 @@ class MapSubscriptionListCursorCriteria(CursorCriteria):
 class MyMapListCursorCriteria(CursorCriteria):
     cursor_keys = [
         'id__lt',
-        'created_at__lte',
     ]

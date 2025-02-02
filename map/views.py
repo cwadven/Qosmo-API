@@ -248,7 +248,7 @@ class MyMapListView(APIView):
         IsMemberLogin,
     ]
 
-    @cursor_pagination(default_size=20, cursor_criteria=[MapSubscriptionListCursorCriteria])
+    @cursor_pagination(default_size=20, cursor_criteria=[MyMapListCursorCriteria])
     def get(self, request, decoded_next_cursor: dict, size: int):
         try:
             my_map_list_request = MyMapListRequestDTO.of(request)
@@ -259,7 +259,6 @@ class MyMapListView(APIView):
                 error_code=MapInvalidInputResponseErrorStatus.INVALID_INPUT_MAP_LIST_PARAM_ERROR_400.value,
                 errors=e.errors(),
             )
-
         map_service = MapService(member_id=request.guest.member_id)
         paginated_my_maps, has_more, next_cursor = map_service.get_my_map_list(
             MyMapListCursorCriteria,
@@ -276,14 +275,16 @@ class MyMapListView(APIView):
         return Response(
             BaseFormatResponse(
                 status_code=SuccessStatusCode.SUCCESS.value,
-                data=MapPopularListResponseDTO(
+                data=MapListResponseDTO(
                     maps=[
                         MapListItemDTO.from_entity(
                             _map,
-                            is_subscribed=subscription_status[_map.id]
+                            is_subscribed=subscription_status[_map.id],
                         )
                         for _map in paginated_my_maps
                     ],
+                    next_cursor=next_cursor,
+                    has_more=has_more,
                 ).model_dump(),
             ).model_dump(),
             status=status.HTTP_200_OK
