@@ -1693,6 +1693,9 @@ components:
         view_count:
           type: integer
           example: 2345
+        is_private:
+          type: boolean
+          example: false
         is_subscribed:
           type: boolean
           example: false
