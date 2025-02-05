@@ -47,6 +47,7 @@ PROJECT_APPS = [
     'question',
     'subscription',
     'node',
+    'play',
 ]
 
 PROJECT_SETTING_APPS = []
