@@ -107,6 +107,14 @@ class MapPlayBanned(models.Model):
         related_name='map_play_ban_histories',
         help_text='추방한 admin',
     )
+    invite_code = models.ForeignKey(
+        'MapPlayInviteCode',
+        on_delete=models.DO_NOTHING,
+        related_name='banned_members',
+        null=True,
+        blank=True,
+        help_text='사용한 초대 코드',
+    )
     banned_reason = models.TextField(
         help_text='추방 사유',
     )

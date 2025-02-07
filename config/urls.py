@@ -23,6 +23,7 @@ urlpatterns = [
     path('v1/node', include('node.urls.v1')),
     path('v1/question', include('question.urls.v1')),
     path('v1/subscription', include('subscription.urls.v1')),
+    path('v1/play', include('play.urls.v1')),
 ]
 
 
