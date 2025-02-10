@@ -6,12 +6,13 @@ from member.permissions import IsGuestExists
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from typing import Optional
 
 
 class NodeGraphView(APIView):
     permission_classes = [IsGuestExists]
 
-    def get(self, request, map_id: int):
+    def get(self, request, map_id: int, map_play_member_id: Optional[int] = None):
         service = MapGraphService(member_id=request.guest.member_id)
         return Response(
             BaseFormatResponse(
@@ -19,7 +20,7 @@ class NodeGraphView(APIView):
                 data={
                     'nodes': [
                         NodeGraphDTO.from_graph_node(node).model_dump()
-                        for node in service.get_nodes(map_id)
+                        for node in service.get_nodes(map_id, map_play_member_id)
                     ]
                 }
             ).model_dump(),
@@ -30,7 +31,7 @@ class NodeGraphView(APIView):
 class ArrowGraphView(APIView):
     permission_classes = [IsGuestExists]
 
-    def get(self, request, map_id: int):
+    def get(self, request, map_id: int, map_play_member_id: Optional[int] = None):
         service = MapGraphService(member_id=request.guest.member_id)
         return Response(
             BaseFormatResponse(
@@ -38,7 +39,7 @@ class ArrowGraphView(APIView):
                 data={
                     'arrows': [
                         arrow.model_dump()
-                        for arrow in service.get_arrows(map_id)
+                        for arrow in service.get_arrows(map_id, map_play_member_id)
                     ]
                 }
             ).model_dump(),
@@ -68,12 +69,12 @@ class NodeCompleteRuleView(APIView):
 class MapMetaView(APIView):
     permission_classes = [IsGuestExists]
 
-    def get(self, request, map_id: int):
+    def get(self, request, map_id: int, map_play_member_id: Optional[int] = None):
         service = MapGraphService(member_id=request.guest.member_id)
         return Response(
             BaseFormatResponse(
                 status_code=SuccessStatusCode.SUCCESS.value,
-                data=service.get_map_meta(map_id).model_dump(),
+                data=service.get_map_meta(map_id, map_play_member_id).model_dump(),
             ).model_dump(),
             status=status.HTTP_200_OK
         )

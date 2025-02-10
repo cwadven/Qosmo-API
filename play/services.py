@@ -3,10 +3,10 @@ from typing import Optional
 
 from django.db import transaction
 from django.utils import timezone
-from django.db.models import F, Q
+from django.db.models import F, Q, QuerySet
 
 from map.exceptions import MapNotFoundException
-from map.models import Map
+from map.models import Map, NodeCompletedHistory
 from play.consts import MapPlayMemberRole, MapPlayMemberDeactivateReason
 from play.models import (
     MapPlay,
@@ -48,15 +48,8 @@ class MapPlayService:
         # 최대 플레이 제한 검증
         self._validate_map_play_limit(map_id, created_by_id)
 
-        try:
-            _map = Map.objects.get(
-                id=map_id,
-                is_deleted=False,
-            )
-            if _map.is_private and _map.created_by_id != created_by_id:
-                raise Map.DoesNotExist
-        except Map.DoesNotExist:
-            raise MapNotFoundException()
+        # Map 접근 권한 검증
+        self.validate_map_access(map_id, created_by_id)
 
         # 플레이 생성
         map_play = MapPlay.objects.create(
@@ -437,4 +430,93 @@ class MapPlayService:
                 member_id=member_id,
                 deactivated=False,
             ).select_related('map_play').order_by('-created_at')
+        )
+
+    def validate_map_access(self, map_id: int, member_id: int) -> Map:
+        """
+        Map 접근 권한 검증 (없으면 예외 발생)
+        Returns:
+            Map: 검증된 Map 객체
+        """
+        try:
+            map_obj = Map.objects.get(id=map_id, is_deleted=False)
+            
+            # public map인 경우 항상 접근 가능
+            if not map_obj.is_private:
+                return map_obj
+                
+            # private map인 경우 생성자이거나 활성화된 플레이 멤버인 경우만 접근 가능
+            has_access = (
+                map_obj.created_by_id == member_id or
+                MapPlayMember.objects.filter(
+                    member_id=member_id,
+                    map_play__map_id=map_id,
+                    deactivated=False,
+                ).exists()
+            )
+            if not has_access:
+                raise MapNotFoundException()
+                
+            return map_obj
+        except Map.DoesNotExist:
+            raise MapNotFoundException()
+
+    def validate_map_and_play_member_access(
+        self,
+        map_id: int,
+        member_id: int,
+        map_play_member_id: Optional[int] = None,
+    ) -> Map:
+        """
+        Map 접근 권한과 MapPlayMember 권한을 한 번에 검증
+        
+        Args:
+            map_id: 맵 ID
+            member_id: 접근하려는 멤버 ID
+            map_play_member_id: 조회하려는 맵 플레이 멤버 ID (Optional)
+            
+        Returns:
+            Map: 검증된 Map 객체
+            
+        Raises:
+            MapNotFoundException: Map이 존재하지 않거나 접근 권한이 없는 경우
+            PlayMemberNotFoundException: map_play_member_id가 주어졌으나 해당 멤버가 존재하지 않거나 비활성화된 경우
+        """
+        # Map 접근 권한 검증
+        map_obj = self.validate_map_access(map_id, member_id)
+            
+        # map_play_member_id가 주어진 경우 해당 멤버 검증
+        if map_play_member_id:
+            member_exists = MapPlayMember.objects.filter(
+                id=map_play_member_id,
+                map_play__map_id=map_id,
+                deactivated=False,
+            ).exists()
+            if not member_exists:
+                raise PlayMemberNotFoundException()
+            
+        return map_obj
+
+    def get_map_play_completed_node_histories(self, map_play_id: int) -> QuerySet:
+        """
+        특정 맵 플레이의 완료된 노드 이력을 조회합니다.
+        """
+        return NodeCompletedHistory.objects.filter(
+            map_play_id=map_play_id,
+        ).select_related(
+            'node__map',
+        ).order_by(
+            'completed_at',
+        )
+
+    def get_map_play_member_completed_node_histories(self, map_play_member_id: int) -> QuerySet:
+        """
+        특정 맵 플레이의 특정 멤버가 완료한 노드 이력을 조회합니다.
+        """
+        return NodeCompletedHistory.objects.filter(
+            map_play_member_id=map_play_member_id,
+        ).select_related(
+            'node__map',
+        ).order_by(
+            'completed_at',
         )

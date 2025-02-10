@@ -5,10 +5,8 @@ from typing import (
     Set,
 )
 
-from map.exceptions import MapNotFoundException
 from map.models import (
     Arrow,
-    Map,
     NodeCompleteRule,
 )
 from map_graph.dtos.graph_arrow import GraphArrow
@@ -17,60 +15,55 @@ from map_graph.dtos.response_dtos import NodeCompleteRuleDTO
 from map_graph.dtos.map_meta import MapMetaDTO
 from node.services.node_services import (
     get_nodes_by_map_id,
-    get_member_completed_node_histories,
 )
 from subscription.models import MapSubscription
+from play.services import MapPlayService
 
 
 class MapGraphService:
     def __init__(self, member_id: Optional[int] = None):
         self.member_id = member_id
+        self.map_play_service = MapPlayService()
 
-    def get_nodes(self, map_id: int) -> List[GraphNode]:
-        try:
-            map_obj = Map.objects.get(
-                id=map_id,
-                is_deleted=False,
-            )
-            if map_obj.is_private and map_obj.created_by_id != self.member_id:
-                raise Map.DoesNotExist()
+    def get_nodes(self, map_id: int, map_play_member_id: Optional[int] = None) -> List[GraphNode]:
+        # Map과 MapPlayMember 접근 권한 검증
+        self.map_play_service.validate_map_and_play_member_access(map_id, self.member_id, map_play_member_id)
 
-            # 맵에 속한 노드들을 가져옵니다.
-            nodes = get_nodes_by_map_id(map_id)
+        # 맵에 속한 노드들을 가져옵니다.
+        nodes = get_nodes_by_map_id(map_id)
 
-            # 화살표 데이터를 가져와서 시작 노드 매핑을 생성합니다.
-            arrows = Arrow.objects.filter(
-                map_id=map_id,
-                is_deleted=False,
-            ).select_related(
-                'start_node',
-                'end_node',
-            )
-            start_node_ids_by_end_node_id = get_start_node_ids_by_end_node_id(arrows)
-
-            # 완료된 노드들의 id를 저장합니다.
-            completed_node_ids = {
-                completed_node.id
-                for completed_node in self.get_completed_nodes(map_id)
-            }
-
-            return [
-                GraphNode.from_node(
-                    node,
-                    completed_node_ids,
-                    start_node_ids_by_end_node_id,
-                )
-                for node in nodes
-            ]
-        except Map.DoesNotExist:
-            raise MapNotFoundException()
-
-    def get_completed_nodes(self, map_id: int) -> List[GraphNode]:
-        if not self.member_id:
-            return []
-        completed_histories = get_member_completed_node_histories(self.member_id, map_id).order_by(
-            'completed_at',
+        # 화살표 데이터를 가져와서 시작 노드 매핑을 생성합니다.
+        arrows = Arrow.objects.filter(
+            map_id=map_id,
+            is_deleted=False,
+        ).select_related(
+            'start_node',
+            'end_node',
         )
+        start_node_ids_by_end_node_id = get_start_node_ids_by_end_node_id(arrows)
+
+        # 완료된 노드들의 id를 저장합니다.
+        completed_node_ids = {
+            completed_node.id
+            for completed_node in self.get_map_play_member_completed_nodes(map_play_member_id)
+        }
+
+        return [
+            GraphNode.from_node(
+                node,
+                completed_node_ids,
+                start_node_ids_by_end_node_id,
+            )
+            for node in nodes
+        ]
+
+    def get_map_play_member_completed_nodes(self, map_play_member_id: Optional[int] = None) -> List[GraphNode]:
+        """
+        특정 맵 플레이 멤버가 완료한 노드들을 GraphNode 형태로 반환합니다.
+        """
+        if not map_play_member_id:
+            return []
+        completed_histories = self.map_play_service.get_map_play_member_completed_node_histories(map_play_member_id)
         completed_nodes_dict = {
             history.node.id: history.node
             for history in completed_histories
@@ -84,91 +77,70 @@ class MapGraphService:
             for node in completed_nodes_dict.values()
         ]
 
-    def get_arrows(self, map_id: int) -> List[GraphArrow]:
-        try:
-            map_obj = Map.objects.get(
-                id=map_id,
-                is_deleted=False
+    def get_arrows(self, map_id: int, map_play_member_id: Optional[int] = None) -> List[GraphArrow]:
+        # Map과 MapPlayMember 접근 권한 검증
+        self.map_play_service.validate_map_and_play_member_access(map_id, self.member_id, map_play_member_id)
+
+        # 화살표 데이터를 가져옵니다.
+        arrows = Arrow.objects.filter(
+            map_id=map_id,
+            is_deleted=False,
+        )
+
+        # 완료된 노드들의 id를 저장합니다.
+        completed_node_ids = {
+            completed_node.id
+            for completed_node in self.get_map_play_member_completed_nodes(map_play_member_id)
+        }
+
+        return [
+            GraphArrow.from_arrow(
+                arrow,
+                completed_node_ids,
             )
-            if map_obj.is_private and map_obj.created_by_id != self.member_id:
-                raise Map.DoesNotExist()
-
-            # 화살표 데이터를 가져옵니다.
-            arrows = Arrow.objects.filter(
-                map_id=map_id,
-                is_deleted=False,
-            )
-
-            # 완료된 노드들의 id를 저장합니다.
-            completed_node_ids = {
-                completed_node.id
-                for completed_node in self.get_completed_nodes(map_id)
-            }
-
-            return [
-                GraphArrow.from_arrow(
-                    arrow,
-                    completed_node_ids,
-                )
-                for arrow in arrows
-            ]
-        except Map.DoesNotExist:
-            raise MapNotFoundException()
+            for arrow in arrows
+        ]
 
     def get_node_complete_rules(self, map_id: int) -> List[NodeCompleteRuleDTO]:
-        try:
-            map_obj = Map.objects.get(
-                id=map_id,
-                is_deleted=False
-            )
-            if map_obj.is_private and map_obj.created_by_id != self.member_id:
-                raise Map.DoesNotExist()
+        # Map 접근 권한 검증
+        self.map_play_service.validate_map_access(map_id, self.member_id)
 
-            rules = NodeCompleteRule.objects.filter(
-                map_id=map_id,
+        rules = NodeCompleteRule.objects.filter(
+            map_id=map_id,
+            is_deleted=False,
+        ).select_related(
+            'node',
+        )
+        return [
+            NodeCompleteRuleDTO.from_rule(rule)
+            for rule in rules
+        ]
+
+    def get_map_meta(self, map_id: int, map_play_member_id: Optional[int] = None) -> MapMetaDTO:
+        # Map과 MapPlayMember 접근 권한 검증
+        map_obj = self.map_play_service.validate_map_and_play_member_access(map_id, self.member_id, map_play_member_id)
+
+        nodes = list(get_nodes_by_map_id(map_id))
+        completed_nodes = self.get_map_play_member_completed_nodes(map_play_member_id)
+
+        start_date = None
+        if self.member_id:
+            first_subscription = MapSubscription.objects.filter(
+                map_id=map_obj,
+                member_id=self.member_id,
                 is_deleted=False,
-            ).select_related(
-                'node',
-            )
-            return [
-                NodeCompleteRuleDTO.from_rule(rule)
-                for rule in rules
-            ]
-        except Map.DoesNotExist:
-            raise MapNotFoundException()
+            ).order_by(
+                '-created_at',
+            ).first()
+            if first_subscription:
+                start_date = first_subscription.updated_at
 
-    def get_map_meta(self, map_id: int) -> MapMetaDTO:
-        try:
-            map_obj = Map.objects.get(
-                id=map_id,
-                is_deleted=False
-            )
-            if map_obj.is_private and map_obj.created_by_id != self.member_id:
-                raise Map.DoesNotExist()
-
-            nodes = list(get_nodes_by_map_id(map_id))
-            completed_nodes = self.get_completed_nodes(map_id)
-
-            start_date = None
-            if self.member_id:
-                first_subscription = MapSubscription.objects.filter(
-                    map_id=map_obj,
-                    member_id=self.member_id,
-                    is_deleted=False,
-                ).order_by(
-                    '-created_at',
-                ).first()
-                if first_subscription:
-                    start_date = first_subscription.updated_at
-
-            return MapMetaDTO.from_map(
-                map_obj=map_obj,
-                nodes=nodes,
-                completed_nodes=completed_nodes,
-                start_date=start_date,
-            )
-        except Map.DoesNotExist:
-            raise MapNotFoundException()
+        return MapMetaDTO.from_map(
+            map_obj=map_obj,
+            nodes=nodes,
+            completed_nodes=completed_nodes,
+            start_date=start_date,
+        )
 
 
 def get_start_node_ids_by_end_node_id(arrows: List[GraphArrow]) -> Dict[int, Set[int]]:

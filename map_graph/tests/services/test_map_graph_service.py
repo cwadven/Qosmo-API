@@ -69,28 +69,6 @@ class MapGraphServiceTest(TestCase):
         # Then: Node 목록이 반환되어야 함
         self.assertEqual(len(nodes), 4)
 
-    def test_should_return_completed_nodes_when_get_completed_nodes(self):
-        # Given: 회원으로 서비스 초기화
-        service = MapGraphService(member_id=self.member.id)
-
-        # When: 완료된 Node 목록 조회
-        completed_nodes = service.get_completed_nodes(self.map.id)
-
-        # Then: 완료된 Node가 반환되어야 함
-        self.assertEqual(len(completed_nodes), 1)
-        self.assertEqual(completed_nodes[0].id, self.nodes[0].id)
-        self.assertEqual(completed_nodes[0].status, 'completed')
-
-    def test_should_return_empty_list_when_get_completed_nodes_without_member(self):
-        # Given: 비회원으로 서비스 초기화
-        service = MapGraphService()
-
-        # When: 완료된 Node 목록 조회
-        completed_nodes = service.get_completed_nodes(self.map.id)
-
-        # Then: 빈 리스트가 반환되어야 함
-        self.assertEqual(len(completed_nodes), 0)
-
     def test_should_raise_exception_when_get_nodes_with_invalid_map_id(self):
         # Given: 서비스 초기화
         service = MapGraphService()
