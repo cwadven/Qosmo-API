@@ -83,4 +83,18 @@ class InviteCodeStatusDTO(BaseModel):
     is_full: bool
     current_uses: int
     max_uses: Optional[int]
-    expired_at: Optional[datetime] 
+    expired_at: Optional[datetime]
+
+
+class MapPlayListDTO(BaseModel):
+    title: str
+    role: MapPlayMemberRole
+    joined_at: datetime
+
+    @classmethod
+    def from_member(cls, member):
+        return cls(
+            title=member.map_play.title,
+            role=member.role,
+            joined_at=member.created_at,
+        ) 

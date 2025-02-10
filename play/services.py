@@ -22,15 +22,32 @@ from play.exceptions import (
     PlayMemberNotFoundException,
     PlayLastAdminException,
     PlayAdminDeactivateException,
+    PlayMaximumLimitExceededException,
 )
 
 
 class MapPlayService:
+    def _validate_map_play_limit(self, map_id: int, member_id: int) -> None:
+        """
+        사용자가 해당 Map에 대해 최대 3개까지만 플레이에 참여할 수 있는지 검증
+        """
+        active_play_count = MapPlayMember.objects.filter(
+            map_play__map_id=map_id,
+            member_id=member_id,
+            deactivated=False,
+        ).count()
+        
+        if active_play_count >= 3:
+            raise PlayMaximumLimitExceededException()
+
     @transaction.atomic
     def create_map_play(self, map_id: int, title: str, created_by_id: int) -> MapPlay:
         """
         플레이 생성 및 admin 멤버 추가
         """
+        # 최대 플레이 제한 검증
+        self._validate_map_play_limit(map_id, created_by_id)
+
         try:
             _map = Map.objects.get(
                 id=map_id,
@@ -88,6 +105,9 @@ class MapPlayService:
         """
         # 초대 코드 검증
         invite_code = self.validate_invite_code(code)
+
+        # 최대 플레이 제한 검증
+        self._validate_map_play_limit(invite_code.map_play.map_id, member_id)
 
         # banned 여부 확인
         if MapPlayBanned.objects.filter(
@@ -406,3 +426,15 @@ class MapPlayService:
         
         if not is_admin:
             raise PlayAdminPermissionException()
+
+    def get_my_plays(self, member_id: int) -> list[MapPlayMember]:
+        """
+        현재 로그인한 사용자가 참여 중인 플레이 목록을 조회합니다.
+        탈퇴하지 않은(deactivated=False) 플레이만 조회됩니다.
+        """
+        return list(
+            MapPlayMember.objects.filter(
+                member_id=member_id,
+                deactivated=False,
+            ).select_related('map_play').order_by('-created_at')
+        )

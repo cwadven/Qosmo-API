@@ -6,7 +6,6 @@ from pydantic import ValidationError
 from common.common_consts.common_status_codes import SuccessStatusCode
 from common.common_exceptions import PydanticAPIException
 from common.dtos.response_dtos import BaseFormatResponse
-from map.exceptions import MapNotFoundException
 from member.permissions import IsMemberLogin
 from play.dtos.request_dtos import (
     CreateMapPlayRequestDTO,
@@ -18,13 +17,32 @@ from play.dtos.response_dtos import (
     MapPlayDTO,
     MapPlayMemberDTO,
     MapPlayInviteCodeDTO,
+    MapPlayListDTO,
 )
 from play.services import MapPlayService
 from play.error_messages import PlayInvalidInputResponseErrorStatus
+from play.models import MapPlayMember
 
 
-class MapPlayCreateView(APIView):
+class MapPlayView(APIView):
     permission_classes = [IsMemberLogin]
+
+    def get(self, request):
+        service = MapPlayService()
+        map_play_members = service.get_my_plays(member_id=request.guest.member_id)
+
+        return Response(
+            BaseFormatResponse(
+                status_code=SuccessStatusCode.SUCCESS.value,
+                data={
+                    "plays": [
+                        MapPlayListDTO.from_member(member).model_dump()
+                        for member in map_play_members
+                    ]
+                },
+            ).model_dump(),
+            status=status.HTTP_200_OK,
+        )
 
     def post(self, request, map_id: int):
         try:

@@ -7,6 +7,12 @@ class PlayAdminPermissionException(CommonAPIException):
     default_detail = '해당 플레이의 admin만 이 작업을 수행할 수 있습니다.'
 
 
+class PlayMaximumLimitExceededException(CommonAPIException):
+    status_code = 400
+    default_code = 'play-maximum-limit-exceeded'
+    default_detail = '한 Map에 대해 최대 3개의 플레이에만 참여할 수 있습니다.'
+
+
 class PlayInviteCodeNotFoundException(CommonAPIException):
     status_code = 404
     default_code = 'play-invite-code-not-found'
