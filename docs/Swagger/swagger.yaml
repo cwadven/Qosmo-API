@@ -1633,7 +1633,7 @@ paths:
         "401":
           $ref: "#/components/responses/UnauthorizedError"
 
-  /v1/map/{map_id}/play:
+  /v1/play/map/<int:map_id>:
     get:
       tags:
         - MapPlay
