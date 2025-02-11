@@ -420,16 +420,19 @@ class MapPlayService:
         if not is_admin:
             raise PlayAdminPermissionException()
 
-    def get_my_plays(self, member_id: int) -> list[MapPlayMember]:
+    def get_my_plays_by_id(self, map_id: int, member_id: int) -> list[MapPlayMember]:
         """
         현재 로그인한 사용자가 참여 중인 플레이 목록을 조회합니다.
         탈퇴하지 않은(deactivated=False) 플레이만 조회됩니다.
         """
         return list(
             MapPlayMember.objects.filter(
+                map_play__map_id=map_id,
                 member_id=member_id,
                 deactivated=False,
-            ).select_related('map_play').order_by('-created_at')
+            ).order_by(
+                '-created_at',
+            )
         )
 
     def validate_map_access(self, map_id: int, member_id: int) -> Map:

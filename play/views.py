@@ -27,9 +27,12 @@ from play.models import MapPlayMember
 class MapPlayView(APIView):
     permission_classes = [IsMemberLogin]
 
-    def get(self, request):
+    def get(self, request, map_id: int):
         service = MapPlayService()
-        map_play_members = service.get_my_plays(member_id=request.guest.member_id)
+        map_play_members = service.get_my_plays_by_id(
+            map_id=map_id,
+            member_id=request.guest.member_id,
+        )
 
         return Response(
             BaseFormatResponse(
