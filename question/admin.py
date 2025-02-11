@@ -12,6 +12,8 @@ from django.utils import timezone
 
 from map.models import Arrow
 from question.consts import QuestionType
+from question.forms.admin_forms import QuestionFileAdminForm
+from question.forms.client_forms import FeedbackForm
 from question.models import (
     Question,
     QuestionAnswer,
@@ -19,7 +21,6 @@ from question.models import (
     UserQuestionAnswer,
     UserQuestionAnswerFile,
 )
-from question.forms import FeedbackForm
 from django.http import HttpResponseRedirect
 from question.services.node_completion_service import NodeCompletionService
 from django.db import transaction
@@ -202,8 +203,10 @@ class UserQuestionAnswerFileAdmin(admin.ModelAdmin):
 class QuestionFileAdmin(admin.ModelAdmin):
     list_display = (
         'question',
+        'name',
         'file',
         'created_at',
     )
     search_fields = ('question__title',)
     readonly_fields = ('created_at', 'updated_at')
+    form = QuestionFileAdminForm

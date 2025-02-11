@@ -26,7 +26,7 @@ class MapAdminForm(PreSignedUrlAdminForm):
     class Meta:
         model = Map
         fields = '__all__'
-        target_field_by_image_field = {
+        target_field_by_file_or_image_field = {
             'icon_image_file': 'icon_image',
             'background_image_file': 'background_image',
         }
@@ -51,7 +51,7 @@ class NodeAdminForm(PreSignedUrlAdminForm):
     class Meta:
         model = Node
         fields = '__all__'
-        target_field_by_image_field = {
+        target_field_by_file_or_image_field = {
             'background_image_file': 'background_image',
         }
         upload_image_type = 'node_image'
@@ -75,7 +75,7 @@ class CategoryAdminForm(PreSignedUrlAdminForm):
     class Meta:
         model = Category
         fields = '__all__'
-        target_field_by_image_field = {
+        target_field_by_file_or_image_field = {
             'icon_image_file': 'icon',
         }
         upload_image_type = 'node_image'
