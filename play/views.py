@@ -39,8 +39,8 @@ class MapPlayView(APIView):
                 status_code=SuccessStatusCode.SUCCESS.value,
                 data={
                     "plays": [
-                        MapPlayListDTO.from_member(member).model_dump()
-                        for member in map_play_members
+                        MapPlayListDTO.from_map_play_member(map_play_member).model_dump()
+                        for map_play_member in map_play_members
                     ]
                 },
             ).model_dump(),

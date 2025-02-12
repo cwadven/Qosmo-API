@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 
 from play.consts import MapPlayMemberRole, MapPlayMemberDeactivateReason
+from play.models import MapPlayMember
 
 
 class MapPlayDTO(BaseModel):
@@ -87,14 +88,16 @@ class InviteCodeStatusDTO(BaseModel):
 
 
 class MapPlayListDTO(BaseModel):
+    id: int
     title: str
     role: MapPlayMemberRole
     joined_at: datetime
 
     @classmethod
-    def from_member(cls, member):
+    def from_map_play_member(cls, map_play_member: MapPlayMember):
         return cls(
-            title=member.map_play.title,
-            role=member.role,
-            joined_at=member.created_at,
+            id=map_play_member.id,
+            title=map_play_member.map_play.title,
+            role=map_play_member.role,
+            joined_at=map_play_member.created_at,
         )
