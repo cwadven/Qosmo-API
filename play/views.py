@@ -59,7 +59,7 @@ class MapPlayView(APIView):
             )
 
         service = MapPlayService()
-        map_play = service.create_map_play(
+        map_play, map_play_member = service.create_map_play(
             map_id=map_id,
             title=dto.title,
             created_by_id=request.guest.member_id,

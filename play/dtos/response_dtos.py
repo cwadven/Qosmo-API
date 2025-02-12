@@ -7,21 +7,21 @@ from play.consts import MapPlayMemberRole, MapPlayMemberDeactivateReason
 
 class MapPlayDTO(BaseModel):
     id: int
+    map_play_id: int
     map_id: int
     title: str
-    created_by_id: int
     created_at: datetime
     updated_at: datetime
 
     @classmethod
-    def from_entity(cls, map_play):
+    def from_entity(cls, map_play_member):
         return cls(
-            id=map_play.id,
-            map_id=map_play.map_id,
-            title=map_play.title,
-            created_by_id=map_play.created_by_id,
-            created_at=map_play.created_at,
-            updated_at=map_play.updated_at,
+            id=map_play_member.id,
+            map_play_id=map_play_member.map_play_id,
+            map_id=map_play_member.map_play.map_id,
+            title=map_play_member.map_play.title,
+            created_at=map_play_member.created_at,
+            updated_at=map_play_member.updated_at,
         )
 
 
@@ -97,4 +97,4 @@ class MapPlayListDTO(BaseModel):
             title=member.map_play.title,
             role=member.role,
             joined_at=member.created_at,
-        ) 
+        )

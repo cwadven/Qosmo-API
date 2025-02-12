@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Tuple
 
 from django.db import transaction
 from django.utils import timezone
@@ -41,7 +41,7 @@ class MapPlayService:
             raise PlayMaximumLimitExceededException()
 
     @transaction.atomic
-    def create_map_play(self, map_id: int, title: str, created_by_id: int) -> MapPlay:
+    def create_map_play(self, map_id: int, title: str, created_by_id: int) -> Tuple[MapPlay, MapPlayMember]:
         """
         플레이 생성 및 admin 멤버 추가
         """
@@ -59,13 +59,13 @@ class MapPlayService:
         )
 
         # 생성자를 admin으로 추가
-        MapPlayMember.objects.create(
+        map_play_member = MapPlayMember.objects.create(
             map_play=map_play,
             member_id=created_by_id,
             role=MapPlayMemberRole.ADMIN,
         )
 
-        return map_play
+        return map_play, map_play_member
 
     def create_invite_code(
         self,

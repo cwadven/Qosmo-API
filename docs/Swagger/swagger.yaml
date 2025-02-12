@@ -1714,15 +1714,15 @@ paths:
                       id:
                         type: integer
                         example: 1
+                      map_play_id:
+                        type: integer
+                        example: 1
                       map_id:
                         type: integer
                         example: 1
                       title:
                         type: string
                         example: "우리 팀의 React 학습"
-                      created_by_id:
-                        type: integer
-                        example: 1
                       created_at:
                         type: string
                         format: date-time
