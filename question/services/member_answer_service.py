@@ -16,13 +16,17 @@ from map.models.node_history import NodeCompletedHistory
 
 
 class MemberAnswerService:
-    def __init__(self, question: Question, member_id: int):
+    def __init__(self, question: Question, member_id: int, map_play_member_id: int):
         self.question = question
         self.member_id = member_id
+        self.map_play_member_id = map_play_member_id
         self._permission_checked = False
         self._not_completed_node_names = None
         self.new_arrow_progresses = []
         self.new_completed_node_histories = []
+
+    def check_permission(self) -> None:
+        self._check_permission()
 
     def _check_permission(self) -> None:
         """
@@ -57,7 +61,7 @@ class MemberAnswerService:
         from_before_arrows_node_completed_ids = NodeCompletedHistory.objects.filter(
             map_id=self.question.map_id,
             node_id__in=from_before_arrows.values_list('start_node_id', flat=True),
-            member_id=self.member_id
+            map_play_member_id=self.map_play_member_id,
         ).values_list('node_id', flat=True)
 
         not_completed_node_ids = set(from_before_arrows.values_list('start_node_id', flat=True)) - set(from_before_arrows_node_completed_ids)
@@ -97,6 +101,7 @@ class MemberAnswerService:
                 map=self.question.map,
                 question=self.question,
                 member_id=self.member_id,
+                map_play_member_id=self.map_play_member_id,
                 answer=answer or '',
                 is_correct=is_correct,
                 feedback=feedback,
@@ -137,6 +142,7 @@ class MemberAnswerService:
                         map=self.question.map,
                         arrow=arrow,
                         member_id=self.member_id,
+                        map_play_member_id=self.map_play_member_id,
                         is_resolved=True,
                         resolved_at=now
                     )
@@ -154,6 +160,7 @@ class MemberAnswerService:
                     completed_arrow_ids = ArrowProgress.objects.filter(
                         arrow__in=rule_arrow_ids,
                         member_id=self.member_id,
+                        map_play_member_id=self.map_play_member_id,
                         is_resolved=True
                     ).values_list(
                         'arrow_id',
@@ -162,7 +169,10 @@ class MemberAnswerService:
 
                     # 모든 Arrow가 completed 상태인 경우 NodeCompletionService 호출
                     if len(rule_arrow_ids) <= len(completed_arrow_ids):
-                        node_completion_service = NodeCompletionService(member_id=self.member_id)
+                        node_completion_service = NodeCompletionService(
+                            member_id=self.member_id,
+                            map_play_member_id=self.map_play_member_id,
+                        )
                         completion_result = node_completion_service.process_nodes_completion(nodes=[arrow.start_node])
 
                         # 결과 누적

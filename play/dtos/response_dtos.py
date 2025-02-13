@@ -15,7 +15,7 @@ class MapPlayDTO(BaseModel):
     updated_at: datetime
 
     @classmethod
-    def from_entity(cls, map_play_member):
+    def from_map_play_member(cls, map_play_member: MapPlayMember):
         return cls(
             id=map_play_member.id,
             map_play_id=map_play_member.map_play_id,

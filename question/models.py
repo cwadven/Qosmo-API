@@ -80,6 +80,13 @@ class UserQuestionAnswer(models.Model):
         on_delete=models.DO_NOTHING,
         related_name='question_answers',
     )
+    map_play_member = models.ForeignKey(
+        'play.MapPlayMember',
+        on_delete=models.DO_NOTHING,
+        related_name='user_answers',
+        null=True,
+        blank=True,
+    )
     answer = models.TextField()
     is_correct = models.BooleanField(
         null=True,

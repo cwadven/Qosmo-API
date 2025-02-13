@@ -74,7 +74,14 @@ class NodeCompletedHistoryAdmin(admin.ModelAdmin):
 
 @admin.register(ArrowProgress)
 class ArrowProgressAdmin(admin.ModelAdmin):
-    list_display = ('arrow', 'member', 'is_resolved', 'resolved_at', 'created_at')
+    list_display = (
+        'arrow',
+        'member',
+        'map_play_member',
+        'is_resolved',
+        'resolved_at',
+        'created_at',
+    )
     list_filter = ('is_resolved',)
     search_fields = ('arrow__map__name', 'member__nickname')
     readonly_fields = ('created_at', 'updated_at')

@@ -11,6 +11,7 @@ from common.common_utils import generate_pre_signed_url_info, upload_file_to_pre
 from common.dtos.response_dtos import BaseFormatResponse
 from member.permissions import IsMemberLogin
 from node.services.node_detail_service import find_activatable_node_ids_after_completion
+from play.services import MapPlayService
 from question.dtos.member_answer_file import MemberAnswerFileDto
 from question.exceptions import QuestionNotFoundException
 from question.consts import QuestionInvalidInputResponseErrorStatus
@@ -34,8 +35,9 @@ class AnswerSubmitView(APIView):
     permission_classes = [
         IsMemberLogin,
     ]
+    map_play_service = MapPlayService()
 
-    def post(self, request, question_id):
+    def post(self, request, question_id: int, map_play_member_id: int):
         try:
             question = Question.objects.select_related(
                 'map',
@@ -46,13 +48,20 @@ class AnswerSubmitView(APIView):
         except Question.DoesNotExist:
             raise QuestionNotFoundException()
 
+        self.map_play_service.validate_map_and_play_member_access(
+            question.map_id,
+            request.guest.member_id,
+            map_play_member_id,
+        )
+
         member_answer_service = MemberAnswerService(
             question=question,
-            member_id=request.member.id
+            member_id=request.guest.member_id,
+            map_play_member_id=map_play_member_id,
         )
 
         # 답변 제출 권한 체크
-        member_answer_service._check_permission()
+        member_answer_service.check_permission()
 
         try:
             AnswerRequestDto.set_question(question)
@@ -82,7 +91,7 @@ class AnswerSubmitView(APIView):
                 settings.AWS_S3_BUCKET_NAME,
                 file.name,
                 'member-answer-file',
-                question_id,
+                str(question_id),
             )
             upload_file_to_pre_signed_url(
                 response['url'],
@@ -111,12 +120,12 @@ class AnswerSubmitView(APIView):
             for arrow_progress in member_answer_service.new_arrow_progresses
         ]
         going_to_in_progress_node_ids = find_activatable_node_ids_after_completion(
-            request.member.id,
+            request.guest.member_id,
             completed_node_ids,
         )
 
         response_dto = BaseFormatResponse(
-            status_code='20100000',
+            status_code='success',
             data=MemberAnswerDataDto.of(
                 member_answer,
                 list(going_to_in_progress_node_ids),

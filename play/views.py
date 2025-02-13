@@ -68,7 +68,7 @@ class MapPlayView(APIView):
         return Response(
             BaseFormatResponse(
                 status_code=SuccessStatusCode.SUCCESS.value,
-                data=MapPlayDTO.from_entity(map_play).model_dump(),
+                data=MapPlayDTO.from_map_play_member(map_play_member).model_dump(),
             ).model_dump(),
             status=status.HTTP_201_CREATED,
         )

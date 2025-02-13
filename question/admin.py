@@ -156,7 +156,8 @@ class UserQuestionAnswerAdmin(admin.ModelAdmin):
 
                         if arrow and arrow.start_node:
                             node_completion_service = NodeCompletionService(
-                                member_id=user_answer.member_id
+                                member_id=user_answer.member_id,
+                                map_play_member_id=user_answer.map_play_member_id,
                             )
                             node_completion_service.process_nodes_completion(
                                 nodes=[arrow.start_node]
