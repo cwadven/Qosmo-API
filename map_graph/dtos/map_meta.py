@@ -94,7 +94,7 @@ class MapMetaDTO(BaseModel):
         else:
             learning_period = MapLearningPeriodDTO(
                 start_date=start_date,
-                days=(datetime.now().date() - start_date.date()).days,
+                days=(datetime.now().date() - start_date).days + 1,
             )
 
         return cls(

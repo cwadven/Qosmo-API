@@ -5,6 +5,8 @@ from typing import (
     Set,
 )
 
+from django.utils import timezone
+
 from map.models import (
     Arrow,
     NodeCompleteRule,
@@ -16,6 +18,7 @@ from map_graph.dtos.map_meta import MapMetaDTO
 from node.services.node_services import (
     get_nodes_by_map_id,
 )
+from play.models import MapPlayMember
 from subscription.models import MapSubscription
 from play.services import MapPlayService
 
@@ -124,17 +127,16 @@ class MapGraphService:
         completed_nodes = self.get_map_play_member_completed_nodes(map_play_member_id)
 
         start_date = None
-        if self.member_id:
-            first_subscription = MapSubscription.objects.filter(
-                map_id=map_obj,
-                member_id=self.member_id,
-                is_deleted=False,
-            ).order_by(
-                '-created_at',
-            ).first()
-            if first_subscription:
-                start_date = first_subscription.updated_at
-
+        if map_play_member_id:
+            try:
+                joined_map_play = MapPlayMember.objects.get(
+                    id=map_play_member_id,
+                    deactivated=False,
+                )
+                # UTC 시간을 현재 timezone으로 변환 후 날짜 추출
+                start_date = timezone.localtime(joined_map_play.created_at).date()
+            except MapPlayMember.DoesNotExist:
+                pass
         return MapMetaDTO.from_map(
             map_obj=map_obj,
             nodes=nodes,
