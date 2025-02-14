@@ -66,6 +66,7 @@ class MapPopularListResponseDTO(BaseModel):
 class MapDetailRecentActivatedNodeDTO(BaseModel):
     id: int
     name: str
+    map_play_title: str
     activated_at: datetime
 
 

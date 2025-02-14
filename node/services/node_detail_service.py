@@ -32,11 +32,11 @@ from question.models import (
 from subscription.services.subscription_service import MapSubscriptionService
 
 
-def get_member_completed_question_ids(
-        member_id: int,
+def get_map_play_member_completed_question_ids(
+        map_play_member_id: Optional[int],
         question_ids: List[int]
 ) -> Set[int]:
-    if not member_id:
+    if not map_play_member_id:
         return set()
     if not question_ids:
         return set()
@@ -45,7 +45,7 @@ def get_member_completed_question_ids(
         ArrowProgress.objects.filter(
             arrow__question_id__in=question_ids,
             is_resolved=True,
-            member_id=member_id,
+            map_play_member_id=map_play_member_id,
         ).values_list(
             'arrow__question_id',
             flat=True,
@@ -53,11 +53,11 @@ def get_member_completed_question_ids(
     )
 
 
-def get_member_completed_arrow_ids(
-        member_id: int,
+def get_map_play_member_completed_arrow_ids(
+        map_play_member_id: int,
         arrow_ids: List[int],
 ) -> Set[int]:
-    if not member_id:
+    if not map_play_member_id:
         return set()
     if not arrow_ids:
         return set()
@@ -65,7 +65,7 @@ def get_member_completed_arrow_ids(
         ArrowProgress.objects.filter(
             arrow_id__in=arrow_ids,
             is_resolved=True,
-            member_id=member_id,
+            map_play_member_id=map_play_member_id,
         ).values_list(
             'arrow_id',
             flat=True,
@@ -73,17 +73,17 @@ def get_member_completed_arrow_ids(
     )
 
 
-def get_member_completed_node_ids(
-        member_id: int,
+def get_map_play_member_completed_node_ids(
+        map_play_member_id: int,
         node_ids: List[int],
 ) -> Set[int]:
-    if not member_id:
+    if not map_play_member_id:
         return set()
     if not node_ids:
         return set()
     return set(
         NodeCompletedHistory.objects.filter(
-            member_id=member_id,
+            map_play_member_id=map_play_member_id,
             node_id__in=node_ids,
         ).values_list(
             'node_id',
@@ -125,8 +125,9 @@ def find_activatable_node_ids_after_completion(
 
 
 class NodeDetailService:
-    def __init__(self, member_id: Optional[int] = None):
+    def __init__(self, member_id: Optional[int] = None, map_play_member_id: Optional[int] = None):
         self.member_id = member_id
+        self.map_play_member_id = map_play_member_id
 
     def get_node_detail(self, node_id: int) -> NodeDetailDTO:
         try:
@@ -155,14 +156,14 @@ class NodeDetailService:
         # Rule별 Question 매핑
         questions_by_rule_id = {}
         questions = []
-        member_completed_arrow_ids = get_member_completed_arrow_ids(
-            self.member_id,
+        member_completed_arrow_ids = get_map_play_member_completed_arrow_ids(
+            self.map_play_member_id,
             [arrow.id for arrow in arrows]
         )
         user_question_answers = UserQuestionAnswer.objects.select_related(
             'reviewed_by'
         ).filter(
-            member_id=self.member_id,
+            map_play_member_id=self.map_play_member_id,
         ).prefetch_related(
             'files',
         ).order_by(
@@ -182,12 +183,12 @@ class NodeDetailService:
                 questions.append(arrow.question)
 
         question_ids = [question.id for question in questions]
-        member_completed_question_ids = get_member_completed_question_ids(
-            self.member_id,
+        member_completed_question_ids = get_map_play_member_completed_question_ids(
+            self.map_play_member_id,
             question_ids
         )
-        member_completed_node_ids = get_member_completed_node_ids(
-            self.member_id,
+        member_completed_node_ids = get_map_play_member_completed_node_ids(
+            self.map_play_member_id,
             # 현재 노드도 포함
             [arrow.start_node_id for arrow in arrows] + [node_id]
         )
@@ -252,6 +253,7 @@ class NodeDetailService:
 
             answer_submittable = bool(
                 self.member_id
+                and self.map_play_member_id
                 and question_status == 'in_progress'
                 and is_subscribed
             )

@@ -103,7 +103,10 @@ class MapDetailView(APIView):
         # 추후에 Service Layer로 이동
         if is_subscribed:
             completed_node_histories = list(
-                get_member_completed_node_histories(request.guest.member_id, map_id).order_by(
+                get_member_completed_node_histories(
+                    member_id=request.guest.member_id,
+                    map_id=map_id,
+                ).order_by(
                     '-completed_at',
                 )
             )
@@ -116,6 +119,10 @@ class MapDetailView(APIView):
                     MapDetailRecentActivatedNodeDTO(
                         id=completed_node_history.node.id,
                         name=completed_node_history.node.name,
+                        map_play_title=(
+                            completed_node_history.map_play_member.map_play.title
+                            if completed_node_history.map_play_member else ''
+                        ),
                         activated_at=completed_node_history.completed_at,
                     )
                     for completed_node_history in completed_node_histories[:3]

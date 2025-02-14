@@ -26,14 +26,6 @@ class NodeCompletedHistory(models.Model):
         related_name='node_completed_histories',
         help_text='해금 규칙',
     )
-    map_play = models.ForeignKey(
-        'play.MapPlay',
-        on_delete=models.DO_NOTHING,
-        related_name='node_completed_histories',
-        help_text='맵 플레이',
-        null=True,
-        blank=True,
-    )
     map_play_member = models.ForeignKey(
         'play.MapPlayMember',
         on_delete=models.DO_NOTHING,

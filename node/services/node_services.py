@@ -20,4 +20,5 @@ def get_member_completed_node_histories(member_id: int, map_id: int) -> QuerySet
         member_id=member_id,
     ).select_related(
         'node__map',
+        'map_play_member__map_play',
     )
