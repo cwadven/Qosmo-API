@@ -2353,6 +2353,9 @@ components:
         is_subscribed:
           type: boolean
           example: false
+        total_node_count:
+          type: integer
+          example: 10
         icon_image:
           type: string
           example: "https://s3/path/to/image.jpg"
