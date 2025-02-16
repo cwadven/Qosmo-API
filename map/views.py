@@ -31,6 +31,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from node.services.node_services import get_nodes_by_map_id
 from subscription.services.subscription_service import MapSubscriptionService
 
 
@@ -91,6 +92,7 @@ class MapDetailView(APIView):
         subscription_service = MapSubscriptionService(member_id=request.guest.member_id)
         subscription_status = subscription_service.get_subscription_status_by_map_ids([map_id])
         is_subscribed = subscription_status[map_id]
+        nodes = get_nodes_by_map_id(map_id)
 
         return Response(
             BaseFormatResponse(
@@ -98,6 +100,7 @@ class MapDetailView(APIView):
                 data=MapDetailDTO.from_entity(
                     map_obj,
                     is_subscribed=is_subscribed,
+                    total_node_count=len(nodes),
                 ).model_dump(),
             ).model_dump(),
             status=status.HTTP_200_OK

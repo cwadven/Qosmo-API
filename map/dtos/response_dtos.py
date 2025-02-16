@@ -73,11 +73,16 @@ class MapDetailDTO(BaseModel):
     icon_image: str
     is_private: bool
     background_image: str
+    total_node_count: int
     created_by: MapListCreatedBy
     created_at: datetime
 
     @staticmethod
-    def from_entity(map_obj: 'Map', is_subscribed: bool = False) -> 'MapDetailDTO':
+    def from_entity(
+            map_obj: 'Map',
+            total_node_count: int,
+            is_subscribed: bool = False,
+    ) -> 'MapDetailDTO':
         return MapDetailDTO(
             id=map_obj.id,
             name=map_obj.name,
@@ -87,6 +92,7 @@ class MapDetailDTO(BaseModel):
             is_private=map_obj.is_private,
             is_subscribed=is_subscribed,
             icon_image=map_obj.icon_image,
+            total_node_count=total_node_count,
             background_image=map_obj.background_image,
             created_by=MapListCreatedBy.from_entity(map_obj.created_by),
             created_at=map_obj.created_at
