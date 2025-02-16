@@ -10,7 +10,6 @@ from common.common_exceptions import PydanticAPIException
 from common.dtos.response_dtos import BaseFormatResponse
 from map.models import NodeCompletedHistory
 from member.permissions import IsMemberLogin
-from node.services.node_services import get_nodes_by_map_id
 from play.dtos.request_dtos import (
     CreateMapPlayRequestDTO,
     CreateInviteCodeRequestDTO,
