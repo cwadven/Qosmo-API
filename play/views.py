@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -6,7 +8,9 @@ from pydantic import ValidationError
 from common.common_consts.common_status_codes import SuccessStatusCode
 from common.common_exceptions import PydanticAPIException
 from common.dtos.response_dtos import BaseFormatResponse
+from map.models import NodeCompletedHistory
 from member.permissions import IsMemberLogin
+from node.services.node_services import get_nodes_by_map_id
 from play.dtos.request_dtos import (
     CreateMapPlayRequestDTO,
     CreateInviteCodeRequestDTO,
@@ -17,11 +21,10 @@ from play.dtos.response_dtos import (
     MapPlayDTO,
     MapPlayMemberDTO,
     MapPlayInviteCodeDTO,
-    MapPlayListDTO,
+    MapPlayListDTO, MapPlayRecentActivatedNode,
 )
 from play.services import MapPlayService
 from play.error_messages import PlayInvalidInputResponseErrorStatus
-from play.models import MapPlayMember
 
 
 class MapPlayView(APIView):
@@ -33,13 +36,35 @@ class MapPlayView(APIView):
             map_id=map_id,
             member_id=request.guest.member_id,
         )
+        completed_node_histories_by_map_play_member_id = defaultdict(list)
+        nch = NodeCompletedHistory.objects.filter(
+            map_id=map_id,
+            member_id=request.guest.member_id,
+        ).select_related(
+            'node',
+        ).order_by(
+            '-completed_at'
+        )
+        for history in nch:
+            completed_node_histories_by_map_play_member_id[history.map_play_member_id].append(history)
 
         return Response(
             BaseFormatResponse(
                 status_code=SuccessStatusCode.SUCCESS.value,
                 data={
                     "plays": [
-                        MapPlayListDTO.from_map_play_member(map_play_member).model_dump()
+                        MapPlayListDTO.from_map_play_member(
+                            map_play_member,
+                            completed_node_count=len(completed_node_histories_by_map_play_member_id[map_play_member.id]),
+                            recent_activated_nodes=[
+                                MapPlayRecentActivatedNode(
+                                    node_id=history.node_id,
+                                    node_name=history.node.title,
+                                    activated_at=history.completed_at,
+                                )
+                                for history in completed_node_histories_by_map_play_member_id[map_play_member.id][:3]
+                            ],
+                        ).model_dump()
                         for map_play_member in map_play_members
                     ]
                 },

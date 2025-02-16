@@ -937,9 +937,8 @@ paths:
     get:
       tags:
         - Map
-      summary: "[TODO] 전체 Map 목록 조회"
+      summary: "전체 Map 목록 조회"
       description: |
-        Status: Not Implemented
         Map 목록을 페이지네이션하여 조회합니다.
       parameters:
         - name: next_cursor
@@ -995,9 +994,8 @@ paths:
     get:
       tags:
         - Map
-      summary: "[TODO] Map 상세 조회"
+      summary: "Map 상세 조회"
       description: |
-        Status: Not Implemented
         특정 Map의 상세 정보를 조회합니다.
       parameters:
         - name: map_id
@@ -1027,9 +1025,8 @@ paths:
     get:
       tags:
         - Node
-      summary: "[TODO] Node 상세 정보 조회"
+      summary: "Node 상세 정보 조회"
       description: |
-        Status: Not Implemented
         특정 Node의 상세 정보를 조회합니다.
       parameters:
         - name: node_id
@@ -1059,9 +1056,8 @@ paths:
     post:
       tags:
         - Question
-      summary: "[TODO] Question 답변 제출"
+      summary: "Question 답변 제출"
       description: |
-        Status: Not Implemented
         특정 Question에 대한 답변을 제출합니다.
       parameters:
         - name: question_id
@@ -1430,9 +1426,8 @@ paths:
     get:
       tags:
         - Map
-      summary: "[TODO] 인기 Map 목록 조회"
+      summary: "인기 Map 목록 조회"
       description: |
-        Status: Not Implemented
         구독자 수 기준으로 상위 5개의 인기 Map 목록을 조회합니다.
       responses:
         "200":
@@ -1674,6 +1669,24 @@ paths:
                               type: string
                               format: date-time
                               example: "2024-02-05T14:23:00Z"
+                            completed_node_count:
+                              type: integer
+                              example: 5
+                            recent_activated_nodes:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  node_id:
+                                    type: integer
+                                    example: 1
+                                  node_name:
+                                    type: string
+                                    example: "Java 공부하기"
+                                  activated_at:
+                                    type: string
+                                    format: date-time
+                                    example: 2025-02-14T12:19:46.770995Z
         "401":
           $ref: "#/components/responses/UnauthorizedError"
     post:
@@ -2317,36 +2330,48 @@ components:
           example: "2024-01-20T00:00:00Z"
 
     MapDetail:
-      allOf:
-        - $ref: "#/components/schemas/MapListItem"
-        - type: object
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "React 학습 로드맵"
+        description:
+          type: string
+          example: "React 개발자가 되기 위한 단계별 학습 로드맵입니다"
+        subscriber_count:
+          type: integer
+          example: 2345
+        view_count:
+          type: integer
+          example: 2345
+        is_private:
+          type: boolean
+          example: false
+        is_subscribed:
+          type: boolean
+          example: false
+        icon_image:
+          type: string
+          example: "https://s3/path/to/image.jpg"
+        background_image:
+          type: string
+          example: "s3/path/to/image.jpg"
+        created_by:
+          type: object
           properties:
-            background_image:
+            id:
+              type: integer
+              example: 1
+            nickname:
               type: string
-              example: "s3/path/to/image.jpg"
-            progress:
-              type: object
-              properties:
-                completed_node_count:
-                  type: integer
-                  example: 4
-                total_node_count:
-                  type: integer
-                  example: 10
-                percentage:
-                  type: integer
-                  example: 40
-                recent_activated_nodes:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                        example: 1
-                      name:
-                        type: string
-                        example: "HTML 마스터"
+              example: "Alice"
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-20T00:00:00Z"
 
     NodeDetail:
       type: object

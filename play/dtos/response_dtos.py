@@ -1,8 +1,15 @@
-from typing import Optional, List
-from pydantic import BaseModel, Field
+from typing import (
+    List,
+    Optional,
+)
+from pydantic import BaseModel
 from datetime import datetime
 
-from play.consts import MapPlayMemberRole, MapPlayMemberDeactivateReason
+from map.models import NodeCompletedHistory
+from play.consts import (
+    MapPlayMemberDeactivateReason,
+    MapPlayMemberRole,
+)
 from play.models import MapPlayMember
 
 
@@ -87,17 +94,32 @@ class InviteCodeStatusDTO(BaseModel):
     expired_at: Optional[datetime]
 
 
+class MapPlayRecentActivatedNode(BaseModel):
+    node_id: int
+    node_name: str
+    activated_at: datetime
+
+
 class MapPlayListDTO(BaseModel):
     id: int
     title: str
     role: MapPlayMemberRole
     joined_at: datetime
+    completed_node_count: int
+    recent_activated_nodes: List[MapPlayRecentActivatedNode]
 
     @classmethod
-    def from_map_play_member(cls, map_play_member: MapPlayMember):
+    def from_map_play_member(
+            cls,
+            map_play_member: MapPlayMember,
+            completed_node_count: int,
+            recent_activated_nodes: List[MapPlayRecentActivatedNode]
+    ):
         return cls(
             id=map_play_member.id,
             title=map_play_member.map_play.title,
             role=map_play_member.role,
             joined_at=map_play_member.created_at,
+            completed_node_count=completed_node_count,
+            recent_activated_nodes=recent_activated_nodes,
         )
