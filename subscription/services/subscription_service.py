@@ -4,6 +4,7 @@ from typing import (
     Optional,
 )
 
+from django.db import transaction
 from django.db.models import (
     Case,
     F,
@@ -13,6 +14,8 @@ from django.utils import timezone
 
 from map.models import Map
 from map.services.map_service import MapService
+from play.consts import MapPlayMemberDeactivateReason
+from play.services import MapPlayService
 from subscription.models import MapSubscription
 
 
@@ -44,9 +47,23 @@ class MapSubscriptionService:
 
         return True
 
+    @transaction.atomic
     def unsubscribe_map_by_map_id(self, map_id: int) -> bool:
         if not self.member_id:
             return False
+
+        # Delete All Map Play Members
+        map_play_service = MapPlayService()
+        map_play_members = map_play_service.get_my_plays_by_id(
+            map_id,
+            self.member_id,
+        )
+        for map_play_member in map_play_members:
+            map_play_service.deactivate_member(
+                map_play_member.id,
+                self.member_id,
+                MapPlayMemberDeactivateReason.UNSUBSCRIBE.value,
+            )
 
         subscriptions = MapSubscription.objects.filter(
             member_id=self.member_id,
@@ -61,6 +78,7 @@ class MapSubscriptionService:
             updated_at=timezone.now()
         )
         self.decrease_map_subscriber_count(map_id)
+
         return True
 
     def get_subscription_status_by_map_ids(self, map_ids: List[int]) -> Dict[int, bool]:

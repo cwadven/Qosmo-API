@@ -8,4 +8,5 @@ class MapPlayMemberRole(StrValueLabel):
 
 class MapPlayMemberDeactivateReason(StrValueLabel):
     SELF_DEACTIVATED = 'self_deactivated', '자발적 탈퇴'
-    BANNED = 'banned', '추방' 
+    UNSUBSCRIBE = 'unsubscribe', '구독 탈퇴'
+    BANNED = 'banned', '추방'

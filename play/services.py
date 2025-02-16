@@ -181,12 +181,17 @@ class MapPlayService:
         멤버 비활성화
         """
         member.deactivated = True
-        member.deactivated_reason = reason
+        member.deactivated_reason = reason.value
         member.save(update_fields=['deactivated', 'deactivated_reason', 'updated_at'])
         return member
 
     @transaction.atomic
-    def deactivate_member(self, map_play_id: int, member_id: int) -> MapPlayMember:
+    def deactivate_member(
+            self,
+            map_play_id: int,
+            member_id: int,
+            deactivated_reason: MapPlayMemberDeactivateReason = MapPlayMemberDeactivateReason.SELF_DEACTIVATED,
+    ) -> MapPlayMember:
         """
         멤버 자발적 탈퇴
         
@@ -200,7 +205,7 @@ class MapPlayService:
 
         # admin이 아닌 경우 바로 탈퇴 가능
         if map_play_member.role != MapPlayMemberRole.ADMIN:
-            return self._deactivate_member(map_play_member, MapPlayMemberDeactivateReason.SELF_DEACTIVATED)
+            return self._deactivate_member(map_play_member, deactivated_reason.value)
 
         # 전체 active 멤버 수 확인
         active_member_count = MapPlayMember.objects.filter(
