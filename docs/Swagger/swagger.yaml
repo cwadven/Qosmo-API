@@ -1968,7 +1968,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /v1/play/{map_play_id}/member/{member_id}/role:
+  /v1/play/{map_play_member_id}/member/{member_id}/role:
     patch:
       tags:
         - MapPlay
@@ -1976,16 +1976,18 @@ paths:
       description: |
         플레이 멤버의 역할을 변경합니다. admin만 변경 가능합니다.
       parameters:
-        - name: map_play_id
+        - name: map_play_member_id
           in: path
           required: true
           schema:
             type: integer
+          description: "역할을 변경할 맵 플레이 멤버 ID"
         - name: member_id
           in: path
           required: true
           schema:
             type: integer
+          description: "역할을 변경할 플레이 멤버 ID"
       requestBody:
         required: true
         content:
@@ -2015,7 +2017,7 @@ paths:
                     type: string
                     example: "success"
                   data:
-                    $ref: "#/components/schemas/MapPlayMember"
+                    $ref: "#/components/schemas/MapPlayMemberDTO"
         "400":
           description: |
             역할 변경 실패<br>
@@ -2043,7 +2045,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /v1/play/{map_play_id}/member/{member_id}/ban:
+  /v1/play/{map_play_member_id}/member/{member_id}/ban:
     post:
       tags:
         - MapPlay
@@ -2051,16 +2053,18 @@ paths:
       description: |
         플레이 멤버를 추방합니다. admin만 추방 가능합니다.
       parameters:
-        - name: map_play_id
+        - name: map_play_member_id
           in: path
           required: true
           schema:
             type: integer
+          description: "추방할 맵 플레이 멤버 ID"
         - name: member_id
           in: path
           required: true
           schema:
             type: integer
+          description: "추방할 플레이 멤버 ID"
       requestBody:
         required: true
         content:
@@ -2120,11 +2124,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /v1/play/{map_play_id}/member/deactivate:
+  /v1/play/{map_play_member_id}/member/self-deactivate:
     post:
       tags:
         - MapPlay
-      summary: "멤버 탈퇴"
+      summary: "맵 플레이 멤버 자발적 탈퇴"
       description: |
         플레이에서 탈퇴합니다.
         1. admin이 아닌 경우: 바로 탈퇴 가능
@@ -2133,11 +2137,12 @@ paths:
            - admin이 2명 이상인 경우: 바로 탈퇴 가능
            - 다른 멤버가 있고 admin이 혼자인 경우: admin 권한 위임 필요
       parameters:
-        - name: map_play_id
+        - name: map_play_member_id
           in: path
           required: true
           schema:
             type: integer
+          description: "탈퇴할 맵 플레이 멤버 ID"
       responses:
         "200":
           description: 탈퇴 성공
@@ -2148,18 +2153,27 @@ paths:
                 properties:
                   status_code:
                     type: string
-                    example: "success"
+                    enum: [success]
                   data:
-                    $ref: "#/components/schemas/MapPlayMember"
+                    $ref: "#/components/schemas/MapPlayMemberDTO"
         "400":
           description: |
             탈퇴 실패<br>
             [ status_code ENUM ]<br>
-            play-member-not-found<br>
             play-admin-deactivate<br>
             [ errors ]<br>
-            - 존재하지 않거나 이미 비활성화된 멤버입니다.<br>
             - 다른 멤버가 있는 경우 admin 권한을 위임한 후에 탈퇴할 수 있습니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: |
+            탈퇴 실패<br>
+            [ status_code ENUM ]<br>
+            play-member-not-found<br>
+            [ errors ]<br>
+            - 존재하지 않거나 이미 비활성화된 멤버입니다.<br>
           content:
             application/json:
               schema:
@@ -2808,6 +2822,68 @@ components:
         updated_at:
           type: string
           format: date-time
+
+    MapPlayMemberDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        map_play_id:
+          type: integer
+          example: 1
+        member_id:
+          type: integer
+          example: 1
+        role:
+          type: string
+          enum: [participant, admin]
+          example: "participant"
+        deactivated:
+          type: boolean
+          example: false
+        deactivated_reason:
+          type: string
+          enum: [self_deactivated, banned]
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PlayAdminDeactivateError:
+      type: object
+      properties:
+        status_code:
+          type: string
+          example: "ERROR"
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "play-admin-deactivate"
+            summary:
+              type: string
+              example: "다른 멤버가 있는 경우 admin 권한을 위임한 후에 탈퇴할 수 있습니다."
+
+    PlayMemberNotFoundError:
+      type: object
+      properties:
+        status_code:
+          type: string
+          example: "ERROR"
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "play-member-not-found"
+            summary:
+              type: string
+              example: "존재하지 않거나 이미 탈퇴한 멤버입니다."
 
   responses:
     UnauthorizedError:

@@ -10,6 +10,7 @@ from common.common_exceptions import PydanticAPIException
 from common.dtos.response_dtos import BaseFormatResponse
 from map.models import NodeCompletedHistory
 from member.permissions import IsMemberLogin
+from play.consts import MapPlayMemberDeactivateReason
 from play.dtos.request_dtos import (
     CreateMapPlayRequestDTO,
     CreateInviteCodeRequestDTO,
@@ -183,7 +184,7 @@ class MapPlayJoinView(APIView):
 class MapPlayMemberRoleView(APIView):
     permission_classes = [IsMemberLogin]
 
-    def patch(self, request, map_play_id: int, member_id: int):
+    def patch(self, request, map_play_member_id: int):
         try:
             dto = ChangeMemberRoleRequestDTO.of(request)
         except ValidationError as e:
@@ -196,8 +197,7 @@ class MapPlayMemberRoleView(APIView):
 
         service = MapPlayService()
         member = service.change_member_role(
-            map_play_id=map_play_id,
-            member_id=member_id,
+            map_play_member_id=map_play_member_id,
             new_role=dto.new_role,
             changed_by_id=request.guest.member_id,
             reason=dto.reason,
@@ -215,7 +215,7 @@ class MapPlayMemberRoleView(APIView):
 class MapPlayMemberBanView(APIView):
     permission_classes = [IsMemberLogin]
 
-    def post(self, request, map_play_id: int, member_id: int):
+    def post(self, request, map_play_member_id: int):
         try:
             dto = BanMemberRequestDTO.of(request)
         except ValidationError as e:
@@ -228,8 +228,7 @@ class MapPlayMemberBanView(APIView):
 
         service = MapPlayService()
         banned = service.ban_member(
-            map_play_id=map_play_id,
-            member_id=member_id,
+            map_play_member_id=map_play_member_id,
             banned_by_id=request.guest.member_id,
             banned_reason=dto.banned_reason,
             invite_code_id=dto.invite_code_id,
@@ -244,14 +243,15 @@ class MapPlayMemberBanView(APIView):
         )
 
 
-class MapPlayMemberDeactivateView(APIView):
+class MapPlayMemberSelfDeactivateView(APIView):
     permission_classes = [IsMemberLogin]
 
-    def post(self, request, map_play_id: int):
+    def post(self, request, map_play_member_id: int):
         service = MapPlayService()
         member = service.deactivate_member(
-            map_play_id=map_play_id,
+            map_play_member_id=map_play_member_id,
             member_id=request.guest.member_id,
+            deactivated_reason=MapPlayMemberDeactivateReason.SELF_DEACTIVATED,
         )
 
         return Response(

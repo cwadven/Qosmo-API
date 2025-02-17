@@ -136,14 +136,13 @@ class MapPlayService:
 
         return map_play_member
 
-    def _get_active_member(self, map_play_id: int, member_id: int) -> MapPlayMember:
+    def _get_active_member(self, map_play_member_id: int) -> MapPlayMember:
         """
         활성화된 멤버 조회
         """
         try:
             return MapPlayMember.objects.select_related('map_play').get(
-                map_play_id=map_play_id,
-                member_id=member_id,
+                id=map_play_member_id,
                 deactivated=False,
             )
         except MapPlayMember.DoesNotExist:
@@ -188,7 +187,7 @@ class MapPlayService:
     @transaction.atomic
     def deactivate_member(
             self,
-            map_play_id: int,
+            map_play_member_id: int,
             member_id: int,
             deactivated_reason: MapPlayMemberDeactivateReason = MapPlayMemberDeactivateReason.SELF_DEACTIVATED,
     ) -> MapPlayMember:
@@ -201,21 +200,25 @@ class MapPlayService:
            - admin이 2명 이상인 경우: 바로 탈퇴 가능
            - 다른 멤버가 있고 admin이 혼자인 경우: admin 권한 위임 필요
         """
-        map_play_member = self._get_active_member(map_play_id, member_id)
+        map_play_member = self._get_active_member(map_play_member_id)
+
+        # 본인 확인
+        if map_play_member.member_id != member_id:
+            raise PlayMemberNotFoundException()
 
         # admin이 아닌 경우 바로 탈퇴 가능
         if map_play_member.role != MapPlayMemberRole.ADMIN:
-            return self._deactivate_member(map_play_member, deactivated_reason.value)
+            return self._deactivate_member(map_play_member, deactivated_reason)
 
         # 전체 active 멤버 수 확인
         active_member_count = MapPlayMember.objects.filter(
-            map_play_id=map_play_id,
+            map_play_id=map_play_member.map_play_id,
             deactivated=False,
         ).count()
 
         # active admin 수 확인
         active_admin_count = MapPlayMember.objects.filter(
-            map_play_id=map_play_id,
+            map_play_id=map_play_member.map_play_id,
             role=MapPlayMemberRole.ADMIN,
             deactivated=False,
         ).count()
@@ -230,8 +233,7 @@ class MapPlayService:
     @transaction.atomic
     def ban_member(
         self,
-        map_play_id: int,
-        member_id: int,
+        map_play_member_id: int,
         banned_by_id: int,
         banned_reason: str,
         invite_code_id: Optional[int] = None,
@@ -239,19 +241,21 @@ class MapPlayService:
         """
         멤버 추방 (admin만 가능)
         """
-        # admin 권한 체크
-        self._validate_admin(map_play_id, banned_by_id)
+        map_play_member = self._get_active_member(map_play_member_id)
 
-        map_play_member = self._get_active_member(map_play_id, member_id)
-        self._validate_admin_action(map_play_id, map_play_member, "추방")
+        # admin 권한 체크
+        self._validate_admin(map_play_member.map_play_id, banned_by_id)
+
+        # admin 관련 액션 검증
+        self._validate_admin_action(map_play_member.map_play_id, map_play_member, "추방")
         
         # 멤버 비활성화
         self._deactivate_member(map_play_member, MapPlayMemberDeactivateReason.BANNED)
 
         # 추방 이력 생성
         return MapPlayBanned.objects.create(
-            map_play_id=map_play_id,
-            member_id=member_id,
+            map_play_id=map_play_member.map_play_id,
+            member_id=map_play_member.member_id,
             banned_by_id=banned_by_id,
             invite_code_id=invite_code_id,
             banned_reason=banned_reason,
@@ -260,8 +264,7 @@ class MapPlayService:
     @transaction.atomic
     def change_member_role(
         self,
-        map_play_id: int,
-        member_id: int,
+        map_play_member_id: int,
         new_role: str,
         changed_by_id: int,
         reason: Optional[str] = None,
@@ -269,10 +272,10 @@ class MapPlayService:
         """
         멤버 역할 변경 (admin만 가능)
         """
-        # admin 권한 체크
-        self._validate_admin(map_play_id, changed_by_id)
+        map_play_member = self._get_active_member(map_play_member_id)
 
-        map_play_member = self._get_active_member(map_play_id, member_id)
+        # admin 권한 체크
+        self._validate_admin(map_play_member.map_play_id, changed_by_id)
 
         # 현재 역할과 같은 경우
         if map_play_member.role == new_role:
@@ -280,7 +283,7 @@ class MapPlayService:
 
         # admin -> participant 변경 시 최소 1명의 admin 유지 확인
         if map_play_member.role == MapPlayMemberRole.ADMIN and new_role == MapPlayMemberRole.PARTICIPANT:
-            self._validate_admin_action(map_play_id, map_play_member, "역할 변경")
+            self._validate_admin_action(map_play_member.map_play_id, map_play_member, "역할 변경")
 
         # 역할 변경 이력 생성
         MapPlayMemberRoleHistory.objects.create(
