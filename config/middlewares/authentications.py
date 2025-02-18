@@ -1,18 +1,22 @@
-import jwt
 from django.apps import apps
 from django.contrib.auth.middleware import AuthenticationMiddleware
-from django.utils.encoding import smart_str
 from django.utils.translation import gettext as _
 from member.exceptions import BlackMemberException
 from rest_framework import exceptions
-from rest_framework.authentication import (
-    BaseAuthentication,
-    get_authorization_header,
-)
+from rest_framework.authentication import BaseAuthentication, get_authorization_header
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.exceptions import APIException
-from rest_framework_jwt.settings import api_settings
+from django.utils.encoding import smart_str
+from django.conf import settings
 
-jwt_decode_handler = api_settings.JWT_DECODE_HANDLER
+
+def jwt_decode_handler(token: str) -> dict:
+    """
+    기존 jwt_decode_handler 대응
+    """
+    access_token = AccessToken(token)
+    return {key: value for key, value in access_token.payload.items()}
 
 
 class DefaultAuthentication(BaseAuthentication):
@@ -20,20 +24,13 @@ class DefaultAuthentication(BaseAuthentication):
 
     def authenticate(self, request):
         jwt_value = self.get_jwt_value(request)
-
         if jwt_value is None:
             return None, None
 
         try:
             payload = jwt_decode_handler(jwt_value)
-        except jwt.ExpiredSignature:
-            msg = _('만료된 토큰입니다.')
-            raise exceptions.AuthenticationFailed(msg)
-        except jwt.DecodeError:
-            msg = _('잘못된 토큰 형식입니다.')
-            raise exceptions.AuthenticationFailed(msg)
-        except jwt.InvalidTokenError:
-            msg = _('유효하지 않은 토큰 입니다.')
+        except Exception as e:
+            msg = _('잘못된 토큰입니다.')
             raise exceptions.AuthenticationFailed(msg)
 
         guest = self.authenticate_credentials(payload)
@@ -50,11 +47,9 @@ class DefaultAuthentication(BaseAuthentication):
 
     def get_jwt_value(self, request):
         auth = get_authorization_header(request).split()
-        auth_header_prefix = api_settings.JWT_AUTH_HEADER_PREFIX.lower()
+        auth_header_prefix = settings.SIMPLE_JWT.get('AUTH_HEADER_TYPES', ('Bearer',))[0].lower()
 
         if not auth:
-            if api_settings.JWT_AUTH_COOKIE:
-                return request.COOKIES.get(api_settings.JWT_AUTH_COOKIE)
             return None
 
         if smart_str(auth[0].lower()) != auth_header_prefix:
@@ -64,14 +59,13 @@ class DefaultAuthentication(BaseAuthentication):
             msg = _('Invalid Authorization header. No credentials provided.')
             raise exceptions.AuthenticationFailed(msg)
         elif len(auth) > 2:
-            msg = _('Invalid Authorization header. Credentials string '
-                    'should not contain spaces.')
+            msg = _('Invalid Authorization header. Credentials string should not contain spaces.')
             raise exceptions.AuthenticationFailed(msg)
 
         return auth[1]
 
     def authenticate_header(self, request):
-        return '{0} realm="{1}"'.format(api_settings.JWT_AUTH_HEADER_PREFIX, self.www_authenticate_realm)
+        return '{0} realm="{1}"'.format(settings.SIMPLE_JWT.get('AUTH_HEADER_TYPES', ('Bearer',))[0], self.www_authenticate_realm)
 
     def authenticate_credentials(self, payload):
         Guest = apps.get_model('member', 'Guest')

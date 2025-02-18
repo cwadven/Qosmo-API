@@ -3,17 +3,25 @@ from datetime import (
     timedelta,
 )
 
-from rest_framework_jwt.settings import api_settings
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.conf import settings
 
 
-jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+def jwt_encode_handler(payload: dict) -> str:
+    """
+    기존 jwt_encode_handler 대응
+    """
+    refresh = RefreshToken()
+    for key, value in payload.items():
+        refresh[key] = value
+    return str(refresh.access_token)
 
 
 def jwt_payload_handler(guest: 'Guest') -> dict:  # noqa
     payload = {
         'guest_id': guest.pk,
         'member_id': guest.member_id,
-        'exp': datetime.utcnow() + api_settings.JWT_EXPIRATION_DELTA,
+        'exp': datetime.utcnow() + settings.SIMPLE_JWT.get('ACCESS_TOKEN_LIFETIME'),
     }
     return payload
 
