@@ -48,6 +48,7 @@ PROJECT_APPS = [
     'subscription',
     'node',
     'play',
+    'push',
 ]
 
 PROJECT_SETTING_APPS = []
