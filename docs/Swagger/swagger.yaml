@@ -2179,6 +2179,129 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /v1/push/device-token:
+    post:
+      tags:
+        - Push
+      summary: "디바이스 토큰 등록/갱신"
+      description: |
+        푸시 알림을 위한 디바이스 토큰을 등록하거나 갱신합니다.
+        이미 등록된 토큰인 경우 게스트 정보와 디바이스 타입이 갱신됩니다.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - device_type
+              properties:
+                token:
+                  type: string
+                  description: "Firebase 디바이스 토큰"
+                  example: "eKh6HBU1..."
+                device_type:
+                  type: string
+                  enum: [ios, android]
+                  description: "디바이스 타입"
+                  example: "ios"
+      responses:
+        "200":
+          description: 토큰 등록/갱신 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    enum: [success]
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                        description: "등록된 디바이스 토큰"
+                      device_type:
+                        type: string
+                        enum: [ios, android]
+                        description: "디바이스 타입"
+                      created_at:
+                        type: string
+                        format: date-time
+                        description: "등록 일시"
+        "400":
+          description: |
+            토큰 등록/갱신 실패<br>
+            [ errors ]<br>
+            - 토큰과 디바이스 타입은 필수입니다.<br>
+            - 디바이스 타입은 ios 또는 android만 가능합니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: |
+            토큰 등록/갱신 실패<br>
+            [ errors ]<br>
+            - 게스트 정보가 없습니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      tags:
+        - Push
+      summary: "디바이스 토큰 비활성화"
+      description: |
+        푸시 알림을 위한 디바이스 토큰을 비활성화합니다.
+        비활성화된 토큰으로는 더 이상 푸시 알림이 발송되지 않습니다.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+                  description: "비활성화할 Firebase 디바이스 토큰"
+                  example: "eKh6HBU1..."
+      responses:
+        "200":
+          description: 토큰 비활성화 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    enum: [success]
+                  data:
+                    type: object
+        "400":
+          description: |
+            토큰 비활성화 실패<br>
+            [ errors ]<br>
+            - 토큰은 필수입니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: |
+            토큰 비활성화 실패<br>
+            [ errors ]<br>
+            - 게스트 정보가 없습니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     NotUserAuthPermission:
@@ -2884,6 +3007,34 @@ components:
             summary:
               type: string
               example: "존재하지 않거나 이미 탈퇴한 멤버입니다."
+
+    DeviceToken:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "디바이스 토큰 ID"
+        guest_id:
+          type: integer
+          description: "토큰 소유자 게스트 ID"
+        token:
+          type: string
+          description: "Firebase 디바이스 토큰"
+        device_type:
+          type: string
+          enum: [ios, android]
+          description: "디바이스 타입"
+        is_active:
+          type: boolean
+          description: "활성화 여부"
+        created_at:
+          type: string
+          format: date-time
+          description: "생성일시"
+        updated_at:
+          type: string
+          format: date-time
+          description: "수정일시"
 
   responses:
     UnauthorizedError:
