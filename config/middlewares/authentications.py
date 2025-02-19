@@ -4,7 +4,6 @@ from django.utils.translation import gettext as _
 from member.exceptions import BlackMemberException
 from rest_framework import exceptions
 from rest_framework.authentication import BaseAuthentication, get_authorization_header
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.exceptions import APIException
 from django.utils.encoding import smart_str

@@ -24,6 +24,7 @@ urlpatterns = [
     path('v1/question', include('question.urls.v1')),
     path('v1/subscription', include('subscription.urls.v1')),
     path('v1/play', include('play.urls.v1')),
+    path('v1/push', include('push.urls.v1')),
 ]
 
 
