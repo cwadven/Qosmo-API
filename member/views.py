@@ -23,7 +23,7 @@ from common.common_utils.cache_utils import (
     increase_cache_int_value_by_key,
 )
 from common.dtos.response_dtos import BaseFormatResponse
-from config.middlewares.authentications import jwt_decode_handler
+from config.middlewares.authentications import jwt_decode_handler, jwt_decode_refresh_token_handler
 from django.contrib.auth import (
     authenticate,
 )
@@ -169,7 +169,7 @@ class RefreshTokenView(APIView):
             refresh_token=m['refresh_token'],
         )
         try:
-            payload = jwt_decode_handler(refresh_token_request.refresh_token)
+            payload = jwt_decode_refresh_token_handler(refresh_token_request.refresh_token)
             member = Member.objects.get(id=payload.get('member_id'))
             refresh_token_response = RefreshTokenResponse(
                 access_token=get_jwt_login_token(member),

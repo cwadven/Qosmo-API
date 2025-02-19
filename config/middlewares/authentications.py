@@ -4,7 +4,7 @@ from django.utils.translation import gettext as _
 from member.exceptions import BlackMemberException
 from rest_framework import exceptions
 from rest_framework.authentication import BaseAuthentication, get_authorization_header
-from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from rest_framework.exceptions import APIException
 from django.utils.encoding import smart_str
 from django.conf import settings
@@ -16,6 +16,14 @@ def jwt_decode_handler(token: str) -> dict:
     """
     access_token = AccessToken(token)
     return {key: value for key, value in access_token.payload.items()}
+
+
+def jwt_decode_refresh_token_handler(token: str) -> dict:
+    """
+    기존 jwt_decode_refresh_token_handler 대응
+    """
+    refresh_token = RefreshToken(token)
+    return {key: value for key, value in refresh_token.payload.items()}
 
 
 class DefaultAuthentication(BaseAuthentication):
