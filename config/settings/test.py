@@ -59,5 +59,14 @@ CACHES = {
     }
 }
 
+# Push Notification 설정
+PUSH_SETTINGS = {
+    "APP_NAME": "Qosmo",
+    "ONE_DEVICE_PER_USER": False,
+    "DELETE_INACTIVE_DEVICES": True,
+    "FCM_API_KEY": FCM_SERVER_KEY,
+    "FCM_SENDER_ID": FCM_SENDER_ID,
+}
+
 KAKAO_PAY_BASE_DOMAIN = 'http://127.0.0.1:8000'
 OPENAI_API_KEY = 'development_OPENAI_API_KEY'
