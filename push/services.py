@@ -1,6 +1,7 @@
 from typing import Optional, List, Dict, Any
 import firebase_admin
 from firebase_admin import credentials, messaging
+from firebase_admin.exceptions import FirebaseError
 from django.conf import settings
 
 from push.models import DeviceToken, PushHistory
@@ -78,9 +79,9 @@ class PushService:
                 )
                 histories.append(history)
                 
-            except messaging.ApiCallError as e:
+            except FirebaseError as e:
                 # 토큰이 유효하지 않은 경우
-                if e.code in ['registration-token-not-registered', 'invalid-argument']:
+                if str(e).startswith('Requested entity was not found') or str(e).startswith('Invalid argument'):
                     self.deactivate_token(device_token.token)
                 
                 # 발송 실패 이력 저장
