@@ -67,3 +67,43 @@ class DeviceTokenView(APIView):
             ).model_dump(),
             status=status.HTTP_200_OK,
         )
+
+
+class TestPushView(APIView):
+    def post(self, request):
+        """푸시 알림 테스트"""
+        token = request.data.get('token')
+        
+        if not token:
+            return Response(
+                {'error': '토큰은 필수입니다.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        service = PushService()
+        success, response = service.send_notification(
+            token=token,
+            title="테스트 알림",
+            body="이것은 테스트 푸시 알림입니다.",
+            data={"type": "test", "message": "Hello from test API!"}
+        )
+
+        if success:
+            return Response(
+                BaseFormatResponse(
+                    status_code=SuccessStatusCode.SUCCESS.value,
+                    data={
+                        'message': '푸시 알림 발송 성공',
+                        'response': str(response)
+                    },
+                ).model_dump(),
+                status=status.HTTP_200_OK,
+            )
+        else:
+            return Response(
+                {
+                    'error': '푸시 알림 발송 실패',
+                    'detail': str(response)
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
