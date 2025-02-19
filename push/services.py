@@ -1,7 +1,5 @@
-from typing import Optional, List, Dict, Any
-import firebase_admin
-from firebase_admin import credentials, messaging
-from firebase_admin.exceptions import FirebaseError
+from typing import Optional, List, Dict, Any, Tuple
+from exponent_server_sdk import PushClient, PushMessage, PushServerError
 from django.conf import settings
 
 from push.models import DeviceToken, PushHistory
@@ -9,9 +7,13 @@ from push.models import DeviceToken, PushHistory
 
 class PushService:
     def __init__(self):
-        if not firebase_admin._apps:
-            cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS_PATH)
-            firebase_admin.initialize_app(cred)
+        self.client = PushClient()
+
+    def validate_token(self, token: str) -> bool:
+        """
+        Expo 푸시 토큰 유효성 검사
+        """
+        return isinstance(token, str) and token.startswith('ExponentPushToken')
 
     def register_token(
         self,
@@ -22,6 +24,17 @@ class PushService:
         """
         디바이스 토큰 등록/갱신
         """
+        # Expo 토큰 유효성 검사
+        if not token or not isinstance(token, str):
+            raise ValueError("토큰은 문자열이어야 합니다.")
+
+        if not self.validate_token(token):
+            raise ValueError("유효하지 않은 Expo 푸시 토큰입니다. 'ExponentPushToken'으로 시작하는 토큰이어야 합니다.")
+
+        # 디바이스 타입 검증
+        if device_type not in ['ios', 'android']:
+            raise ValueError("디바이스 타입은 'ios' 또는 'android'여야 합니다.")
+
         device_token, _ = DeviceToken.objects.update_or_create(
             token=token,
             defaults={
@@ -53,20 +66,24 @@ class PushService:
             is_active=True,
         )
         
+        if not device_tokens.exists():
+            return []
+        
         histories = []
         for device_token in device_tokens:
             try:
-                message = messaging.Message(
-                    notification=messaging.Notification(
-                        title=title,
-                        body=body,
-                    ),
-                    data=data or {},
+                # 토큰 재검증
+                if not self.validate_token(device_token.token):
+                    self.deactivate_token(device_token.token)
+                    continue
+
+                # Expo 푸시 발송
+                success, response = self.send_notification(
                     token=device_token.token,
+                    title=title,
+                    body=body,
+                    data=data,
                 )
-                
-                # Firebase로 푸시 발송
-                response = messaging.send(message)
                 
                 # 발송 이력 저장
                 history = PushHistory.objects.create(
@@ -75,16 +92,22 @@ class PushService:
                     title=title,
                     body=body,
                     data=data,
-                    is_success=True,
+                    is_success=success,
+                    error_message=None if success else str(response),
                 )
                 histories.append(history)
                 
-            except FirebaseError as e:
-                # 토큰이 유효하지 않은 경우
-                if str(e).startswith('Requested entity was not found') or str(e).startswith('Invalid argument'):
+                # 토큰이 유효하지 않은 경우 비활성화
+                if not success and isinstance(response, str) and (
+                    'DeviceNotRegistered' in response or
+                    'InvalidCredentials' in response or
+                    'MessageTooBig' in response or
+                    'MessageRateExceeded' in response
+                ):
                     self.deactivate_token(device_token.token)
                 
-                # 발송 실패 이력 저장
+            except Exception as e:
+                # 기타 예외 처리
                 history = PushHistory.objects.create(
                     guest_id=guest_id,
                     device_token=device_token,
@@ -92,11 +115,39 @@ class PushService:
                     body=body,
                     data=data,
                     is_success=False,
-                    error_message=str(e),
+                    error_message=f"Unexpected error: {str(e)}",
                 )
                 histories.append(history)
                 
         return histories
+
+    def send_notification(
+        self,
+        token: str,
+        title: str,
+        body: str,
+        data: Optional[Dict[str, Any]] = None,
+    ) -> Tuple[bool, Any]:
+        """Expo 푸시 알림 전송"""
+        try:
+            if not self.validate_token(token):
+                raise ValueError('Invalid Expo push token')
+
+            response = self.client.publish(
+                PushMessage(
+                    to=token,
+                    title=title,
+                    body=body,
+                    data=data or {}
+                )
+            )
+            return True, response
+        except PushServerError as e:
+            print(f"Push server error: {e}")
+            return False, str(e)
+        except Exception as e:
+            print(f"Push notification error: {e}")
+            return False, str(e)
 
     def send_push_to_multiple(
         self,

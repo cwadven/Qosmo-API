@@ -192,15 +192,14 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_USE_TLS = True
 EMAIL_PORT = 587
 
-# Firebase 설정
-FIREBASE_CREDENTIALS_PATH = os.getenv('FIREBASE_CREDENTIALS_PATH', os.path.join(BASE_DIR, 'firebase-credentials.json'))
+# Expo Push 설정
+EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send'
 
-# FCM 설정
-FCM_DJANGO_SETTINGS = {
-    "APP_VERBOSE_NAME": "Qosmo",
-    "FCM_SERVER_KEY": os.getenv('FCM_SERVER_KEY', ''),
-    "ONE_DEVICE_PER_USER": False,  # 한 사용자당 여러 디바이스 허용
-    "DELETE_INACTIVE_DEVICES": True,  # 비활성 디바이스 자동 삭제
+# Push Notification 설정
+PUSH_SETTINGS = {
+    "APP_NAME": "Qosmo",
+    "ONE_DEVICE_PER_USER": False,
+    "DELETE_INACTIVE_DEVICES": True,
 }
 
 SIMPLE_JWT = {
