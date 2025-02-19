@@ -33,6 +33,4 @@ django-constance[redis]==4.1.2
 drf-yasg==1.21.8
 # JWT 인증
 djangorestframework-simplejwt>=5.3.0
-# Firebase
-firebase-admin>=6.3.0
 exponent_server_sdk==2.1.0
