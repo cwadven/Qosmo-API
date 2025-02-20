@@ -24,6 +24,7 @@ from map_graph.dtos.node_detail import (
     RuleProgressDTO,
 )
 from node.exceptions import NodeNotFoundException
+from play.models import MapPlayMember, MapPlay
 from question.consts import QuestionType
 from question.models import (
     QuestionFile,
@@ -127,7 +128,7 @@ def find_activatable_node_ids_after_completion(
 class NodeDetailService:
     def __init__(self, member_id: Optional[int] = None, map_play_member_id: Optional[int] = None):
         self.member_id = member_id
-        self.map_play_member_id = map_play_member_id
+        self.map_play_member = MapPlayMember.objects.filter(id=map_play_member_id).first()
 
     def get_node_detail(self, node_id: int) -> NodeDetailDTO:
         try:
@@ -157,13 +158,13 @@ class NodeDetailService:
         questions_by_rule_id = {}
         questions = []
         member_completed_arrow_ids = get_map_play_member_completed_arrow_ids(
-            self.map_play_member_id,
+            self.map_play_member.id,
             [arrow.id for arrow in arrows]
         )
         user_question_answers = UserQuestionAnswer.objects.select_related(
             'reviewed_by'
         ).filter(
-            map_play_member_id=self.map_play_member_id,
+            map_play_member_id=self.map_play_member.id,
         ).prefetch_related(
             'files',
         ).order_by(
@@ -184,11 +185,11 @@ class NodeDetailService:
 
         question_ids = [question.id for question in questions]
         member_completed_question_ids = get_map_play_member_completed_question_ids(
-            self.map_play_member_id,
+            self.map_play_member.id,
             question_ids
         )
         member_completed_node_ids = get_map_play_member_completed_node_ids(
-            self.map_play_member_id,
+            self.map_play_member.id,
             # 현재 노드도 포함
             [arrow.start_node_id for arrow in arrows] + [node_id]
         )
@@ -208,7 +209,7 @@ class NodeDetailService:
             node_status = 'in_progress'
 
         # 통계 데이터 조회
-        activated_count, completed_count = self._get_node_statistics(node)
+        activated_count, completed_count = self._get_node_map_play_statistics(node)
         if node_status == 'locked':
             return NodeDetailDTO(
                 id=node.id,
@@ -253,7 +254,7 @@ class NodeDetailService:
 
             answer_submittable = bool(
                 self.member_id
-                and self.map_play_member_id
+                and self.map_play_member.id
                 and question_status == 'in_progress'
                 and is_subscribed
             )
@@ -366,23 +367,19 @@ class NodeDetailService:
             ],
         )
 
-    def _get_node_statistics(self, node: Node) -> Tuple[int, int]:
-        completed_count = self._get_node_completed_member_count(node.id)
-        activated_count = self._get_in_progress_member_count(node.id)
+    def _get_node_map_play_statistics(self, node: Node) -> Tuple[int, int]:
+        completed_count = self._get_node_completed_in_map_play_count(node.id)
+        activated_count = self._get_in_node_progress_in_map_play_count(node.id)
 
         return activated_count, completed_count
 
-    @staticmethod
-    def _get_node_completed_member_count(node_id: int) -> int:
+    def _get_node_completed_in_map_play_count(self, node_id: int) -> int:
         return NodeCompletedHistory.objects.filter(
             node_id=node_id,
-        ).values(
-            'member',
-        ).distinct().count()
+            map_play_member__map_play_id=self.map_play_member.map_play_id,
+        ).count()
 
-    @staticmethod
-    def _get_before_node_solved_member_count(node_id: int) -> int:
-        # 현재 node_id 의 이전 Node 들을 찾습니다.
+    def _get_before_node_solved_in_map_play_count(self, node_id: int) -> int:
         start_node_ids = set(
             Arrow.objects.filter(
                 end_node_id=node_id,
@@ -393,9 +390,8 @@ class NodeDetailService:
         )
         return NodeCompletedHistory.objects.filter(
             node_id__in=start_node_ids,
-        ).values(
-            'member',
-        ).distinct().count()
+            map_play_member__map_play_id=self.map_play_member.map_play_id,
+        ).count()
 
-    def _get_in_progress_member_count(self, node_id: int) -> int:
-        return self._get_before_node_solved_member_count(node_id) - self._get_node_completed_member_count(node_id)
+    def _get_in_node_progress_in_map_play_count(self, node_id: int) -> int:
+        return self._get_before_node_solved_in_map_play_count(node_id) - self._get_node_completed_in_map_play_count(node_id)
