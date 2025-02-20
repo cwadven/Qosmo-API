@@ -192,13 +192,6 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_USE_TLS = True
 EMAIL_PORT = 587
 
-# Expo Push 설정
-EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send'
-
-# Firebase Cloud Messaging 설정
-FCM_SERVER_KEY = "TEST"    # Firebase Console의 서버 키
-FCM_SENDER_ID = "TEST"     # Firebase Console의 발신자 ID
-
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": datetime.timedelta(hours=2),
     "REFRESH_TOKEN_LIFETIME": datetime.timedelta(days=2),
@@ -315,3 +308,13 @@ SWAGGER_SETTINGS = {
 }
 
 APPEND_SLASH = False
+
+# Firebase Admin SDK 설정
+FIREBASE_CREDENTIALS_PATH = os.path.join(BASE_DIR, 'service-account.json')
+
+# Push Notification 설정
+PUSH_SETTINGS = {
+    "APP_NAME": "Qosmo",
+    "ONE_DEVICE_PER_USER": False,
+    "DELETE_INACTIVE_DEVICES": True,
+}

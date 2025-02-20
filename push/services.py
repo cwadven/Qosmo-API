@@ -1,19 +1,29 @@
 from typing import Optional, List, Dict, Any, Tuple
-from exponent_server_sdk import PushClient, PushMessage, PushServerError
+import firebase_admin
+from firebase_admin import messaging
+from firebase_admin.exceptions import FirebaseError
 from django.conf import settings
 
 from push.models import DeviceToken, PushHistory
 
 
 class PushService:
-    def __init__(self):
-        self.client = PushClient()
-
     def validate_token(self, token: str) -> bool:
         """
-        Expo 푸시 토큰 유효성 검사
+        FCM 토큰 유효성 검사
         """
-        return isinstance(token, str) and token.startswith('ExponentPushToken')
+        try:
+            # 테스트 메시지 생성 (실제로 발송하지는 않음)
+            messaging.Message(
+                notification=messaging.Notification(
+                    title='Token Validation',
+                    body='Validating FCM token',
+                ),
+                token=token,
+            )
+            return True
+        except ValueError:
+            return False
 
     def register_token(
         self,
@@ -24,12 +34,12 @@ class PushService:
         """
         디바이스 토큰 등록/갱신
         """
-        # Expo 토큰 유효성 검사
+        # FCM 토큰 유효성 검사
         if not token or not isinstance(token, str):
             raise ValueError("토큰은 문자열이어야 합니다.")
 
         if not self.validate_token(token):
-            raise ValueError("유효하지 않은 Expo 푸시 토큰입니다. 'ExponentPushToken'으로 시작하는 토큰이어야 합니다.")
+            raise ValueError("유효하지 않은 FCM 토큰입니다.")
 
         # 디바이스 타입 검증
         if device_type not in ['ios', 'android']:
@@ -77,13 +87,17 @@ class PushService:
                     self.deactivate_token(device_token.token)
                     continue
 
-                # Expo 푸시 발송
-                success, response = self.send_notification(
+                message = messaging.Message(
+                    notification=messaging.Notification(
+                        title=title,
+                        body=body,
+                    ),
+                    data=data or {},
                     token=device_token.token,
-                    title=title,
-                    body=body,
-                    data=data,
                 )
+                
+                # Firebase로 푸시 발송
+                response = messaging.send(message)
                 
                 # 발송 이력 저장
                 history = PushHistory.objects.create(
@@ -92,20 +106,32 @@ class PushService:
                     title=title,
                     body=body,
                     data=data,
-                    is_success=success,
-                    error_message=None if success else str(response),
+                    is_success=True,
                 )
                 histories.append(history)
                 
-                # 토큰이 유효하지 않은 경우 비활성화
-                if not success and isinstance(response, str) and (
-                    'DeviceNotRegistered' in response or
-                    'InvalidCredentials' in response or
-                    'MessageTooBig' in response or
-                    'MessageRateExceeded' in response
-                ):
+            except FirebaseError as e:
+                error_message = str(e).lower()
+                # 토큰이 유효하지 않은 경우 체크
+                if any(msg in error_message for msg in [
+                    'not a valid fcm registration token',
+                    'requested entity was not found',
+                    'invalid argument',
+                    'registration token not valid'
+                ]):
                     self.deactivate_token(device_token.token)
                 
+                # 발송 실패 이력 저장
+                history = PushHistory.objects.create(
+                    guest_id=guest_id,
+                    device_token=device_token,
+                    title=title,
+                    body=body,
+                    data=data,
+                    is_success=False,
+                    error_message=str(e),
+                )
+                histories.append(history)
             except Exception as e:
                 # 기타 예외 처리
                 history = PushHistory.objects.create(
@@ -128,21 +154,23 @@ class PushService:
         body: str,
         data: Optional[Dict[str, Any]] = None,
     ) -> Tuple[bool, Any]:
-        """Expo 푸시 알림 전송"""
+        """Firebase 푸시 알림 전송"""
         try:
             if not self.validate_token(token):
-                raise ValueError('Invalid Expo push token')
+                raise ValueError('Invalid FCM token')
 
-            response = self.client.publish(
-                PushMessage(
-                    to=token,
+            message = messaging.Message(
+                notification=messaging.Notification(
                     title=title,
                     body=body,
-                    data=data or {}
-                )
+                ),
+                data=data or {},
+                token=token,
             )
+            
+            response = messaging.send(message)
             return True, response
-        except PushServerError as e:
+        except FirebaseError as e:
             print(f"Push server error: {e}")
             return False, str(e)
         except Exception as e:
