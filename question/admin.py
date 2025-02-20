@@ -147,15 +147,12 @@ class UserQuestionAnswerAdmin(admin.ModelAdmin):
                     feedback_obj.reviewed_at = timezone.now()
                     feedback_obj.save()
 
+                    arrow = Arrow.objects.filter(
+                        question=user_answer.question,
+                        is_deleted=False
+                    ).first()
                     # 정답인 경우 노드 완료 처리
                     if feedback_obj.is_correct:
-                        # Question과 연결된 Arrow의 start_node 찾기
-                        # 지금은 무조건 1개의 arrow 는 1개의 question 가정
-                        arrow = Arrow.objects.filter(
-                            question=user_answer.question,
-                            is_deleted=False
-                        ).first()
-
                         if arrow and arrow.start_node:
                             node_completion_service = NodeCompletionService(
                                 member_id=user_answer.member_id,
@@ -175,10 +172,12 @@ class UserQuestionAnswerAdmin(admin.ModelAdmin):
                             data={
                                 "type": "question_feedback",
                                 "question_id": str(user_answer.question.id),
+                                "map_id": str(arrow.map_id),
+                                "map_play_member_id": str(user_answer.map_play_member_id),
                                 "is_correct": str(feedback_obj.is_correct).lower(),
                             },
                         )
-                    except Guest.DoesNotExist:
+                    except (Guest.DoesNotExist, Arrow.DoesNotExist):
                         pass
 
                 messages.success(request, '피드백이 성공적으로 저장되었습니다.')
