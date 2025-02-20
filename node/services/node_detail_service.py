@@ -128,7 +128,11 @@ def find_activatable_node_ids_after_completion(
 class NodeDetailService:
     def __init__(self, member_id: Optional[int] = None, map_play_member_id: Optional[int] = None):
         self.member_id = member_id
-        self.map_play_member = MapPlayMember.objects.filter(id=map_play_member_id).first()
+        self.map_play_member = MapPlayMember.objects.filter(id=map_play_member_id).first() if map_play_member_id else None
+
+    @property
+    def map_play_member_id(self):
+        return self.map_play_member.id if self.map_play_member else None
 
     def get_node_detail(self, node_id: int) -> NodeDetailDTO:
         try:
@@ -158,13 +162,13 @@ class NodeDetailService:
         questions_by_rule_id = {}
         questions = []
         member_completed_arrow_ids = get_map_play_member_completed_arrow_ids(
-            self.map_play_member.id,
+            self.map_play_member_id,
             [arrow.id for arrow in arrows]
         )
         user_question_answers = UserQuestionAnswer.objects.select_related(
             'reviewed_by'
         ).filter(
-            map_play_member_id=self.map_play_member.id,
+            map_play_member_id=self.map_play_member_id,
         ).prefetch_related(
             'files',
         ).order_by(
@@ -185,11 +189,11 @@ class NodeDetailService:
 
         question_ids = [question.id for question in questions]
         member_completed_question_ids = get_map_play_member_completed_question_ids(
-            self.map_play_member.id,
+            self.map_play_member_id,
             question_ids
         )
         member_completed_node_ids = get_map_play_member_completed_node_ids(
-            self.map_play_member.id,
+            self.map_play_member_id,
             # 현재 노드도 포함
             [arrow.start_node_id for arrow in arrows] + [node_id]
         )
@@ -254,7 +258,7 @@ class NodeDetailService:
 
             answer_submittable = bool(
                 self.member_id
-                and self.map_play_member.id
+                and self.map_play_member_id
                 and question_status == 'in_progress'
                 and is_subscribed
             )
