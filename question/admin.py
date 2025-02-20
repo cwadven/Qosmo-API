@@ -11,6 +11,7 @@ from django.template.response import TemplateResponse
 from django.utils import timezone
 
 from map.models import Arrow
+from member.models import Guest
 from question.consts import QuestionType
 from question.forms.admin_forms import QuestionFileAdminForm
 from question.forms.client_forms import FeedbackForm
@@ -24,6 +25,7 @@ from question.models import (
 from django.http import HttpResponseRedirect
 from question.services.node_completion_service import NodeCompletionService
 from django.db import transaction
+from push.services import PushService
 
 
 class QuestionAdminForm(ModelForm):
@@ -162,6 +164,23 @@ class UserQuestionAnswerAdmin(admin.ModelAdmin):
                             node_completion_service.process_nodes_completion(
                                 nodes=[arrow.start_node]
                             )
+
+                    try:
+                        guest = Guest.objects.get(member_id=user_answer.member_id, member__is_active=True)
+                        push_service = PushService()
+                        push_service.send_push(
+                            guest_id=guest.id,
+                            title=f"\'{user_answer.question.title}\' 문제 결과",
+                            body=feedback_obj.feedback,
+                            data={
+                                "type": "question_feedback",
+                                "question_id": str(user_answer.question.id),
+                                "is_correct": str(feedback_obj.is_correct).lower(),
+                            },
+                        )
+                    except Guest.DoesNotExist:
+                        pass
+
                 messages.success(request, '피드백이 성공적으로 저장되었습니다.')
                 return HttpResponseRedirect(
                     reverse('admin:question_userquestionanswer_change', args=[object_id])
