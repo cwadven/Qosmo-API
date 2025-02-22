@@ -95,6 +95,7 @@ class PushService:
                     continue
 
                 message = messaging.Message(
+                    data=data or {},
                     notification=messaging.Notification(
                         title=title,
                         body=body,
@@ -109,13 +110,12 @@ class PushService:
                         ),
                         data=data or {},
                     ),
-                    data=data or {},
                     token=device_token.token,
                 )
                 
                 # Firebase로 푸시 발송
                 response = messaging.send(message)
-                
+
                 # 발송 이력 저장
                 history = PushHistory.objects.create(
                     guest_id=guest_id,
@@ -177,6 +177,7 @@ class PushService:
                 raise ValueError('Invalid FCM token')
 
             message = messaging.Message(
+                data=data or {},
                 notification=messaging.Notification(
                     title=title,
                     body=body,
@@ -191,7 +192,6 @@ class PushService:
                     ),
                     data=data or {},
                 ),
-                data=data or {},
                 token=token,
             )
             
