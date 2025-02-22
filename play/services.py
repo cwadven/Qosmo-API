@@ -17,12 +17,16 @@ from play.models import (
 )
 from play.utils import generate_invite_code, increment_invite_code_uses
 from play.exceptions import (
+    AlreadyPlayMemberException,
     PlayAdminPermissionException,
     PlayInviteCodeNotFoundException,
     PlayMemberNotFoundException,
     PlayLastAdminException,
     PlayAdminDeactivateException,
     PlayMaximumLimitExceededException,
+    PlayMemberFromInviteBannedException,
+    PlayMemberInviteCodeMaxUseException, PlayMemberInvalidInviteCodeException,
+    PlayMemberAlreadyDeactivatedInviteCodeException,
 )
 
 
@@ -108,7 +112,7 @@ class MapPlayService:
             member_id=member_id,
             invite_code=invite_code,
         ).exists():
-            raise ValueError("이 초대 코드로는 더 이상 참여할 수 없습니다.")
+            raise PlayMemberFromInviteBannedException()
 
         # 이미 active 멤버인지 확인
         if MapPlayMember.objects.filter(
@@ -116,11 +120,11 @@ class MapPlayService:
             member_id=member_id,
             deactivated=False,
         ).exists():
-            raise ValueError("이미 플레이 멤버입니다.")
+            raise AlreadyPlayMemberException()
 
         # 사용 횟수 증가 시도
         if not increment_invite_code_uses(code, invite_code.max_uses, invite_code.expired_at):
-            raise ValueError("초대 코드 사용 횟수를 초과했습니다.")
+            raise PlayMemberInviteCodeMaxUseException()
 
         # 멤버 생성
         map_play_member = MapPlayMember.objects.create(
@@ -279,7 +283,7 @@ class MapPlayService:
 
         # 현재 역할과 같은 경우
         if map_play_member.role == new_role:
-            raise ValueError("이미 해당 역할입니다.")
+            raise PlayMemberAlreadyRoleException()
 
         # admin -> participant 변경 시 최소 1명의 admin 유지 확인
         if map_play_member.role == MapPlayMemberRole.ADMIN and new_role == MapPlayMemberRole.PARTICIPANT:
@@ -342,7 +346,7 @@ class MapPlayService:
         try:
             invite_code = MapPlayInviteCode.objects.get(code=code)
         except MapPlayInviteCode.DoesNotExist:
-            raise ValueError("존재하지 않는 초대 코드입니다.")
+            raise PlayInviteCodeNotFoundException()
 
         now = timezone.now()
         is_expired = invite_code.expired_at and invite_code.expired_at < now
@@ -399,18 +403,18 @@ class MapPlayService:
                 is_active=True,
             )
         except MapPlayInviteCode.DoesNotExist:
-            raise ValueError("유효하지 않은 초대 코드입니다.")
+            raise PlayMemberInvalidInviteCodeException()
 
         # 만료 여부 확인
         if invite_code.expired_at and invite_code.expired_at < timezone.now():
-            raise ValueError("초대 코드가 만료되었습니다.")
+            raise PlayMemberAlreadyDeactivatedInviteCodeException()
 
         # 사용 횟수 초과 여부 확인
         if (
             invite_code.max_uses is not None 
             and invite_code.current_uses >= invite_code.max_uses
         ):
-            raise ValueError("초대 코드 사용 횟수를 초과했습니다.")
+            raise PlayMemberInviteCodeMaxUseException()
 
         return invite_code
 
