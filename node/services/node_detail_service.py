@@ -24,7 +24,7 @@ from map_graph.dtos.node_detail import (
     RuleProgressDTO,
 )
 from node.exceptions import NodeNotFoundException
-from play.models import MapPlayMember, MapPlay
+from play.models import MapPlayMember
 from question.consts import QuestionType
 from question.models import (
     QuestionFile,

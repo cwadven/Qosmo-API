@@ -1,10 +1,17 @@
-from typing import Optional, List, Dict, Any, Tuple
-import firebase_admin
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+)
 from firebase_admin import messaging
 from firebase_admin.exceptions import FirebaseError
-from django.conf import settings
 
-from push.models import DeviceToken, PushHistory
+from push.models import (
+    DeviceToken,
+    PushHistory,
+)
 
 
 class PushService:
@@ -92,6 +99,16 @@ class PushService:
                         title=title,
                         body=body,
                     ),
+                    android=messaging.AndroidConfig(
+                        priority='high',
+                        notification=messaging.AndroidNotification(
+                            channel_id='default',
+                            priority='max',
+                            default_sound=True,
+                            default_vibrate_timings=True,
+                        ),
+                        data=data or {},
+                    ),
                     data=data or {},
                     token=device_token.token,
                 )
@@ -163,6 +180,16 @@ class PushService:
                 notification=messaging.Notification(
                     title=title,
                     body=body,
+                ),
+                android=messaging.AndroidConfig(
+                    priority='high',
+                    notification=messaging.AndroidNotification(
+                        channel_id='default',
+                        priority='max',
+                        default_sound=True,
+                        default_vibrate_timings=True,
+                    ),
+                    data=data or {},
                 ),
                 data=data or {},
                 token=token,
