@@ -100,6 +100,7 @@ class MapDetailView(APIView):
                 data=MapDetailDTO.from_entity(
                     map_obj,
                     is_subscribed=is_subscribed,
+                    is_owner=map_obj.created_by_id == request.guest.member_id,
                     total_node_count=len(nodes),
                 ).model_dump(),
             ).model_dump(),

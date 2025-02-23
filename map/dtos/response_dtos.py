@@ -72,6 +72,7 @@ class MapDetailDTO(BaseModel):
     is_subscribed: bool
     icon_image: str
     is_private: bool
+    is_owner: bool
     background_image: str
     total_node_count: int
     created_by: MapListCreatedBy
@@ -82,6 +83,7 @@ class MapDetailDTO(BaseModel):
             map_obj: 'Map',
             total_node_count: int,
             is_subscribed: bool = False,
+            is_owner: bool = False
     ) -> 'MapDetailDTO':
         return MapDetailDTO(
             id=map_obj.id,
@@ -92,6 +94,7 @@ class MapDetailDTO(BaseModel):
             is_private=map_obj.is_private,
             is_subscribed=is_subscribed,
             icon_image=map_obj.icon_image,
+            is_owner=is_owner,
             total_node_count=total_node_count,
             background_image=map_obj.background_image,
             created_by=MapListCreatedBy.from_entity(map_obj.created_by),

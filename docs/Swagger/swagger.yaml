@@ -2482,6 +2482,9 @@ components:
         is_subscribed:
           type: boolean
           example: false
+        is_owner:
+          type: boolean
+          example: true
         total_node_count:
           type: integer
           example: 10
