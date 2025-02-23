@@ -102,7 +102,7 @@ class MapPlayView(APIView):
 class MapPlayInviteCodeView(APIView):
     permission_classes = [IsMemberLogin]
 
-    def post(self, request, map_play_id: int):
+    def post(self, request, map_play_member_id: int):
         try:
             dto = CreateInviteCodeRequestDTO.of(request)
         except ValidationError as e:
@@ -115,7 +115,7 @@ class MapPlayInviteCodeView(APIView):
 
         service = MapPlayService()
         invite_code = service.create_invite_code(
-            map_play_id=map_play_id,
+            map_play_member_id=map_play_member_id,
             created_by_id=request.guest.member_id,
             max_uses=dto.max_uses,
             expired_at=dto.expired_at,
@@ -129,10 +129,10 @@ class MapPlayInviteCodeView(APIView):
             status=status.HTTP_201_CREATED,
         )
 
-    def get(self, request, map_play_id: int):
+    def get(self, request, map_play_member_id: int):
         service = MapPlayService()
         invite_codes = service.get_invite_codes(
-            map_play_id=map_play_id,
+            map_play_member_id=map_play_member_id,
             member_id=request.guest.member_id,
             include_inactive=False,
             include_expired=False,
@@ -148,10 +148,10 @@ class MapPlayInviteCodeView(APIView):
             status=status.HTTP_200_OK,
         )
 
-    def delete(self, request, map_play_id: int, code: str):
+    def delete(self, request, map_play_member_id: int, code: str):
         service = MapPlayService()
         service.deactivate_invite_code(
-            map_play_id=map_play_id,
+            map_play_member_id=map_play_member_id,
             code=code,
             deactivated_by_id=request.guest.member_id,
         )

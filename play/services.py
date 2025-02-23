@@ -26,11 +26,22 @@ from play.exceptions import (
     PlayMaximumLimitExceededException,
     PlayMemberFromInviteBannedException,
     PlayMemberInviteCodeMaxUseException, PlayMemberInvalidInviteCodeException,
-    PlayMemberAlreadyDeactivatedInviteCodeException,
+    PlayMemberAlreadyDeactivatedInviteCodeException, PlayMemberAlreadyRoleException,
 )
 
 
 class MapPlayService:
+    def _get_map_play_by_map_play_member_id(self, map_play_member_id: int) -> MapPlay:
+        """
+        맵 플레이 조회
+        """
+        try:
+            return MapPlayMember.objects.get(
+                id=map_play_member_id,
+            ).map_play
+        except MapPlayMember.DoesNotExist:
+            raise PlayMemberNotFoundException()
+
     def _validate_map_play_limit(self, map_id: int, member_id: int) -> None:
         """
         사용자가 해당 Map에 대해 최대 3개까지만 플레이에 참여할 수 있는지 검증
@@ -73,7 +84,7 @@ class MapPlayService:
 
     def create_invite_code(
         self,
-        map_play_id: int,
+        map_play_member_id: int,
         created_by_id: int,
         max_uses: Optional[int] = None,
         expired_at: Optional[datetime] = None,
@@ -82,13 +93,15 @@ class MapPlayService:
         초대 코드 생성 (admin만 가능)
         """
         # admin 권한 체크
-        self._validate_admin(map_play_id, created_by_id)
+        map_play = self._get_map_play_by_map_play_member_id(map_play_member_id)
+
+        self._validate_admin(map_play.id, created_by_id)
 
         now = timezone.now()
-        code = generate_invite_code(map_play_id, now)
+        code = generate_invite_code(map_play.id, now)
 
         return MapPlayInviteCode.objects.create(
-            map_play_id=map_play_id,
+            map_play_id=map_play.id,
             code=code,
             created_by_id=created_by_id,
             max_uses=max_uses,
@@ -306,7 +319,7 @@ class MapPlayService:
 
     def get_invite_codes(
         self,
-        map_play_id: int,
+        map_play_member_id: int,
         member_id: int,
         include_inactive: bool = False,
         include_expired: bool = False,
@@ -315,15 +328,17 @@ class MapPlayService:
         초대 코드 목록 조회 (admin만 가능)
         
         Args:
-            map_play_id: 맵 플레이 ID
+            map_play_member_id: 조회하는 맵 플레이 멤버 ID
             member_id: 조회하는 멤버 ID
             include_inactive: 비활성화된 코드 포함 여부
             include_expired: 만료된 코드 포함 여부
         """
         # admin 권한 체크
-        self._validate_admin(map_play_id, member_id)
+        map_play = self._get_map_play_by_map_play_member_id(map_play_member_id)
+
+        self._validate_admin(map_play.id, member_id)
         
-        queryset = MapPlayInviteCode.objects.filter(map_play_id=map_play_id)
+        queryset = MapPlayInviteCode.objects.filter(map_play_id=map_play.id)
         
         if not include_inactive:
             queryset = queryset.filter(is_active=True)
@@ -367,7 +382,7 @@ class MapPlayService:
     @transaction.atomic
     def deactivate_invite_code(
         self, 
-        map_play_id: int, 
+        map_play_member_id: int,
         code: str,
         deactivated_by_id: int,
     ) -> MapPlayInviteCode:
@@ -375,12 +390,14 @@ class MapPlayService:
         초대 코드 비활성화 (admin만 가능)
         """
         # admin 권한 체크
-        self._validate_admin(map_play_id, deactivated_by_id)
+        map_play = self._get_map_play_by_map_play_member_id(map_play_member_id)
+
+        self._validate_admin(map_play.id, deactivated_by_id)
 
         # 초대 코드 조회
         try:
             invite_code = MapPlayInviteCode.objects.select_related('map_play').get(
-                map_play_id=map_play_id,
+                map_play_id=map_play.id,
                 code=code,
                 is_active=True,
             )

@@ -1761,7 +1761,7 @@ paths:
               schema:
                 $ref: "#/components/responses/MapNotFoundError"
 
-  /v1/play/{map_play_id}/invite-codes:
+  /v1/play/{map_play_member_id}/invite-codes:
     get:
       tags:
         - MapPlay
