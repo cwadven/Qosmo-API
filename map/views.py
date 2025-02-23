@@ -22,6 +22,7 @@ from map.dtos.response_dtos import (
 )
 from map.error_messages import MapInvalidInputResponseErrorStatus
 from map.services.map_service import MapService
+from map.services.map_share_service import MapShareService
 from member.permissions import (
     IsGuestExists,
     IsMemberLogin,
@@ -33,6 +34,7 @@ from rest_framework.views import APIView
 
 from node.services.node_services import get_nodes_by_map_id
 from subscription.services.subscription_service import MapSubscriptionService
+from django.urls import reverse
 
 
 class MapListView(APIView):
@@ -251,6 +253,79 @@ class MyMapListView(APIView):
                     ],
                     next_cursor=next_cursor,
                     has_more=has_more,
+                ).model_dump(),
+            ).model_dump(),
+            status=status.HTTP_200_OK
+        )
+
+
+class MapShareLinkView(APIView):
+    """
+    Map 공유 링크 생성 API
+    """
+    permission_classes = [IsMemberLogin]
+
+    def post(self, request, map_id: int):
+        """
+        Map 공유 링크 생성
+        
+        Args:
+            request: Request 객체
+            map_id: Map ID
+            
+        Returns:
+            Response: 공유 링크
+        """
+        map_share_service = MapShareService(
+            member_id=request.guest.member_id,
+        )
+        share_key = map_share_service.create_share_link(map_id)
+
+        return Response(
+            BaseFormatResponse(
+                status_code=SuccessStatusCode.SUCCESS.value,
+                data={
+                    'share_link': reverse('map:map-validate-share-link', args=[share_key])
+                }
+            ).model_dump(),
+            status=status.HTTP_201_CREATED
+        )
+
+
+class MapShareValidateView(APIView):
+    """
+    Map 공유 링크 검증 API
+    """
+    permission_classes = [IsGuestExists]
+
+    def get(self, request, map_id: int):
+        """
+        Map 공유 링크 검증
+        
+        Args:
+            request: Request 객체
+            map_id: 공유 키
+            
+        Returns:
+            Response: Map 상세 정보
+        """
+        map_share_service = MapShareService(
+            member_id=request.guest.member_id,
+        )
+        map_obj = map_share_service.validate_share_map(map_id)
+        subscription_service = MapSubscriptionService(member_id=request.guest.member_id)
+        subscription_status = subscription_service.get_subscription_status_by_map_ids([map_obj.id])
+        is_subscribed = subscription_status[map_obj.id]
+        nodes = get_nodes_by_map_id(map_obj.id)
+
+        return Response(
+            BaseFormatResponse(
+                status_code=SuccessStatusCode.SUCCESS.value,
+                data=MapDetailDTO.from_entity(
+                    map_obj,
+                    is_subscribed=is_subscribed,
+                    is_owner=map_obj.created_by_id == request.guest.member_id,
+                    total_node_count=len(nodes),
                 ).model_dump(),
             ).model_dump(),
             status=status.HTTP_200_OK

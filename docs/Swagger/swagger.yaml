@@ -2294,6 +2294,105 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /v1/map/{map_id}/share:
+    post:
+      tags:
+        - Map
+      summary: Map 공유 링크 생성
+      description: |
+        Map의 공유 링크를 생성합니다.
+        - private map인 경우 30분간 유효한 공유 링크가 생성됩니다.
+        - public map인 경우에도 공유 링크가 생성되지만, 링크 없이도 접근 가능합니다.
+      security:
+        - jwt: []
+      parameters:
+        - name: map_id
+          in: path
+          description: Map ID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '201':
+          description: 공유 링크 생성 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      share_link:
+                        type: string
+                        example: "https://roadmap.com/map/share/1"
+        '404':
+          description: Map을 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: map-not-found
+                  message:
+                    type: string
+                    example: Map을 찾을 수 없습니다.
+                  errors:
+                    type: object
+                    example: {}
+
+  /v1/map/share/{map_id}:
+    get:
+      tags:
+        - Map
+      summary: Map 공유 링크 검증
+      description: |
+        공유 링크를 통해 Map에 접근합니다.
+        - public map인 경우 바로 접근 가능합니다.
+        - private map인 경우 유효한 공유 키가 필요합니다.
+        - 공유 키는 30분간 유효합니다.
+      parameters:
+        - name: map_id
+          in: path
+          description: 공유 키
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Map 상세 정보 조회 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: success
+                  data:
+                    $ref: '#/components/schemas/MapDetail'
+        '404':
+          description: Map을 찾을 수 없거나 접근 권한이 없음
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: map-not-found
+                  message:
+                    type: string
+                    example: Map을 찾을 수 없거나 접근 권한이 없습니다.
+                  errors:
+                    type: object
+                    example: {}
+
 components:
   schemas:
     NotUserAuthPermission:
