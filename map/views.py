@@ -123,7 +123,7 @@ class MapSubscribedListView(APIView):
                 error_code=MapInvalidInputResponseErrorStatus.INVALID_INPUT_MAP_LIST_PARAM_ERROR_400.value,
                 errors=e.errors(),
             )
-        map_service = MapService(member_id=1)
+        map_service = MapService(member_id=request.guest.member_id)
         paginated_map_subscriptions, has_more, next_cursor = map_service.get_map_subscription_list(
             MapSubscriptionListCursorCriteria,
             search=map_subscribed_list_request.search,
