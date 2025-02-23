@@ -2326,9 +2326,9 @@ paths:
                   data:
                     type: object
                     properties:
-                      share_link:
+                      share_key:
                         type: string
-                        example: "https://roadmap.com/map/share/1"
+                        example: "1"
         '404':
           description: Map을 찾을 수 없음
           content:

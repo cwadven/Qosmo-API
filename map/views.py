@@ -285,7 +285,7 @@ class MapShareLinkView(APIView):
             BaseFormatResponse(
                 status_code=SuccessStatusCode.SUCCESS.value,
                 data={
-                    'share_link': reverse('map:map-validate-share-link', args=[share_key])
+                    'share_key': share_key,
                 }
             ).model_dump(),
             status=status.HTTP_201_CREATED
