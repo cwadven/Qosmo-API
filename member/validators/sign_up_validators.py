@@ -25,21 +25,21 @@ class SignUpPayloadValidator(PayloadValidator):
 
     def validate(self) -> dict:
         # username
-        if check_username_exists(self.payload['username']):
-            self.add_error_context('username', MemberCreationExceptionMessage.USERNAME_EXISTS.label)
-        if not (USERNAME_MIN_LENGTH <= len(self.payload['username']) <= USERNAME_MAX_LENGTH):
-            self.add_error_context(
-                'username',
-                MemberCreationExceptionMessage.USERNAME_LENGTH_INVALID.label.format(
-                    USERNAME_MIN_LENGTH,
-                    USERNAME_MAX_LENGTH,
-                )
-            )
-        if not check_only_alphanumeric(self.payload['username']):
-            self.add_error_context(
-                'username',
-                MemberCreationExceptionMessage.USERNAME_REG_EXP_INVALID.label
-            )
+        # if check_username_exists(self.payload['username']):
+        #     self.add_error_context('username', MemberCreationExceptionMessage.USERNAME_EXISTS.label)
+        # if not (USERNAME_MIN_LENGTH <= len(self.payload['username']) <= USERNAME_MAX_LENGTH):
+        #     self.add_error_context(
+        #         'username',
+        #         MemberCreationExceptionMessage.USERNAME_LENGTH_INVALID.label.format(
+        #             USERNAME_MIN_LENGTH,
+        #             USERNAME_MAX_LENGTH,
+        #         )
+        #     )
+        # if not check_only_alphanumeric(self.payload['username']):
+        #     self.add_error_context(
+        #         'username',
+        #         MemberCreationExceptionMessage.USERNAME_REG_EXP_INVALID.label
+        #     )
 
         # nickname
         if check_nickname_exists(self.payload['nickname']):

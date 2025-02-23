@@ -66,7 +66,6 @@ class RefreshTokenRequest(BaseModel):
 
 class SignUpEmailTokenSendRequest(BaseModel):
     email: str = Field(...)
-    username: str = Field(...)
     nickname: str = Field(...)
     password2: str = Field(...)
 
@@ -77,9 +76,8 @@ class SignUpEmailTokenValidationEndRequest(BaseModel):
 
 
 class SignUpValidationRequest(BaseModel):
-    username: str = Field(...)
-    nickname: str = Field(...)
     email: str = Field(...)
+    nickname: str = Field(...)
     password1: str = Field(...)
     password2: str = Field(...)
 

@@ -31,6 +31,7 @@ from django.db import transaction
 from member.consts import (
     MemberCreationExceptionMessage,
     MemberProviderEnum,
+    MemberStatusEnum,
     MemberTypeEnum,
     SIGNUP_EMAIL_TOKEN_TTL,
     SIGNUP_MACRO_COUNT,
@@ -183,11 +184,10 @@ class RefreshTokenView(APIView):
 
 
 class SignUpEmailTokenSendView(APIView):
-    @mandatories('email', 'username', 'nickname', 'password2')
+    @mandatories('email', 'nickname', 'password2')
     def post(self, request, m):
         sign_up_email_token_send_request = SignUpEmailTokenSendRequest(
             email=m['email'],
-            username=m['username'],
             nickname=m['nickname'],
             password2=m['password2'],
         )
@@ -196,7 +196,6 @@ class SignUpEmailTokenSendView(APIView):
             value={
                 'one_time_token': generate_random_string_digits(),
                 'email': sign_up_email_token_send_request.email,
-                'username': sign_up_email_token_send_request.username,
                 'nickname': sign_up_email_token_send_request.nickname,
                 'password2': sign_up_email_token_send_request.password2,
             },
@@ -242,11 +241,6 @@ class SignUpEmailTokenValidationEndView(APIView):
             raise SignUpEmailTokenInvalidErrorException(
                 errors={'one_time_token': ['인증번호가 다릅니다.']}
             )
-
-        if check_username_exists(value['username']):
-            raise MemberCreationErrorException(
-                error_summary=MemberCreationExceptionMessage.USERNAME_EXISTS.label
-            )
         if check_nickname_exists(value['nickname']):
             raise MemberCreationErrorException(
                 error_summary=MemberCreationExceptionMessage.NICKNAME_EXISTS.label
@@ -257,10 +251,11 @@ class SignUpEmailTokenValidationEndView(APIView):
             )
 
         member = Member.objects.create_user(
-            username=value['username'],
+            username=value['email'],
             nickname=value['nickname'],
             email=value['email'],
             member_type_id=MemberTypeEnum.NORMAL_MEMBER.value,
+            member_status_id=MemberStatusEnum.NORMAL_MEMBER.value,
             password=value['password2'],
             member_provider_id=MemberProviderEnum.EMAIL.value,
         )
@@ -277,12 +272,11 @@ class SignUpEmailTokenValidationEndView(APIView):
 
 
 class SignUpValidationView(APIView):
-    @mandatories('username', 'email', 'nickname', 'password1', 'password2')
+    @mandatories('email', 'nickname', 'password1', 'password2')
     def post(self, request, m):
         payload = SignUpValidationRequest(
-            username=m['username'],
-            nickname=m['nickname'],
             email=m['email'],
+            nickname=m['nickname'],
             password1=m['password1'],
             password2=m['password2'],
         )

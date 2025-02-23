@@ -266,15 +266,11 @@ paths:
             schema:
               type: object
               required:
-                - username
                 - email
                 - nickname
                 - password1
                 - password2
               properties:
-                username:
-                  type: string
-                  example: "test"
                 email:
                   type: string
                   format: email
@@ -330,7 +326,6 @@ paths:
               type: object
               required:
                 - email
-                - username
                 - nickname
                 - password2
               properties:
@@ -338,9 +333,6 @@ paths:
                   type: string
                   format: email
                   example: "test@naver.com"
-                username:
-                  type: string
-                  example: "username"
                 nickname:
                   type: string
                   example: "nickname"
