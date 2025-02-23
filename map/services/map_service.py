@@ -4,14 +4,24 @@ from typing import (
     Tuple, Type,
 )
 
+from django_redis import get_redis_connection
+
 from common.common_criteria.cursor_criteria import CursorCriteria
 from common.common_paginations.cursor_pagination_helpers import get_objects_with_cursor_pagination
-from django.db.models import QuerySet, Max, Subquery, OuterRef, F
+from django.db.models import (
+    F,
+    OuterRef,
+    QuerySet,
+    Subquery,
+)
 
 from map.consts import PopularMapType
 from map.exceptions import MapNotFoundException
 from map.models import Map, PopularMap
+from map.services.map_share_service import MapShareService
 from subscription.models import MapSubscription
+
+redis_client = get_redis_connection("default")
 
 
 class MapService:
@@ -136,9 +146,12 @@ class MapService:
                 id=map_id,
                 is_deleted=False
             )
-            if map_obj.is_private and map_obj.created_by_id != self.member_id:
-                raise Map.DoesNotExist()
-            return map_obj
+            if not map_obj.is_private:
+                return map_obj
+            if map_obj.created_by_id == self.member_id:
+                return map_obj
+            map_share_service = MapShareService()
+            return map_share_service.validate_share_map(map_id)
         except Map.DoesNotExist:
             raise MapNotFoundException()
 
