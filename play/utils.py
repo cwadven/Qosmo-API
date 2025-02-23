@@ -1,8 +1,11 @@
 import random
+import logging
 from datetime import datetime
+from django_redis import get_redis_connection
 
-from django.conf import settings
-from django.core.cache import cache
+logger = logging.getLogger(__name__)
+
+redis_client = get_redis_connection("default")
 
 
 def generate_invite_code(map_play_id: int, created_at: datetime) -> str:
@@ -33,7 +36,7 @@ def get_invite_code_uses_key(code: str) -> str:
 def get_invite_code_uses(code: str) -> int:
     """Redis에서 초대 코드 사용 횟수 조회"""
     key = get_invite_code_uses_key(code)
-    value = cache.get(key)
+    value = redis_client.get(key)
     return int(value) if value is not None else 0
 
 
@@ -49,15 +52,23 @@ def increment_invite_code_uses(code: str, max_uses: int = None, expired_at: date
         return True
         
     key = get_invite_code_uses_key(code)
-    current_uses = cache.incr(key)
-    
-    # TTL 설정
-    if expired_at:
-        cache.expire(key, int((expired_at - datetime.now()).total_seconds()))
-    
-    # 사용 횟수 초과 시 롤백
-    if current_uses > max_uses:
-        cache.decr(key)
-        return False
+
+    try:
+        current_uses = redis_client.incr(key)
         
-    return True 
+        # TTL 설정
+        if expired_at:
+            ttl = int((expired_at - datetime.now()).total_seconds())
+            if ttl > 0:
+                redis_client.expire(key, ttl)
+        
+        # 사용 횟수 초과 시 롤백
+        if current_uses > max_uses:
+            redis_client.decr(key)
+            return False
+            
+        return True
+        
+    except Exception as e:
+        logger.error(f"Redis operation failed: {str(e)}")
+        raise
