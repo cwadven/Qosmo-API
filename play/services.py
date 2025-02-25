@@ -28,6 +28,7 @@ from play.exceptions import (
     PlayMemberInviteCodeMaxUseException, PlayMemberInvalidInviteCodeException,
     PlayMemberAlreadyDeactivatedInviteCodeException, PlayMemberAlreadyRoleException,
 )
+from subscription.models import MapSubscription
 
 
 class MapPlayService:
@@ -484,6 +485,11 @@ class MapPlayService:
                     member_id=member_id,
                     map_play__map_id=map_id,
                     deactivated=False,
+                ).exists() or
+                MapSubscription.objects.filter(
+                    member_id=member_id,
+                    map_id=map_id,
+                    is_deleted=False,
                 ).exists()
             )
             if not has_access:
