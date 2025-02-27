@@ -16,10 +16,12 @@ from django.db.models import (
 )
 
 from map.consts import PopularMapType
+from map.dtos.map_dtos import MapDTO
 from map.exceptions import MapNotFoundException
 from map.models import Map, PopularMap
 from map.services.map_share_service import MapShareService
 from subscription.models import MapSubscription
+from subscription.services.subscription_service import MapSubscriptionService
 
 redis_client = get_redis_connection("default")
 
@@ -138,7 +140,7 @@ class MapService:
             )
         return queryset.distinct()
 
-    def get_map_detail(self, map_id: int) -> Map:
+    def get_map_detail(self, map_id: int) -> MapDTO:
         try:
             map_obj = Map.objects.select_related(
                 'created_by'
@@ -146,12 +148,29 @@ class MapService:
                 id=map_id,
                 is_deleted=False
             )
+            subscription_service = MapSubscriptionService(member_id=self.member_id)
+            subscription_status = subscription_service.get_subscription_status_by_map_ids([map_id])
+            is_subscribed = subscription_status[map_id]
             if not map_obj.is_private:
-                return map_obj
+                return MapDTO(
+                    map=map_obj,
+                    is_subscribed=is_subscribed,
+                )
             if map_obj.created_by_id == self.member_id:
-                return map_obj
+                return MapDTO(
+                    map=map_obj,
+                    is_subscribed=is_subscribed,
+                )
+            if is_subscribed:
+                return MapDTO(
+                    map=map_obj,
+                    is_subscribed=is_subscribed,
+                )
             map_share_service = MapShareService()
-            return map_share_service.validate_share_map(map_id)
+            return MapDTO(
+                map=map_share_service.validate_share_map(map_id),
+                is_subscribed=is_subscribed,
+            )
         except Map.DoesNotExist:
             raise MapNotFoundException()
 

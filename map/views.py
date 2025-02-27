@@ -90,19 +90,16 @@ class MapDetailView(APIView):
 
     def get(self, request, map_id: int):
         map_service = MapService(member_id=request.guest.member_id)
-        map_obj = map_service.get_map_detail(map_id)
-        subscription_service = MapSubscriptionService(member_id=request.guest.member_id)
-        subscription_status = subscription_service.get_subscription_status_by_map_ids([map_id])
-        is_subscribed = subscription_status[map_id]
+        map_dto = map_service.get_map_detail(map_id)
         nodes = get_nodes_by_map_id(map_id)
 
         return Response(
             BaseFormatResponse(
                 status_code=SuccessStatusCode.SUCCESS.value,
                 data=MapDetailDTO.from_entity(
-                    map_obj,
-                    is_subscribed=is_subscribed,
-                    is_owner=map_obj.created_by_id == request.guest.member_id,
+                    map_dto.map,
+                    is_subscribed=map_dto.is_subscribed,
+                    is_owner=map_dto.map.created_by_id == request.guest.member_id,
                     total_node_count=len(nodes),
                 ).model_dump(),
             ).model_dump(),

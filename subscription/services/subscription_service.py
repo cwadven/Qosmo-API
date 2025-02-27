@@ -25,14 +25,14 @@ class MapSubscriptionService:
 
     def subscribe_map_by_map_id(self, map_id: int) -> bool:
         map_service = MapService(self.member_id)
-        map_detail = map_service.get_map_detail(map_id)
+        map_dto = map_service.get_map_detail(map_id)
 
         if not self.member_id:
             return False
 
         subscription, is_created = MapSubscription.objects.get_or_create(
             member_id=self.member_id,
-            map_id=map_detail.id,
+            map_id=map_dto.map.id,
             defaults={
                 'is_deleted': False
             }
