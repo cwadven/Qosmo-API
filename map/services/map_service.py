@@ -21,7 +21,6 @@ from map.exceptions import MapNotFoundException
 from map.models import Map, PopularMap
 from map.services.map_share_service import MapShareService
 from subscription.models import MapSubscription
-from subscription.services.subscription_service import MapSubscriptionService
 
 redis_client = get_redis_connection("default")
 
@@ -148,6 +147,7 @@ class MapService:
                 id=map_id,
                 is_deleted=False
             )
+            from subscription.services.subscription_service import MapSubscriptionService
             subscription_service = MapSubscriptionService(member_id=self.member_id)
             subscription_status = subscription_service.get_subscription_status_by_map_ids([map_id])
             is_subscribed = subscription_status[map_id]
