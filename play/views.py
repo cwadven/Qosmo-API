@@ -134,8 +134,8 @@ class MapPlayInviteCodeView(APIView):
         invite_codes = service.get_invite_codes(
             map_play_member_id=map_play_member_id,
             member_id=request.guest.member_id,
-            include_inactive=False,
-            include_expired=False,
+            include_inactive=True,
+            include_expired=True,
         )
 
         return Response(
