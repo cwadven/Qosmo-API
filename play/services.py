@@ -558,3 +558,39 @@ class MapPlayService:
         ).order_by(
             'completed_at',
         )
+
+    def get_map_play_members(self, map_play_member_id: int, member_id: int) -> list[MapPlayMember]:
+        """
+        Map Play 멤버 목록 조회
+        
+        Args:
+            map_play_member_id: 맵 플레이 멤버 ID
+            member_id: 조회하는 멤버 ID
+            
+        Returns:
+            list[MapPlayMember]: 맵 플레이 멤버 목록
+            
+        Raises:
+            PlayMemberNotFoundException: 맵 플레이 멤버를 찾을 수 없는 경우
+        """
+        map_play = self._get_map_play_by_map_play_member_id(map_play_member_id)
+        
+        # 본인이 해당 플레이의 멤버인지 확인
+        if not MapPlayMember.objects.filter(
+            map_play_id=map_play.id,
+            member_id=member_id,
+            deactivated=False,
+        ).exists():
+            raise PlayMemberNotFoundException()
+            
+        return list(
+            MapPlayMember.objects.filter(
+                map_play_id=map_play.id,
+                deactivated=False,
+            ).select_related(
+                'member',
+            ).order_by(
+                'role',
+                'created_at',
+            )
+        )

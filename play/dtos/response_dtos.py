@@ -123,3 +123,33 @@ class MapPlayListDTO(BaseModel):
             completed_node_count=completed_node_count,
             recent_activated_nodes=recent_activated_nodes,
         )
+
+
+class MemberInfoDTO(BaseModel):
+    id: int
+    nickname: str
+
+    @classmethod
+    def from_member(cls, member):
+        return cls(
+            id=member.id,
+            nickname=member.nickname,
+        )
+
+
+class MapPlayMemberDetailDTO(BaseModel):
+    id: int
+    member_info: MemberInfoDTO
+    role: MapPlayMemberRole
+    created_at: datetime
+    updated_at: datetime
+
+    @classmethod
+    def from_entity(cls, map_play_member):
+        return cls(
+            id=map_play_member.id,
+            member_info=MemberInfoDTO.from_member(map_play_member.member),
+            role=map_play_member.role,
+            created_at=map_play_member.created_at,
+            updated_at=map_play_member.updated_at,
+        )

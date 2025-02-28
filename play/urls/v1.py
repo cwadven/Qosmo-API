@@ -6,6 +6,7 @@ from play.views import (
     MapPlayMemberBanView,
     MapPlayView,
     MapPlayMemberSelfDeactivateView,
+    MapPlayMemberListView,
 )
 
 
@@ -16,4 +17,5 @@ urlpatterns = [
     path('/<int:map_play_member_id>/member/role', MapPlayMemberRoleView.as_view(), name='map-play-member-role'),
     path('/<int:map_play_member_id>/member/ban', MapPlayMemberBanView.as_view(), name='map-play-member-ban'),
     path('/<int:map_play_member_id>/member/self-deactivate', MapPlayMemberSelfDeactivateView.as_view(), name='map-play-member-self-deactivate'),
+    path('/<int:map_play_member_id>/members', MapPlayMemberListView.as_view(), name='map-play-member-list'),
 ]

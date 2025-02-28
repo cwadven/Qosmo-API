@@ -2393,6 +2393,104 @@ paths:
                     type: object
                     example: {}
 
+  /v1/play/{map_play_member_id}/members:
+    get:
+      tags:
+        - MapPlay
+      summary: Map Play 멤버 목록 조회
+      description: |
+        Map Play의 멤버 목록을 조회합니다.
+        - 본인이 해당 플레이의 멤버인 경우에만 조회 가능합니다.
+        - 멤버 목록은 역할(admin -> participant)과 생성일시 순으로 정렬됩니다.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: map_play_member_id
+          in: path
+          description: Map Play 멤버 ID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: string
+                    description: "상태 코드"
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      members:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              description: Map Play 멤버 ID
+                              example: 1
+                            member_info:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+                                  description: 멤버 ID
+                                  example: 1
+                                nickname:
+                                  type: string
+                                  description: 멤버 닉네임
+                                  example: "비니"
+                            role:
+                              type: string
+                              description: 역할 (admin/participant)
+                              example: "admin"
+                            created_at:
+                              type: string
+                              format: date-time
+                              description: 생성일시
+                              example: "2024-02-05T14:30:00Z"
+                            updated_at:
+                              type: string
+                              format: date-time
+                              description: 수정일시
+                              example: "2024-02-05T14:30:00Z"
+        '403':
+          description: 맵 플레이 멤버를 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                  - status_code
+                  - errors
+                properties:
+                  message:
+                    type: string
+                    description: "에러 메시지"
+                    example: "Map Play 멤버를 찾을 수 없습니다."
+                  status_code:
+                    type: string
+                    description: "에러 코드"
+                    example: "play-member-not-found"
+                  errors:
+                    type: object
+                    nullable: true
+                    additionalProperties:
+                      type: array
+                      items:
+                        type: string
+                    example: null
+
 components:
   schemas:
     NotUserAuthPermission:

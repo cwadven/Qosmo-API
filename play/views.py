@@ -22,6 +22,7 @@ from play.dtos.response_dtos import (
     MapPlayMemberDTO,
     MapPlayInviteCodeDTO,
     MapPlayListDTO, MapPlayRecentActivatedNode,
+    MapPlayMemberDetailDTO,
 )
 from play.services import MapPlayService
 from play.error_messages import PlayInvalidInputResponseErrorStatus
@@ -258,6 +259,33 @@ class MapPlayMemberSelfDeactivateView(APIView):
             BaseFormatResponse(
                 status_code=SuccessStatusCode.SUCCESS.value,
                 data=MapPlayMemberDTO.from_entity(member).model_dump(),
+            ).model_dump(),
+            status=status.HTTP_200_OK,
+        )
+
+
+class MapPlayMemberListView(APIView):
+    permission_classes = [IsMemberLogin]
+
+    def get(self, request, map_play_member_id: int):
+        """
+        Map Play 멤버 목록 조회
+        """
+        service = MapPlayService()
+        members = service.get_map_play_members(
+            map_play_member_id=map_play_member_id,
+            member_id=request.guest.member_id,
+        )
+
+        return Response(
+            BaseFormatResponse(
+                status_code=SuccessStatusCode.SUCCESS.value,
+                data={
+                    'members': [
+                        MapPlayMemberDetailDTO.from_entity(member).model_dump()
+                        for member in members
+                    ]
+                }
             ).model_dump(),
             status=status.HTTP_200_OK,
         )

@@ -55,6 +55,12 @@ class PlayMemberNotFoundException(CommonAPIException):
     default_detail = '존재하지 않거나 이미 비활성화된 멤버입니다.'
 
 
+class PlayMemberNoPermissionException(CommonAPIException):
+    status_code = 403
+    default_code = 'play-member-no-permission'
+    default_detail = '해당 멤버는 이 작업을 수행할 수 없습니다.'
+
+
 class PlayLastAdminException(CommonAPIException):
     status_code = 400
     default_code = 'play-last-admin'
