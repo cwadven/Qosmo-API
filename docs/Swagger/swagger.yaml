@@ -1960,7 +1960,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /v1/play/{map_play_member_id}/member/{member_id}/role:
+  /v1/play/{map_play_member_id}/member/role:
     patch:
       tags:
         - MapPlay
@@ -1974,12 +1974,6 @@ paths:
           schema:
             type: integer
           description: "역할을 변경할 맵 플레이 멤버 ID"
-        - name: member_id
-          in: path
-          required: true
-          schema:
-            type: integer
-          description: "역할을 변경할 플레이 멤버 ID"
       requestBody:
         required: true
         content:
@@ -2037,7 +2031,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /v1/play/{map_play_member_id}/member/{member_id}/ban:
+  /v1/play/{map_play_member_id}/member/ban:
     post:
       tags:
         - MapPlay
@@ -2051,12 +2045,6 @@ paths:
           schema:
             type: integer
           description: "추방할 맵 플레이 멤버 ID"
-        - name: member_id
-          in: path
-          required: true
-          schema:
-            type: integer
-          description: "추방할 플레이 멤버 ID"
       requestBody:
         required: true
         content:

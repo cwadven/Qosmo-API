@@ -7,6 +7,12 @@ class PlayAdminPermissionException(CommonAPIException):
     default_detail = '해당 플레이의 admin만 이 작업을 수행할 수 있습니다.'
 
 
+class PlayAdminCannotChangeRolePermissionException(CommonAPIException):
+    status_code = 403
+    default_code = 'play-admin-cannot-change-role-permission-denied'
+    default_detail = '관리자의 권한은 수정할 수 없습니다.'
+
+
 class PlayMaximumLimitExceededException(CommonAPIException):
     status_code = 400
     default_code = 'play-maximum-limit-exceeded'

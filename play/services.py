@@ -27,6 +27,7 @@ from play.exceptions import (
     PlayMemberFromInviteBannedException,
     PlayMemberInviteCodeMaxUseException, PlayMemberInvalidInviteCodeException,
     PlayMemberAlreadyDeactivatedInviteCodeException, PlayMemberAlreadyRoleException,
+    PlayAdminCannotChangeRolePermissionException,
 )
 from subscription.models import MapSubscription
 
@@ -177,7 +178,12 @@ class MapPlayService:
         ).count()
         return active_admin_count <= 1
 
-    def _validate_admin_action(self, map_play_id: int, member: MapPlayMember, action: str) -> None:
+    def _validate_admin_action(
+            self,
+            map_play_id: int,
+            member: MapPlayMember,
+            action: str,
+    ) -> None:
         """
         admin 관련 액션 검증
         
@@ -298,6 +304,9 @@ class MapPlayService:
         # 현재 역할과 같은 경우
         if map_play_member.role == new_role:
             raise PlayMemberAlreadyRoleException()
+
+        if map_play_member.role == MapPlayMemberRole.ADMIN and not map_play_member.member_id == changed_by_id:
+            raise PlayAdminCannotChangeRolePermissionException()
 
         # admin -> participant 변경 시 최소 1명의 admin 유지 확인
         if map_play_member.role == MapPlayMemberRole.ADMIN and new_role == MapPlayMemberRole.PARTICIPANT:
