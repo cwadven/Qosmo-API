@@ -58,7 +58,7 @@ def increment_invite_code_uses(code: str, max_uses: int = None, expired_at: date
         
         # TTL 설정
         if expired_at:
-            ttl = int((expired_at - datetime.now()).total_seconds())
+            ttl = int((datetime.combine(expired_at, datetime.max.time()) - datetime.now()).total_seconds())
             if ttl > 0:
                 redis_client.expire(key, ttl)
         

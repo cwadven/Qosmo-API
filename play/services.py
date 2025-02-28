@@ -424,7 +424,7 @@ class MapPlayService:
             raise PlayMemberInvalidInviteCodeException()
 
         # 만료 여부 확인 expired_at max 날짜
-        if invite_code.expired_at and datetime.combine(invite_code.expired_at.date(), datetime.max.time()) < timezone.now():
+        if invite_code.expired_at and datetime.combine(invite_code.expired_at.date(), datetime.max.time()) < datetime.now():
             raise PlayMemberAlreadyDeactivatedInviteCodeException()
 
         # 사용 횟수 초과 여부 확인
