@@ -1,12 +1,14 @@
 from datetime import datetime
 from typing import Optional, Tuple
 
+import pytz
 from django.db import transaction
 from django.utils import timezone
 from django.db.models import F, Q, QuerySet
 
 from map.exceptions import MapNotFoundException
 from map.models import Map, NodeCompletedHistory
+from member.models import Guest
 from play.consts import MapPlayMemberRole, MapPlayMemberDeactivateReason
 from play.models import (
     MapPlay,
@@ -29,6 +31,7 @@ from play.exceptions import (
     PlayMemberAlreadyDeactivatedInviteCodeException, PlayMemberAlreadyRoleException,
     PlayAdminCannotChangeRolePermissionException,
 )
+from push.services import PushService
 from subscription.models import MapSubscription
 
 
@@ -312,6 +315,23 @@ class MapPlayService:
         if map_play_member.role == MapPlayMemberRole.ADMIN and new_role == MapPlayMemberRole.PARTICIPANT:
             self._validate_admin_action(map_play_member.map_play_id, map_play_member, "역할 변경")
 
+        if map_play_member.role == MapPlayMemberRole.ADMIN:
+            guest = Guest.objects.get(
+                member_id=map_play_member.member_id,
+                member__is_active=True,
+            )
+            push_service = PushService()
+            push_service.send_push(
+                guest_id=guest.id,
+                title=f"\'{map_play_member.map_play.map.name}\' 권한 변경",
+                body=f"{map_play_member.map_play.title} 의 권한이 {MapPlayMemberRole.ADMIN.label}로 변경되었습니다.",
+                data={
+                    "type": "play_member_role_changed",
+                    "map_id": str(map_play_member.map_play.map_id),
+                    "map_play_member_id": str(map_play_member.id),
+                },
+            )
+
         # 역할 변경 이력 생성
         MapPlayMemberRoleHistory.objects.create(
             map_play_member=map_play_member,
@@ -433,8 +453,15 @@ class MapPlayService:
             raise PlayMemberInvalidInviteCodeException()
 
         # 만료 여부 확인 expired_at max 날짜
-        if invite_code.expired_at and datetime.combine(invite_code.expired_at.date(), datetime.max.time()) < datetime.now():
-            raise PlayMemberAlreadyDeactivatedInviteCodeException()
+        if invite_code.expired_at:
+            korea_tz = pytz.timezone('Asia/Seoul')
+            expired_at_kst = invite_code.expired_at.astimezone(korea_tz)
+            expired_at_kst_end = timezone.make_aware(
+                datetime.combine(expired_at_kst.date(), datetime.max.time()),
+                korea_tz,
+            )
+            if expired_at_kst_end < timezone.now():
+                raise PlayMemberAlreadyDeactivatedInviteCodeException()
 
         # 사용 횟수 초과 여부 확인
         if (

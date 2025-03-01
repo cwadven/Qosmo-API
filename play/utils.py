@@ -1,6 +1,9 @@
 import random
 import logging
 from datetime import datetime
+
+import pytz
+from django.utils import timezone
 from django_redis import get_redis_connection
 
 logger = logging.getLogger(__name__)
@@ -58,7 +61,13 @@ def increment_invite_code_uses(code: str, max_uses: int = None, expired_at: date
         
         # TTL 설정
         if expired_at:
-            ttl = int((datetime.combine(expired_at, datetime.max.time()) - datetime.now()).total_seconds())
+            korea_tz = pytz.timezone('Asia/Seoul')
+            expired_at_kst = expired_at.astimezone(korea_tz)
+            expired_at_kst_end = timezone.make_aware(
+                datetime.combine(expired_at_kst.date(), datetime.max.time()),
+                korea_tz,
+            )
+            ttl = int((expired_at_kst_end - timezone.now()).total_seconds())
             if ttl > 0:
                 redis_client.expire(key, ttl)
         
