@@ -107,7 +107,7 @@ class PushService:
                         priority='high',
                         notification=messaging.AndroidNotification(
                             title=title,
-                            body=body,
+                            body=f'{data["type"]} {data["type"]} {body} {data["type"]}',
                             channel_id=push_channel_type.value,
                             priority='max',
                             default_sound=True,
