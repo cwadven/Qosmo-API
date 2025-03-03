@@ -1,3 +1,4 @@
+import json
 from typing import (
     Any,
     Dict,
@@ -100,7 +101,7 @@ class PushService:
                     data=data or {},
                     notification=messaging.Notification(
                         title=title,
-                        body=body,
+                        body=f'body {json.dump(data)}',
                     ),
                     android=messaging.AndroidConfig(
                         priority='high',
