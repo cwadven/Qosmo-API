@@ -175,22 +175,20 @@ class PushService:
             if not self.validate_token(token):
                 raise ValueError('Invalid FCM token')
 
+            # 데이터에 title과 body 추가
+            message_data = data or {}
+            message_data.update({
+                'title': title,
+                'body': body,
+                'notification_title': title,
+                'notification_body': body,
+            })
+
             message = messaging.Message(
-                data=data or {},
-                notification=messaging.Notification(
-                    title=title,
-                    body=body,
-                ),
+                data=message_data,  # notification 키 없이 data만 사용
                 android=messaging.AndroidConfig(
                     priority='high',
-                    notification=messaging.AndroidNotification(
-                        channel_id='default',
-                        priority='max',
-                        default_sound=True,
-                        default_vibrate_timings=True,
-                        click_action='OPEN_ACTIVITY_1',
-                    ),
-                    data=data or {},
+                    ttl=86400,  # 24시간
                 ),
                 token=token,
             )
