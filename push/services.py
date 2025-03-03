@@ -8,6 +8,7 @@ from typing import (
 from firebase_admin import messaging
 from firebase_admin.exceptions import FirebaseError
 
+from push.consts import PushChannelType
 from push.models import (
     DeviceToken,
     PushHistory,
@@ -73,6 +74,7 @@ class PushService:
         guest_id: int,
         title: str,
         body: str,
+        push_channel_type: PushChannelType = PushChannelType.DEFAULT,
         data: Optional[Dict[str, Any]] = None,
     ) -> List[PushHistory]:
         """
@@ -103,7 +105,7 @@ class PushService:
                     android=messaging.AndroidConfig(
                         priority='high',
                         notification=messaging.AndroidNotification(
-                            channel_id='default',
+                            channel_id=push_channel_type.value,
                             priority='max',
                             default_sound=True,
                             default_vibrate_timings=True,
@@ -170,6 +172,7 @@ class PushService:
         token: str,
         title: str,
         body: str,
+        push_channel_type: str = 'default',
         data: Optional[Dict[str, Any]] = None,
     ) -> Tuple[bool, Any]:
         """Firebase 푸시 알림 전송"""
@@ -186,7 +189,7 @@ class PushService:
                 android=messaging.AndroidConfig(
                     priority='high',
                     notification=messaging.AndroidNotification(
-                        channel_id='default',
+                        channel_id=push_channel_type.value,
                         priority='max',
                         default_sound=True,
                         default_vibrate_timings=True,
@@ -211,6 +214,7 @@ class PushService:
         guest_ids: List[int],
         title: str,
         body: str,
+        push_channel_type: PushChannelType = PushChannelType.DEFAULT,
         data: Optional[Dict[str, Any]] = None,
     ) -> List[PushHistory]:
         """
@@ -218,6 +222,12 @@ class PushService:
         """
         all_histories = []
         for guest_id in guest_ids:
-            histories = self.send_push(guest_id, title, body, data)
+            histories = self.send_push(
+                guest_id,
+                title,
+                body,
+                push_channel_type,
+                data,
+            )
             all_histories.extend(histories)
         return all_histories 

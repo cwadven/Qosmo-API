@@ -12,6 +12,7 @@ from django.utils import timezone
 
 from map.models import Arrow
 from member.models import Guest
+from push.consts import PushChannelType
 from question.consts import QuestionType
 from question.forms.admin_forms import QuestionFileAdminForm
 from question.forms.client_forms import FeedbackForm
@@ -169,6 +170,7 @@ class UserQuestionAnswerAdmin(admin.ModelAdmin):
                             guest_id=guest.id,
                             title=f"\'{user_answer.question.title}\' 문제 결과",
                             body=feedback_obj.feedback,
+                            push_channel_type=PushChannelType.QUESTION_FEEDBACK,
                             data={
                                 "type": "question_feedback",
                                 "question_id": str(user_answer.question.id),

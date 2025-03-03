@@ -31,6 +31,7 @@ from play.exceptions import (
     PlayMemberAlreadyDeactivatedInviteCodeException, PlayMemberAlreadyRoleException,
     PlayAdminCannotChangeRolePermissionException,
 )
+from push.consts import PushChannelType
 from push.services import PushService
 from subscription.models import MapSubscription
 
@@ -325,6 +326,7 @@ class MapPlayService:
                 guest_id=guest.id,
                 title=f"\'{map_play_member.map_play.map.name}\' 권한 변경",
                 body=f"{map_play_member.map_play.title} 의 권한이 {MapPlayMemberRole.ADMIN.label}로 변경되었습니다.",
+                push_channel_type=PushChannelType.ROLE_CHANGE,
                 data={
                     "type": "play_member_role_changed",
                     "map_id": str(map_play_member.map_play.map_id),
