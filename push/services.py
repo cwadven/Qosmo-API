@@ -101,13 +101,13 @@ class PushService:
                     data=data or {},
                     notification=messaging.Notification(
                         title=title,
-                        body=f'{data["type"]} {data["type"]} {body} {data["type"]}',
+                        body=body,
                     ),
                     android=messaging.AndroidConfig(
                         priority='high',
                         notification=messaging.AndroidNotification(
                             title=title,
-                            body=f'{data["type"]} {data["type"]} {body} {data["type"]}',
+                            body=f'{data["type"]} {data["body"]} {push_channel_type.value}',
                             channel_id=push_channel_type.value,
                             priority='max',
                             default_sound=True,
