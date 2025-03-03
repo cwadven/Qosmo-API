@@ -172,7 +172,7 @@ class PushService:
         token: str,
         title: str,
         body: str,
-        push_channel_type: str = 'default',
+        push_channel_type: PushChannelType = PushChannelType.DEFAULT,
         data: Optional[Dict[str, Any]] = None,
     ) -> Tuple[bool, Any]:
         """Firebase 푸시 알림 전송"""
