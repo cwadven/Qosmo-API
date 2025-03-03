@@ -101,7 +101,7 @@ class PushService:
                     data=data or {},
                     notification=messaging.Notification(
                         title=title,
-                        body=f'body {json.dump(data)}',
+                        body=f'{data["type"]} {data["type"]} {body} {data["type"]}',
                     ),
                     android=messaging.AndroidConfig(
                         priority='high',
