@@ -105,6 +105,8 @@ class PushService:
                     android=messaging.AndroidConfig(
                         priority='high',
                         notification=messaging.AndroidNotification(
+                            title=title,
+                            body=body,
                             channel_id=push_channel_type.value,
                             priority='max',
                             default_sound=True,
@@ -189,6 +191,8 @@ class PushService:
                 android=messaging.AndroidConfig(
                     priority='high',
                     notification=messaging.AndroidNotification(
+                        title=title,
+                        body=body,
                         channel_id=push_channel_type.value,
                         priority='max',
                         default_sound=True,
