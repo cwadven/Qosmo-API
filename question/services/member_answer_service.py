@@ -168,14 +168,15 @@ class MemberAnswerService:
                         'id',
                         flat=True,
                     )
-                    completed_arrow_ids = ArrowProgress.objects.filter(
-                        arrow__in=rule_arrow_ids,
-                        member_id=self.member_id,
-                        map_play_member_id=self.map_play_member_id,
-                        is_resolved=True
-                    ).values_list(
-                        'arrow_id',
-                        flat=True,
+                    completed_arrow_ids = set(
+                        ArrowProgress.objects.filter(
+                            arrow__in=rule_arrow_ids,
+                            map_play_member__map_play_id=self.map_play_id,
+                            is_resolved=True
+                        ).values_list(
+                            'arrow_id',
+                            flat=True,
+                        )
                     )
 
                     # 모든 Arrow가 completed 상태인 경우 NodeCompletionService 호출
@@ -183,6 +184,7 @@ class MemberAnswerService:
                         node_completion_service = NodeCompletionService(
                             member_id=self.member_id,
                             map_play_member_id=self.map_play_member_id,
+                            map_play_id=self.map_play_id,
                         )
                         completion_result = node_completion_service.process_nodes_completion(nodes=[arrow.start_node])
 

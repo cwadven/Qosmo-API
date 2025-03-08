@@ -554,7 +554,7 @@ class MapPlayService:
             map_id: 맵 ID
             member_id: 접근하려는 멤버 ID
             map_play_member_id: 조회하려는 맵 플레이 멤버 ID (Optional)
-            
+
         Returns:
             Map: 검증된 Map 객체
             
