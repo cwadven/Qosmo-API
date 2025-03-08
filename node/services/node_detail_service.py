@@ -5,7 +5,7 @@ from typing import (
     Set,
 )
 
-from django.db.models import F
+from django.db.models import F, Q
 
 from map.models import (
     Arrow,
@@ -54,6 +54,27 @@ def get_map_play_member_completed_question_ids(
     )
 
 
+def get_map_play_completed_question_ids(
+        map_play_id: Optional[int],
+        question_ids: List[int]
+) -> Set[int]:
+    if not map_play_id:
+        return set()
+    if not question_ids:
+        return set()
+
+    return set(
+        ArrowProgress.objects.filter(
+            arrow__question_id__in=question_ids,
+            is_resolved=True,
+            map_play_member__map_play_id=map_play_id,
+        ).values_list(
+            'arrow__question_id',
+            flat=True,
+        )
+    )
+
+
 def get_map_play_member_completed_arrow_ids(
         map_play_member_id: int,
         arrow_ids: List[int],
@@ -74,6 +95,26 @@ def get_map_play_member_completed_arrow_ids(
     )
 
 
+def get_map_play_completed_arrow_ids(
+        map_play_id: Optional[int],
+        arrow_ids: List[int],
+) -> Set[int]:
+    if not map_play_id:
+        return set()
+    if not arrow_ids:
+        return set()
+    return set(
+        ArrowProgress.objects.filter(
+            arrow_id__in=arrow_ids,
+            is_resolved=True,
+            map_play_member__map_play_id=map_play_id,
+        ).values_list(
+            'arrow_id',
+            flat=True,
+        )
+    )
+
+
 def get_map_play_member_completed_node_ids(
         map_play_member_id: int,
         node_ids: List[int],
@@ -85,6 +126,25 @@ def get_map_play_member_completed_node_ids(
     return set(
         NodeCompletedHistory.objects.filter(
             map_play_member_id=map_play_member_id,
+            node_id__in=node_ids,
+        ).values_list(
+            'node_id',
+            flat=True,
+        )
+    )
+
+
+def get_map_play_completed_node_ids(
+        map_play_id: Optional[int],
+        node_ids: List[int],
+) -> Set[int]:
+    if not map_play_id:
+        return set()
+    if not node_ids:
+        return set()
+    return set(
+        NodeCompletedHistory.objects.filter(
+            map_play_member__map_play_id=map_play_id,
             node_id__in=node_ids,
         ).values_list(
             'node_id',
@@ -128,11 +188,23 @@ def find_activatable_node_ids_after_completion(
 class NodeDetailService:
     def __init__(self, member_id: Optional[int] = None, map_play_member_id: Optional[int] = None):
         self.member_id = member_id
-        self.map_play_member = MapPlayMember.objects.filter(id=map_play_member_id).first() if map_play_member_id else None
+        self.map_play_member = (
+            MapPlayMember.objects.select_related(
+                'map_play',
+            ).filter(
+                id=map_play_member_id,
+            ).first()
+            if map_play_member_id else None
+        )
+        self.map_play = self.map_play_member.map_play if self.map_play_member else None
 
     @property
     def map_play_member_id(self):
         return self.map_play_member.id if self.map_play_member else None
+
+    @property
+    def map_play_id(self):
+        return self.map_play.id if self.map_play else None
 
     def get_node_detail(self, node_id: int) -> NodeDetailDTO:
         try:
@@ -161,25 +233,27 @@ class NodeDetailService:
         # Rule별 Question 매핑
         questions_by_rule_id = {}
         questions = []
-        member_completed_arrow_ids = get_map_play_member_completed_arrow_ids(
-            self.map_play_member_id,
+        members_completed_arrow_ids = get_map_play_completed_arrow_ids(
+            self.map_play_id,
             [arrow.id for arrow in arrows]
         )
-        user_question_answers = UserQuestionAnswer.objects.select_related(
-            'reviewed_by'
+        users_question_answers = UserQuestionAnswer.objects.select_related(
+            'reviewed_by',
+            'member',
         ).filter(
-            map_play_member_id=self.map_play_member_id,
+            Q(map_play_member_id=self.map_play_member_id) | Q(is_correct=True),
         ).prefetch_related(
             'files',
         ).order_by(
+            '-is_correct',
             '-created_at',
         )
-        my_answers_by_question_id = {}
-        for user_question_answer in user_question_answers:
-            if user_question_answer.question_id not in my_answers_by_question_id:
-                my_answers_by_question_id[user_question_answer.question_id] = []
-            my_answers_by_question_id[user_question_answer.question_id].append(
-                MyAnswerDTO.from_answer(user_question_answer)
+        users_answers_by_question_id = {}
+        for users_question_answer in users_question_answers:
+            if users_question_answer.question_id not in users_answers_by_question_id:
+                users_answers_by_question_id[users_question_answer.question_id] = []
+            users_answers_by_question_id[users_question_answer.question_id].append(
+                MyAnswerDTO.from_answer(users_question_answer)
             )
 
         is_start_node = all([arrow.start_node_id == arrow.end_node_id for arrow in arrows])
@@ -188,12 +262,12 @@ class NodeDetailService:
                 questions.append(arrow.question)
 
         question_ids = [question.id for question in questions]
-        member_completed_question_ids = get_map_play_member_completed_question_ids(
-            self.map_play_member_id,
+        members_completed_question_ids = get_map_play_completed_question_ids(
+            self.map_play_id,
             question_ids
         )
-        member_completed_node_ids = get_map_play_member_completed_node_ids(
-            self.map_play_member_id,
+        members_completed_node_ids = get_map_play_completed_node_ids(
+            self.map_play_id,
             # 현재 노드도 포함
             [arrow.start_node_id for arrow in arrows] + [node_id]
         )
@@ -205,9 +279,9 @@ class NodeDetailService:
         # 해결된 Node 면 completed
         # 아니면 locked
         node_status = 'locked'
-        if node.id in member_completed_node_ids:
+        if node.id in members_completed_node_ids:
             node_status = 'completed'
-        elif bool(len({arrow.id for arrow in arrows} & member_completed_arrow_ids)):
+        elif bool(len({arrow.id for arrow in arrows} & members_completed_arrow_ids)):
             node_status = 'in_progress'
         elif is_start_node:
             node_status = 'in_progress'
@@ -246,11 +320,11 @@ class NodeDetailService:
                 question_dtos_by_rule_id[arrow.node_complete_rule_id] = []
 
             question_status = 'locked'
-            if arrow.question_id in member_completed_question_ids:
+            if arrow.question_id in members_completed_question_ids:
                 question_status = 'completed'
             elif is_start_node:
                 question_status = 'in_progress'
-            elif arrow.start_node_id in member_completed_node_ids:
+            elif arrow.start_node_id in members_completed_node_ids:
                 question_status = 'in_progress'
             # Rule 안에 있에서 통해서 오는 것들이 전부다 해결이 됐어야 문제를 풀수 있도록 해야함
             elif arrow.start_node_id == arrow.end_node_id and node_status == 'in_progress':
@@ -284,7 +358,7 @@ class NodeDetailService:
                         answer_submit_with_text=QuestionType.TEXT.value in arrow.question.question_types,
                         answer_submit_with_file=QuestionType.FILE.value in arrow.question.question_types,
                         answer_submittable=answer_submittable,
-                        my_answers=my_answers_by_question_id.get(arrow.question_id, []),
+                        my_answers=users_answers_by_question_id.get(arrow.question_id, []),
                     )
                 )
 
@@ -301,7 +375,7 @@ class NodeDetailService:
                         question_files=[],
                         status=(
                             'completed'
-                            if (arrow.start_node_id in member_completed_node_ids)
+                            if (arrow.start_node_id in members_completed_node_ids)
                             else 'locked'
                         ),
                         by_node_id=arrow.start_node_id,
@@ -378,12 +452,17 @@ class NodeDetailService:
         return activated_count, completed_count
 
     def _get_node_completed_in_map_play_count(self, node_id: int) -> int:
+        if not self.map_play_member:
+            return 0
+
         return NodeCompletedHistory.objects.filter(
             node_id=node_id,
             map_play_member__map_play_id=self.map_play_member.map_play_id,
         ).count()
 
     def _get_before_node_solved_in_map_play_count(self, node_id: int) -> int:
+        if not self.map_play_member:
+            return 0
         start_node_ids = set(
             Arrow.objects.filter(
                 end_node_id=node_id,

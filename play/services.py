@@ -37,16 +37,20 @@ from subscription.models import MapSubscription
 
 
 class MapPlayService:
+    def _get_map_play_member_by_id(self, map_play_member_id: int) -> MapPlayMember:
+        """
+        맵 플레이 멤버 조회
+        """
+        try:
+            return MapPlayMember.objects.get(id=map_play_member_id, deactivated=False)
+        except MapPlayMember.DoesNotExist:
+            raise PlayMemberNotFoundException()
+
     def _get_map_play_by_map_play_member_id(self, map_play_member_id: int) -> MapPlay:
         """
         맵 플레이 조회
         """
-        try:
-            return MapPlayMember.objects.get(
-                id=map_play_member_id,
-            ).map_play
-        except MapPlayMember.DoesNotExist:
-            raise PlayMemberNotFoundException()
+        return self._get_map_play_member_by_id(map_play_member_id).map_play
 
     def _validate_map_play_limit(self, map_id: int, member_id: int) -> None:
         """
@@ -578,7 +582,7 @@ class MapPlayService:
         특정 맵 플레이의 완료된 노드 이력을 조회합니다.
         """
         return NodeCompletedHistory.objects.filter(
-            map_play_id=map_play_id,
+            map_play_member__map_play_id=map_play_id,
         ).select_related(
             'node__map',
         ).order_by(

@@ -16,10 +16,17 @@ from map.models.node_history import NodeCompletedHistory
 
 
 class MemberAnswerService:
-    def __init__(self, question: Question, member_id: int, map_play_member_id: int):
+    def __init__(
+            self,
+            question: Question,
+            member_id: int,
+            map_play_member_id: int,
+            map_play_id: int
+    ):
         self.question = question
         self.member_id = member_id
         self.map_play_member_id = map_play_member_id
+        self.map_play_id = map_play_id
         self._permission_checked = False
         self._not_completed_node_names = None
         self.new_arrow_progresses = []
@@ -61,7 +68,7 @@ class MemberAnswerService:
         from_before_arrows_node_completed_ids = NodeCompletedHistory.objects.filter(
             map_id=self.question.map_id,
             node_id__in=from_before_arrows.values_list('start_node_id', flat=True),
-            map_play_member_id=self.map_play_member_id,
+            map_play_member__map_play_id=self.map_play_id,
         ).values_list('node_id', flat=True)
 
         not_completed_node_ids = set(from_before_arrows.values_list('start_node_id', flat=True)) - set(from_before_arrows_node_completed_ids)

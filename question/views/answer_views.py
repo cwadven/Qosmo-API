@@ -48,16 +48,18 @@ class AnswerSubmitView(APIView):
         except Question.DoesNotExist:
             raise QuestionNotFoundException()
 
+        map_play_member = self.map_play_service._get_map_play_member_by_id(map_play_member_id)
         self.map_play_service.validate_map_and_play_member_access(
             question.map_id,
             request.guest.member_id,
-            map_play_member_id,
+            map_play_member.id,
         )
 
         member_answer_service = MemberAnswerService(
             question=question,
             member_id=request.guest.member_id,
             map_play_member_id=map_play_member_id,
+            map_play_id=map_play_member.map_play_id,
         )
 
         # 답변 제출 권한 체크

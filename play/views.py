@@ -38,16 +38,19 @@ class MapPlayView(APIView):
             member_id=request.guest.member_id,
         )
         completed_node_histories_by_map_play_member_id = defaultdict(list)
+        map_play_member_id_by_map_play_id = {
+            map_play_member.map_play_id: map_play_member.id for map_play_member in map_play_members
+        }
         nch = NodeCompletedHistory.objects.filter(
             map_id=map_id,
-            member_id=request.guest.member_id,
+            map_play_member__map_play_id__in={map_play_member.map_play_id for map_play_member in map_play_members},
         ).select_related(
             'node',
         ).order_by(
             '-completed_at'
         )
         for history in nch:
-            completed_node_histories_by_map_play_member_id[history.map_play_member_id].append(history)
+            completed_node_histories_by_map_play_member_id[map_play_member_id_by_map_play_id[history.map_play_member.map_play_id]].append(history)
 
         return Response(
             BaseFormatResponse(

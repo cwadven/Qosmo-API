@@ -66,7 +66,9 @@ class MapGraphService:
         """
         if not map_play_member_id:
             return []
-        completed_histories = self.map_play_service.get_map_play_member_completed_node_histories(map_play_member_id)
+        completed_histories = self.map_play_service.get_map_play_completed_node_histories(
+            self.map_play_service._get_map_play_member_by_id(map_play_member_id).map_play_id
+        )
         completed_nodes_dict = {
             history.node.id: history.node
             for history in completed_histories
