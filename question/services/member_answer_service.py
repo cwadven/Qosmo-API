@@ -5,6 +5,10 @@ from django.utils import timezone
 from django.db import transaction
 
 from map.models import ArrowProgress, Node
+from member.models import Guest
+from play.models import MapPlayMember
+from push.consts import PushChannelType
+from push.services import PushService
 from question.dtos.member_answer_file import MemberAnswerFileDto
 from question.dtos.node_completion import NodeCompletionResultDto
 from question.exceptions import AnswerPermissionDeniedException
@@ -185,6 +189,33 @@ class MemberAnswerService:
                         # 결과 누적
                         self.new_arrow_progresses.extend(completion_result.new_arrow_progresses)
                         self.new_completed_node_histories.extend(completion_result.new_completed_node_histories)
+
+                push_service = PushService()
+                map_play_members = MapPlayMember.objects.filter(
+                    map_play_id=self.map_play_id,
+                    deactivated=False,
+                ).exclude(
+                    member_id=self.member_id,
+                )
+                if map_play_members:
+                    guests = Guest.objects.filter(
+                        member_id__in=[map_play_member.member_id for map_play_member in map_play_members],
+                        member__is_active=True,
+                    )
+                    for guest in guests:
+                        push_service.send_push(
+                            guest_id=guest.id,
+                            title=f"\'{user_answer.question.title}\' 문제 해결",
+                            body=f"{user_answer.member.nickname}님이 문제를 해결했습니다.",
+                            push_channel_type=PushChannelType.QUESTION_SOLVED_ALERT,
+                            data={
+                                "type": "question_solved_alert",
+                                "question_id": str(user_answer.question.id),
+                                "map_id": str(arrow.map_id),
+                                "map_play_id": str(user_answer.map_play_member.map_play_id),
+                                "is_correct": True,
+                            },
+                        )
 
             return user_answer
 
