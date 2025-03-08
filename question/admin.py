@@ -12,6 +12,7 @@ from django.utils import timezone
 
 from map.models import Arrow
 from member.models import Guest
+from play.models import MapPlayMember
 from push.consts import PushChannelType
 from question.consts import QuestionType
 from question.forms.admin_forms import QuestionFileAdminForm
@@ -162,12 +163,19 @@ class UserQuestionAnswerAdmin(admin.ModelAdmin):
                             node_completion_service.process_nodes_completion(
                                 nodes=[arrow.start_node]
                             )
-
+                    map_play_members = MapPlayMember.objects.filter(
+                        map_play_id=user_answer.map_play_member.map_play.id,
+                        deactivated=False,
+                    )
                     try:
-                        guest = Guest.objects.get(member_id=user_answer.member_id, member__is_active=True)
                         push_service = PushService()
+
+                        answer_owner = Guest.objects.get(
+                            member_id=user_answer.member_id,
+                            member__is_active=True,
+                        )
                         push_service.send_push(
-                            guest_id=guest.id,
+                            guest_id=answer_owner.id,
                             title=f"\'{user_answer.question.title}\' 문제 결과",
                             body=feedback_obj.feedback,
                             push_channel_type=PushChannelType.QUESTION_FEEDBACK,
@@ -179,6 +187,28 @@ class UserQuestionAnswerAdmin(admin.ModelAdmin):
                                 "is_correct": str(feedback_obj.is_correct).lower(),
                             },
                         )
+
+                        if feedback_obj.is_correct:
+                            guests = Guest.objects.filter(
+                                member_id__in=[map_play_member.member_id for map_play_member in map_play_members],
+                                member__is_active=True,
+                            ).exclude(
+                                member_id=user_answer.member_id,
+                            )
+                            for guest in guests:
+                                push_service.send_push(
+                                    guest_id=guest.id,
+                                    title=f"\'{user_answer.question.title}\' 문제 해결",
+                                    body=f"{user_answer.member.nickname}님이 문제를 해결했습니다.",
+                                    push_channel_type=PushChannelType.QUESTION_SOLVED_ALERT,
+                                    data={
+                                        "type": "question_solved_alert",
+                                        "question_id": str(user_answer.question.id),
+                                        "map_id": str(arrow.map_id),
+                                        "map_play_id": str(user_answer.map_play_member.map_play_id),
+                                        "is_correct": True,
+                                    },
+                                )
                     except (Guest.DoesNotExist, Arrow.DoesNotExist):
                         pass
 
