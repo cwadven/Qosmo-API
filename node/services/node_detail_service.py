@@ -245,7 +245,7 @@ class NodeDetailService:
         ).prefetch_related(
             'files',
         ).order_by(
-            '-is_correct',
+            'is_correct',
             '-created_at',
         )
         users_answers_by_question_id = {}
