@@ -15,6 +15,7 @@ from question.exceptions import AnswerPermissionDeniedException
 from question.models import Question, UserQuestionAnswer, UserQuestionAnswerFile
 from question.services.answer_validation_service import AnswerValidationService
 from question.services.node_completion_service import NodeCompletionService
+from question.tasks import send_question_submitted_email
 from map.models.arrow import Arrow
 from map.models.node_history import NodeCompletedHistory
 
@@ -133,6 +134,23 @@ class MemberAnswerService:
                     for file in files
                 ]
                 UserQuestionAnswerFile.objects.bulk_create(answer_files)
+
+            # 관리자 수동 검증이 필요한 경우 email 전송
+            if is_correct is None:
+                send_question_submitted_email.apply_async(
+                    (
+                        [self.question.map.created_by.email],
+                        user_answer.member.nickname,
+                        self.question.map.name,
+                        self.question.title,
+                        answer,
+                        [
+                            {'name': file.name, 'url': file.url}
+                            for file in files
+                        ],
+                        user_answer.id,
+                     )
+                )
 
             # 정답인 경우 Arrow 진행 상태 처리
             if is_correct:
