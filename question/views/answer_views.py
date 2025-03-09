@@ -137,3 +137,59 @@ class AnswerSubmitView(APIView):
         )
 
         return Response(response_dto.model_dump(), status=status.HTTP_201_CREATED)
+
+
+class UserQuestionAnswerDetailView(APIView):
+    """
+    사용자의 문제 답변 상세 조회 API
+    """
+    permission_classes = [IsMemberLogin]
+
+    def get(self, request, user_question_answer_id: int):
+        """
+        사용자의 문제 답변 상세 정보를 조회합니다.
+        - 답변 작성자 본인 또는 Map 생성자만 조회 가능합니다.
+        """
+        from question.services.member_answer_service import MemberAnswerService
+        answer = MemberAnswerService.get_answer_detail(
+            user_question_answer_id=user_question_answer_id,
+            member_id=request.guest.member_id,
+        )
+
+        return Response(
+            BaseFormatResponse(
+                status_code='success',
+                data={
+                    'id': answer.id,
+                    'question': {
+                        'id': answer.question.id,
+                        'title': answer.question.title,
+                        'description': answer.question.description,
+                    },
+                    'member': {
+                        'id': answer.map_play_member.member.id,
+                        'nickname': answer.map_play_member.member.nickname,
+                    },
+                    'answer': answer.answer,
+                    'files': [
+                        {
+                            'id': file.id,
+                            'name': file.name,
+                            'file': file.file,
+                        }
+                        for file in answer.files.filter(
+                            is_deleted=False,
+                        )
+                    ],
+                    'is_correct': answer.is_correct,
+                    'feedback': answer.feedback,
+                    'reviewed_by': {
+                        'id': answer.reviewed_by.id,
+                        'nickname': answer.reviewed_by.nickname,
+                    } if answer.reviewed_by else None,
+                    'reviewed_at': answer.reviewed_at,
+                    'submitted_at': answer.created_at,
+                }
+            ).model_dump(),
+            status=status.HTTP_200_OK,
+        )

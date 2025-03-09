@@ -11,7 +11,7 @@ from push.consts import PushChannelType
 from push.services import PushService
 from question.dtos.member_answer_file import MemberAnswerFileDto
 from question.dtos.node_completion import NodeCompletionResultDto
-from question.exceptions import AnswerPermissionDeniedException
+from question.exceptions import AnswerPermissionDeniedException, AnswerNotFoundException
 from question.models import Question, UserQuestionAnswer, UserQuestionAnswerFile
 from question.services.answer_validation_service import AnswerValidationService
 from question.services.node_completion_service import NodeCompletionService
@@ -248,3 +248,40 @@ class MemberAnswerService:
             new_arrow_progresses=self.new_arrow_progresses,
             new_completed_node_histories=self.new_completed_node_histories
         )
+
+    @staticmethod
+    def get_answer_detail(user_question_answer_id: int, member_id: int) -> 'UserQuestionAnswer':
+        """
+        사용자의 문제 답변 상세 정보를 조회합니다.
+        
+        Args:
+            user_question_answer_id: 조회할 답변 ID
+            member_id: 조회하는 사용자 ID
+            
+        Returns:
+            UserQuestionAnswer: 답변 상세 정보
+            
+        Raises:
+            AnswerPermissionDeniedException: 조회 권한이 없는 경우
+            AnswerNotFoundException: 답변을 찾을 수 없는 경우
+        """
+        try:
+            answer = UserQuestionAnswer.objects.select_related(
+                'question',
+                'map_play_member',
+                'map_play_member__member',
+                'reviewed_by',
+            ).prefetch_related(
+                'files',
+            ).get(
+                id=user_question_answer_id,
+            )
+            
+            # 답변 작성자 본인 또는 Map 생성자만 조회 가능
+            if member_id != answer.map_play_member.member_id and member_id != answer.map.created_by_id:
+                raise AnswerPermissionDeniedException()
+                
+            return answer
+            
+        except UserQuestionAnswer.DoesNotExist:
+            raise AnswerNotFoundException()

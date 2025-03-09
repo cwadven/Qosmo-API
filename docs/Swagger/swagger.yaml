@@ -2767,6 +2767,145 @@ paths:
                         type: string
                     example: null
 
+  /v1/question/user-question-answer/{user_question_answer_id}:
+    get:
+      tags:
+        - Question
+      summary: "사용자 문제 답변 상세 조회"
+      description: |
+        사용자의 문제 답변 상세 정보를 조회합니다.
+        - 답변 작성자 본인 또는 Map 생성자만 조회 가능합니다.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_question_answer_id
+          in: path
+          description: 조회할 답변 ID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 답변 상세 정보 조회 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        description: 답변 ID
+                        example: 1
+                      question:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            description: 문제 ID
+                            example: 1
+                          title:
+                            type: string
+                            description: 문제 제목
+                            example: "React Hooks 이해하기"
+                          description:
+                            type: string
+                            description: 문제 설명
+                            example: "React Hooks의 기본 개념과 사용법을 설명하세요."
+                      member:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            description: 멤버 ID
+                            example: 1
+                          nickname:
+                            type: string
+                            description: 멤버 닉네임
+                            example: "비니"
+                      answer:
+                        type: string
+                        description: 답변 내용
+                        example: "React Hooks는 ..."
+                      files:
+                        type: array
+                        description: 첨부 파일 목록
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              description: 파일 ID
+                              example: 1
+                            name:
+                              type: string
+                              description: 파일 이름
+                              example: "file.pdf"
+                            file:
+                              type: string
+                              description: 파일 경로
+                              example: "s3/path/to/file.pdf"
+                      is_correct:
+                        type: boolean
+                        nullable: true
+                        description: 정답 여부
+                        example: true
+                      feedback:
+                        type: string
+                        nullable: true
+                        description: 피드백 내용
+                        example: "잘 설명해주셨습니다."
+                      reviewed_by:
+                        type: object
+                        nullable: true
+                        properties:
+                          id:
+                            type: integer
+                            description: 리뷰어 ID
+                            example: 1
+                          nickname:
+                            type: string
+                            description: 리뷰어 닉네임
+                            example: "관리자"
+                      reviewed_at:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        description: 리뷰 일시
+                        example: "2024-02-05T14:30:00Z"
+                      submitted_at:
+                        type: string
+                        format: date-time
+                        description: 제출 일시
+                        example: "2024-02-05T14:30:00Z"
+        '403':
+          description: |
+            답변 조회 실패<br>
+            [ status_code ENUM ]<br>
+            answer-permission-denied<br>
+            [ errors ]<br>
+            - 답변 작성자 본인 또는 Map 생성자만 조회할 수 있습니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: |
+            답변 조회 실패<br>
+            [ status_code ENUM ]<br>
+            answer-not-found<br>
+            [ errors ]<br>
+            - 존재하지 않는 답변입니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     NotUserAuthPermission:
