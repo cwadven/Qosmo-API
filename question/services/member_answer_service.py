@@ -355,12 +355,21 @@ class MemberAnswerService:
             
             # 정답인 경우 노드 완료 처리
             if is_correct:
+                arrow = Arrow.objects.filter(
+                    map=answer.question.map,
+                    question=answer.question,
+                    is_deleted=False
+                ).select_related(
+                    'start_node',
+                    'node_complete_rule',
+                ).first()
+
                 node_completion_service = NodeCompletionService(
                     member_id=answer.map_play_member.member_id,
                     map_play_member_id=answer.map_play_member_id,
                     map_play_id=answer.map_play_member.map_play_id,
                 )
-                node_completion_service.process_nodes_completion(nodes=[answer.question.node])
+                node_completion_service.process_nodes_completion(nodes=[arrow.start_node])
                 
                 # 푸시 알림 전송
                 map_play_members = MapPlayMember.objects.filter(
