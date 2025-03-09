@@ -20,6 +20,7 @@ from map.dtos.map_dtos import MapDTO
 from map.exceptions import MapNotFoundException
 from map.models import Map, PopularMap
 from map.services.map_share_service import MapShareService
+from question.consts import ValidationType
 from subscription.models import MapSubscription
 
 redis_client = get_redis_connection("default")
@@ -220,3 +221,43 @@ class MapService:
             size,
         )
         return paginated_maps, has_more, next_cursor
+
+    def get_feedback_answers(self, map_id: int, status: str) -> List['UserQuestionAnswer']:
+        """
+        Map의 피드백 답변 목록 조회
+        
+        Args:
+            map_id: Map ID
+            status: 피드백 상태 (pending/completed)
+            
+        Returns:
+            List[UserQuestionAnswer]: 피드백 답변 목록
+        """
+        from question.models import UserQuestionAnswer
+        
+        # Map 생성자 권한 확인
+        try:
+            Map.objects.get(
+                id=map_id,
+                created_by_id=self.member_id,
+                is_deleted=False,
+            )
+        except Map.DoesNotExist:
+            raise MapNotFoundException()
+
+        # 피드백 답변 조회
+        answers = UserQuestionAnswer.objects.select_related(
+            'question',
+            'map_play_member',
+            'map_play_member__member',
+        ).prefetch_related(
+            'files',
+        ).filter(
+            map_id=map_id,
+            question__answer_validation_type=ValidationType.MANUAL.value,
+            reviewed_by__isnull=(status == 'pending'),
+        ).order_by(
+            '-created_at',
+        )
+        
+        return answers

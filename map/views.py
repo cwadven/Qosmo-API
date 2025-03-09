@@ -327,3 +327,66 @@ class MapShareValidateView(APIView):
             ).model_dump(),
             status=status.HTTP_200_OK
         )
+
+
+class MapFeedbackAnswersView(APIView):
+    permission_classes = [IsMemberLogin]
+
+    def get(self, request, map_id: int):
+        """
+        Map의 피드백 답변 목록 조회
+        - Map 생성자만 조회 가능
+        - status로 피드백 상태 필터링 (pending/completed)
+        """
+        feedback_status = request.GET.get('status', 'pending')
+        try:
+            if feedback_status not in ['pending', 'completed']:
+                raise ValidationError('Invalid status')
+        except ValidationError as e:
+            raise PydanticAPIException(
+                status_code=400,
+                error_summary=MapInvalidInputResponseErrorStatus.INVALID_INPUT_FEEDBACK_ANSWERS_ERROR_400.label,
+                error_code=MapInvalidInputResponseErrorStatus.INVALID_INPUT_FEEDBACK_ANSWERS_ERROR_400.value,
+                errors=e.errors(),
+            )
+
+        map_service = MapService(member_id=request.guest.member_id)
+        answers = map_service.get_feedback_answers(
+            map_id=map_id,
+            status=feedback_status,
+        )
+
+        return Response(
+            BaseFormatResponse(
+                status_code=SuccessStatusCode.SUCCESS.value,
+                data={
+                    'answers': [
+                        {
+                            'id': answer.id,
+                            'question': {
+                                'id': answer.question.id,
+                                'title': answer.question.title,
+                            },
+                            'member': {
+                                'id': answer.map_play_member.member.id,
+                                'nickname': answer.map_play_member.member.nickname,
+                            },
+                            'answer': answer.answer,
+                            'files': [
+                                {
+                                    'id': file.id,
+                                    'name': file.name,
+                                    'file': file.file,
+                                }
+                                for file in answer.files.filter(
+                                    is_deleted=False,
+                                )
+                            ],
+                            'submitted_at': answer.created_at,
+                        }
+                        for answer in answers
+                    ]
+                }
+            ).model_dump(),
+            status=status.HTTP_200_OK,
+        )
