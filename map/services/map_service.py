@@ -257,7 +257,7 @@ class MapService:
             question__answer_validation_type=ValidationType.MANUAL.value,
             reviewed_by__isnull=(status == 'pending'),
         ).order_by(
-            '-created_at',
+            '-reviewed_at' if status == 'completed' else '-created_at',
         )
         
         return answers

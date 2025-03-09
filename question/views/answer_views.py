@@ -141,7 +141,7 @@ class AnswerSubmitView(APIView):
 
 class UserQuestionAnswerDetailView(APIView):
     """
-    사용자의 문제 답변 상세 조회 API
+    사용자의 문제 답변 상세 조회/피드백 제출 API
     """
     permission_classes = [IsMemberLogin]
 
@@ -189,6 +189,47 @@ class UserQuestionAnswerDetailView(APIView):
                     } if answer.reviewed_by else None,
                     'reviewed_at': answer.reviewed_at,
                     'submitted_at': answer.created_at,
+                }
+            ).model_dump(),
+            status=status.HTTP_200_OK,
+        )
+
+    def put(self, request, user_question_answer_id: int):
+        """
+        사용자의 문제 답변에 대한 피드백을 제출합니다.
+        - Map 생성자만 피드백을 제출할 수 있습니다.
+        """
+        try:
+            from question.dtos.feedback import FeedbackRequestDTO
+            feedback_dto = FeedbackRequestDTO.of(request)
+        except ValidationError as e:
+            raise PydanticAPIException(
+                status_code=400,
+                error_summary=QuestionInvalidInputResponseErrorStatus.INVALID_INPUT_FEEDBACK_ERROR_400.label,
+                error_code=QuestionInvalidInputResponseErrorStatus.INVALID_INPUT_FEEDBACK_ERROR_400.value,
+                errors=e.errors(),
+            )
+
+        from question.services.member_answer_service import MemberAnswerService
+        answer = MemberAnswerService.submit_feedback(
+            user_question_answer_id=user_question_answer_id,
+            member_id=request.guest.member_id,
+            is_correct=feedback_dto.is_correct,
+            feedback=feedback_dto.feedback,
+        )
+
+        return Response(
+            BaseFormatResponse(
+                status_code='success',
+                data={
+                    'id': answer.id,
+                    'is_correct': answer.is_correct,
+                    'feedback': answer.feedback,
+                    'reviewed_by': {
+                        'id': answer.reviewed_by.id,
+                        'nickname': answer.reviewed_by.nickname,
+                    },
+                    'reviewed_at': answer.reviewed_at,
                 }
             ).model_dump(),
             status=status.HTTP_200_OK,

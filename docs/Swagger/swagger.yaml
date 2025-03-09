@@ -2905,6 +2905,115 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+    put:
+      tags:
+        - Question
+      summary: "사용자 문제 답변 피드백 제출"
+      description: |
+        사용자의 문제 답변에 대한 피드백을 제출합니다.
+        - Map 생성자만 피드백을 제출할 수 있습니다.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_question_answer_id
+          in: path
+          description: 피드백을 제출할 답변 ID
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - is_correct
+                - feedback
+              properties:
+                is_correct:
+                  type: boolean
+                  description: 정답 여부
+                  example: true
+                feedback:
+                  type: string
+                  description: 피드백 내용
+                  example: "잘 설명해주셨습니다."
+      responses:
+        '200':
+          description: 피드백 제출 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        description: 답변 ID
+                        example: 1
+                      is_correct:
+                        type: boolean
+                        description: 정답 여부
+                        example: true
+                      feedback:
+                        type: string
+                        description: 피드백 내용
+                        example: "잘 설명해주셨습니다."
+                      reviewed_by:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            description: 리뷰어 ID
+                            example: 1
+                          nickname:
+                            type: string
+                            description: 리뷰어 닉네임
+                            example: "관리자"
+                      reviewed_at:
+                        type: string
+                        format: date-time
+                        description: 리뷰 일시
+                        example: "2024-02-05T14:30:00Z"
+        '400':
+          description: |
+            피드백 제출 실패<br>
+            [ status_code ENUM ]<br>
+            INVALID_INPUT_FEEDBACK_ERROR_400<br>
+            [ errors ]<br>
+            - is_correct와 feedback은 필수입니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '403':
+          description: |
+            피드백 제출 실패<br>
+            [ status_code ENUM ]<br>
+            answer-permission-denied<br>
+            [ errors ]<br>
+            - Map 생성자만 피드백을 제출할 수 있습니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: |
+            피드백 제출 실패<br>
+            [ status_code ENUM ]<br>
+            answer-not-found<br>
+            [ errors ]<br>
+            - 존재하지 않는 답변입니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
   schemas:

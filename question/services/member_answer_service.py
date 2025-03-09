@@ -285,3 +285,111 @@ class MemberAnswerService:
             
         except UserQuestionAnswer.DoesNotExist:
             raise AnswerNotFoundException()
+
+    @staticmethod
+    def submit_feedback(
+        user_question_answer_id: int,
+        member_id: int,
+        is_correct: bool,
+        feedback: str,
+    ) -> 'UserQuestionAnswer':
+        """
+        사용자의 문제 답변에 대한 피드백을 제출합니다.
+        
+        Args:
+            user_question_answer_id: 답변 ID
+            member_id: 피드백 제출자 ID
+            is_correct: 정답 여부
+            feedback: 피드백 내용
+            
+        Returns:
+            UserQuestionAnswer: 업데이트된 답변 정보
+            
+        Raises:
+            AnswerPermissionDeniedException: 피드백 제출 권한이 없는 경우
+            AnswerNotFoundException: 답변을 찾을 수 없는 경우
+        """
+        try:
+            answer = UserQuestionAnswer.objects.select_related(
+                'map',
+                'map_play_member',
+                'map_play_member__member',
+                'reviewed_by',
+            ).get(
+                id=user_question_answer_id,
+            )
+            
+            # Map 생성자만 피드백 제출 가능
+            if member_id != answer.map.created_by_id:
+                raise AnswerPermissionDeniedException()
+            
+            # 피드백 업데이트
+            answer.is_correct = is_correct
+            answer.feedback = feedback
+            answer.reviewed_by_id = member_id
+            answer.reviewed_at = timezone.now()
+            answer.save(update_fields=['is_correct', 'feedback', 'reviewed_by', 'reviewed_at'])
+
+            push_service = PushService()
+
+            try:
+                answer_owner = Guest.objects.get(
+                    member_id=answer.member_id,
+                    member__is_active=True,
+                )
+                push_service.send_push(
+                    guest_id=answer_owner.id,
+                    title=f"\'{answer.question.title}\' 문제 결과",
+                    body=feedback,
+                    push_channel_type=PushChannelType.QUESTION_FEEDBACK,
+                    data={
+                        "type": "question_feedback",
+                        "question_id": str(answer.question.id),
+                        "map_id": str(answer.map_id),
+                        "map_play_member_id": str(answer.map_play_member_id),
+                        "is_correct": str(answer.is_correct).lower(),
+                    },
+                )
+            except Guest.DoesNotExist:
+                pass
+            
+            # 정답인 경우 노드 완료 처리
+            if is_correct:
+                node_completion_service = NodeCompletionService(
+                    member_id=answer.map_play_member.member_id,
+                    map_play_member_id=answer.map_play_member_id,
+                    map_play_id=answer.map_play_member.map_play_id,
+                )
+                node_completion_service.process_nodes_completion(nodes=[answer.question.node])
+                
+                # 푸시 알림 전송
+                map_play_members = MapPlayMember.objects.filter(
+                    map_play_id=answer.map_play_member.map_play_id,
+                    deactivated=False,
+                ).exclude(
+                    member_id=answer.map_play_member.member_id,
+                )
+                if map_play_members:
+                    guests = Guest.objects.filter(
+                        member_id__in=[map_play_member.member_id for map_play_member in map_play_members],
+                        member__is_active=True,
+                    )
+                    for guest in guests:
+                        push_service.send_push(
+                            guest_id=guest.id,
+                            title=f"\'{answer.question.title}\' 문제 해결",
+                            body=f"{answer.member.nickname}님이 문제를 해결했습니다.",
+                            push_channel_type=PushChannelType.QUESTION_SOLVED_ALERT,
+                            data={
+                                "type": "question_solved_alert",
+                                "question_id": str(answer.question.id),
+                                "map_id": str(answer.map_id),
+                                "map_play_id": str(answer.map_play_member.map_play_id),
+                                "is_correct": True,
+                            },
+                        )
+            
+            return answer
+            
+        except UserQuestionAnswer.DoesNotExist:
+            raise AnswerNotFoundException()
