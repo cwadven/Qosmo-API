@@ -37,4 +37,12 @@ class BanMemberRequestDTO(BaseModel):
 
     @classmethod
     def of(cls, request):
-        return cls(**request.data) 
+        return cls(**request.data)
+
+
+class MapPlayManagementRequestDTO(BaseModel):
+    title: str
+
+    @classmethod
+    def of(cls, request):
+        return cls(**request.data)

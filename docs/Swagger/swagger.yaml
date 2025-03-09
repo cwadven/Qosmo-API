@@ -2479,6 +2479,132 @@ paths:
                         type: string
                     example: null
 
+  /v1/play/{map_play_member_id}/management:
+    put:
+      tags:
+        - MapPlay
+      summary: Map Play 관리 (제목 수정)
+      description: |
+        Map Play의 제목을 수정합니다.
+        - admin만 수정할 수 있습니다.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: map_play_member_id
+          in: path
+          description: Map Play 멤버 ID
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                  description: 새로운 제목
+                  example: "새로운 React 학습"
+      responses:
+        '200':
+          description: 제목 수정 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      map_play_id:
+                        type: integer
+                        example: 1
+                      map_id:
+                        type: integer
+                        example: 1
+                      title:
+                        type: string
+                        example: "새로운 React 학습"
+                      created_at:
+                        type: string
+                        format: date-time
+                      updated_at:
+                        type: string
+                        format: date-time
+        '400':
+          description: |
+            제목 수정 실패<br>
+            [ status_code ENUM ]<br>
+            INVALID_INPUT_MANAGEMENT_ERROR_400<br>
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                  - status_code
+                  - errors
+                properties:
+                  message:
+                    type: string
+                    description: "에러 메시지"
+                    example: "유효하지 않은 입력값입니다."
+                  status_code:
+                    type: string
+                    description: "에러 코드"
+                    example: "invalid-input"
+                  errors:
+                    type: object
+                    nullable: true
+                    additionalProperties:
+                      type: array
+                      items:
+                        type: string
+                    example:
+                      title: ["제목은 필수입니다."]
+        '403':
+          description: |
+            제목 수정 실패<br>
+            [ status_code ENUM ]<br>
+            play-admin-permission-denied<br>
+            [ errors ]<br>
+            - 해당 플레이의 admin만 이 작업을 수행할 수 있습니다.<br>
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                  - status_code
+                  - errors
+                properties:
+                  message:
+                    type: string
+                    description: "에러 메시지"
+                    example: "해당 플레이의 admin만 이 작업을 수행할 수 있습니다."
+                  status_code:
+                    type: string
+                    description: "에러 코드"
+                    example: "play-admin-permission-denied"
+                  errors:
+                    type: object
+                    nullable: true
+                    additionalProperties:
+                      type: array
+                      items:
+                        type: string
+                    example: null
+
 components:
   schemas:
     NotUserAuthPermission:

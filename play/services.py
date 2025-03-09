@@ -636,3 +636,35 @@ class MapPlayService:
                 'created_at',
             )
         )
+
+    def update_map_play_title(self, map_play_member_id: int, member_id: int, title: str) -> MapPlay:
+        """
+        Map Play의 제목을 수정합니다.
+        
+        Args:
+            map_play_member_id: 맵 플레이 멤버 ID
+            member_id: 수정하는 멤버 ID
+            title: 새로운 제목
+            
+        Returns:
+            MapPlay: 수정된 맵 플레이
+            
+        Raises:
+            PlayMemberNotFoundException: 맵 플레이 멤버를 찾을 수 없는 경우
+            PlayAdminPermissionDeniedException: admin이 아닌 경우
+        """
+        map_play_member = self._get_map_play_member_by_id(map_play_member_id)
+        
+        # 본인이 해당 플레이의 멤버인지 확인
+        if map_play_member.member_id != member_id:
+            raise PlayMemberNotFoundException()
+            
+        # admin인지 확인
+        if map_play_member.role != MapPlayMemberRole.ADMIN:
+            raise PlayAdminPermissionException()
+            
+        map_play = map_play_member.map_play
+        map_play.title = title
+        map_play.save(update_fields=['title', 'updated_at'])
+        
+        return map_play

@@ -16,6 +16,7 @@ from play.dtos.request_dtos import (
     CreateInviteCodeRequestDTO,
     ChangeMemberRoleRequestDTO,
     BanMemberRequestDTO,
+    MapPlayManagementRequestDTO,
 )
 from play.dtos.response_dtos import (
     MapPlayDTO,
@@ -289,6 +290,40 @@ class MapPlayMemberListView(APIView):
                         for member in members
                     ]
                 }
+            ).model_dump(),
+            status=status.HTTP_200_OK,
+        )
+
+
+class MapPlayManagementView(APIView):
+    permission_classes = [IsMemberLogin]
+
+    def put(self, request, map_play_member_id: int):
+        """
+        Map Play 관리 (제목 수정)
+        """
+        try:
+            dto = MapPlayManagementRequestDTO.of(request)
+        except ValidationError as e:
+            raise PydanticAPIException(
+                status_code=400,
+                error_summary=PlayInvalidInputResponseErrorStatus.INVALID_INPUT_MANAGEMENT_ERROR_400.label,
+                error_code=PlayInvalidInputResponseErrorStatus.INVALID_INPUT_MANAGEMENT_ERROR_400.value,
+                errors=e.errors(),
+            )
+
+        service = MapPlayService()
+        service.update_map_play_title(
+            map_play_member_id=map_play_member_id,
+            member_id=request.guest.member_id,
+            title=dto.title,
+        )
+        map_play_member = service._get_map_play_member_by_id(map_play_member_id)
+
+        return Response(
+            BaseFormatResponse(
+                status_code=SuccessStatusCode.SUCCESS.value,
+                data=MapPlayDTO.from_map_play_member(map_play_member).model_dump(),
             ).model_dump(),
             status=status.HTTP_200_OK,
         )
