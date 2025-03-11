@@ -99,10 +99,6 @@ class PushService:
 
                 message = messaging.Message(
                     data=data or {},
-                    notification=messaging.Notification(
-                        title=title,
-                        body=body,
-                    ),
                     android=messaging.AndroidConfig(
                         priority='high',
                         notification=messaging.AndroidNotification(
