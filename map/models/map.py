@@ -10,7 +10,7 @@ class Map(models.Model):
     icon_image = models.CharField(max_length=2048, help_text='아이콘 이미지')
     background_image = models.CharField(max_length=2048, help_text='배경 이미지')
     subscriber_count = models.BigIntegerField(default=0, help_text='구독자 수', db_index=True)
-    view_count = models.BigIntegerField(default=0, help_text='조회수', db_index=True)
+    play_count = models.BigIntegerField(default=0, help_text='플레이 횟수', db_index=True)
     created_by = models.ForeignKey(
         Member,
         on_delete=models.DO_NOTHING,
@@ -48,9 +48,9 @@ class PopularMap(models.Model):
         help_text='데이터 생성 시 구독자 수',
         db_index=True,
     )
-    view_count = models.BigIntegerField(
+    play_count = models.BigIntegerField(
         default=0,
-        help_text='데이터 생성 시 조회 수',
+        help_text='데이터 생성 시 플레이 횟수',
         db_index=True,
     )
     is_deleted = models.BooleanField(default=False)

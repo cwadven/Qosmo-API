@@ -22,10 +22,10 @@ class MapCategoryInline(admin.TabularInline):
 
 @admin.register(Map)
 class MapAdmin(admin.ModelAdmin):
-    list_display = ('name', 'created_by', 'subscriber_count', 'view_count', 'is_private', 'created_at')
+    list_display = ('name', 'created_by', 'subscriber_count', 'play_count', 'is_private', 'created_at')
     list_filter = ('is_private', 'is_deleted')
     search_fields = ('name', 'description')
-    readonly_fields = ('subscriber_count', 'view_count', 'created_at', 'updated_at')
+    readonly_fields = ('subscriber_count', 'play_count', 'created_at', 'updated_at')
     form = MapAdminForm
     inlines = [MapCategoryInline]
 

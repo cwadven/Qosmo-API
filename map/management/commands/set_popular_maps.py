@@ -70,7 +70,7 @@ class Command(BaseCommand):
                 map=map_by_map_id[popular_map_subscription['map_id']],
                 type=self.type,
                 subscriber_count=popular_map_subscription['subscriber_count'],
-                view_count=0,
+                play_count=0,
             )
             for popular_map_subscription in popular_map_subscription_qs
         ])

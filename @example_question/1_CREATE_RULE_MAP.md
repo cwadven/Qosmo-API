@@ -7,7 +7,7 @@
 ```sql
 INSERT INTO map_map (
   name, description, icon_image, background_image,
-  subscriber_count, view_count, created_by_id,
+  subscriber_count, play_count, created_by_id,
   is_private, is_deleted,
   created_at, updated_at
 ) VALUES (
@@ -37,7 +37,7 @@ INSERT INTO map_map (
   - [ ] icon_image: 맵 아이콘 이미지 URL
   - [ ] background_image: 맵 배경 이미지 URL
   - [ ] subscriber_count: 구독자 수 (기본값 0)
-  - [ ] view_count: 조회수 (기본값 0)
+  - [ ] play_count: 플레이 횟수 (기본값 0)
   - [ ] created_by_id: 생성자 ID (member_member 테이블 참조)
   - [ ] is_private: 비공개 여부
   - [ ] is_deleted: 삭제 여부
