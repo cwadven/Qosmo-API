@@ -37,6 +37,19 @@ from subscription.models import MapSubscription
 
 
 class MapPlayService:
+    def _increase_map_play_count(self, member_id: int, map_id: int) -> None:
+        """
+        맵 플레이 카운트 증가
+        """
+        if member_id is None:
+            return
+        if MapPlayMember.objects.filter(
+            map_play__map_id=map_id,
+            member_id=member_id
+        ).exists():
+            return
+        Map.objects.filter(id=map_id).update(play_count=F('play_count') + 1)
+
     def _get_map_play_member_by_id(self, map_play_member_id: int) -> MapPlayMember:
         """
         맵 플레이 멤버 조회
@@ -84,6 +97,7 @@ class MapPlayService:
         )
 
         # 생성자를 admin으로 추가
+        self._increase_map_play_count(created_by_id, map_id)
         map_play_member = MapPlayMember.objects.create(
             map_play=map_play,
             member_id=created_by_id,
@@ -150,6 +164,7 @@ class MapPlayService:
             raise PlayMemberInviteCodeMaxUseException()
 
         # 멤버 생성
+        self._increase_map_play_count(member_id, invite_code.map_play.map_id)
         map_play_member = MapPlayMember.objects.create(
             map_play=invite_code.map_play,
             member_id=member_id,
