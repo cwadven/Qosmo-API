@@ -6,6 +6,7 @@ from django.db.models import (
     Count,
     QuerySet,
 )
+from django.utils import timezone
 
 from map.models import (
     Map,
@@ -26,6 +27,7 @@ class Command(BaseCommand):
         parser.add_argument('type', type=str, help='daily, monthly')
 
     def _get_popular_map_subscription_qs(self) -> QuerySet[Dict]:
+        now = timezone.now()
         queryset = MapSubscription.objects.filter(
             is_deleted=False,
             map__is_deleted=False,
@@ -33,11 +35,12 @@ class Command(BaseCommand):
         )
         if self.type == 'daily':
             queryset = queryset.filter(
-                updated_at__date=datetime.now().date()
+                updated_at__date=now.date()
             )
         elif self.type == 'monthly':
             queryset = queryset.filter(
-                updated_at__month=datetime.now().month
+                updated_at__gte=now.replace(day=1),
+                updated_at__lt=now.replace(day=1, month=now.month+1)
             )
         else:
             queryset = MapSubscription.objects.none()
@@ -49,7 +52,7 @@ class Command(BaseCommand):
         return queryset
 
     def _get_popular_map_play_qs(self) -> QuerySet[Dict]:
-        now = datetime.now()
+        now = timezone.now()
         queryset = MapPlay.objects.filter(
             map__is_deleted=False,
             map__is_private=False,
@@ -60,7 +63,8 @@ class Command(BaseCommand):
             )
         elif self.type == 'monthly':
             queryset = queryset.filter(
-                created_at__month=now.month
+                created_at__gte=now.replace(day=1),
+                created_at__lt=now.replace(day=1, month=now.month + 1)
             )
         else:
             queryset = MapPlay.objects.none()
