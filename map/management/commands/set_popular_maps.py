@@ -122,8 +122,8 @@ class Command(BaseCommand):
             PopularMap(
                 map_id=going_to_be_popular_map.id,
                 type=self.type,
-                subscriber_count=popular_map_subscription_mapper['map_id']['subscriber_count'],
-                play_count=popular_map_play_mapper['map_id']['play_count'],
+                subscriber_count=popular_map_subscription_mapper.get('map_id', {}).get('subscriber_count', 0),
+                play_count=popular_map_play_mapper.get('map_id', {}).get('play_count', 0),
             )
             for going_to_be_popular_map in going_to_be_popular_map_qs
         ])
