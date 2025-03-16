@@ -330,6 +330,8 @@ dos2unix command.cron
 chmod 0644 command.cron
 cat command.cron | crontab -
 service cron restart
+# Cron 된 내용 확인
+crontab -l
 ```
 
 ### Docker Start
