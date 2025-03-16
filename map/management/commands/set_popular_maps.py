@@ -16,6 +16,10 @@ from subscription.models import MapSubscription
 
 
 class Command(BaseCommand):
+    """
+    python manage.py set_popular_maps daily
+    python manage.py set_popular_maps monthly
+    """
     help = '인기 맵 데이터를 최신화 합니다.'
 
     def add_arguments(self, parser):
