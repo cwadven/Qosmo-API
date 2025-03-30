@@ -1,7 +1,7 @@
 from common.common_consts.common_error_messages import InvalidInputResponseErrorStatus
 from common.common_exceptions import PydanticAPIException
 from common.common_utils import generate_pre_signed_url_info
-from common.consts import IMAGE_CONSTANCE_TYPES
+from common.consts import IMAGE_CONSTANCE_TYPES, FILE_CONSTANCE_TYPES
 from common.dtos.request_dtos import GetPreSignedURLRequest
 from common.dtos.response_dtos import (
     ConstanceTypeResponse,
@@ -54,6 +54,46 @@ class GetImagePreSignedURLView(APIView):
             )
 
         if constance_type not in IMAGE_CONSTANCE_TYPES:
+            raise InvalidPathParameterException()
+
+        try:
+            info = generate_pre_signed_url_info(
+                pre_signed_url_request.file_name,
+                constance_type,
+                transaction_pk,
+                same_file_name=True,
+            )
+            url = info['url']
+            data = info['fields']
+        except Exception:
+            raise ExternalAPIException()
+
+        return Response(
+            GetPreSignedURLResponse(
+                url=url,
+                data=data,
+            ).model_dump(),
+            status=200,
+        )
+
+
+class GetFilePreSignedURLView(APIView):
+    permission_classes = [
+        IsMemberLogin,
+    ]
+
+    def post(self, request, constance_type: str, transaction_pk: str):
+        try:
+            pre_signed_url_request = GetPreSignedURLRequest.of(request.data)
+        except ValidationError as e:
+            raise PydanticAPIException(
+                status_code=400,
+                error_summary=InvalidInputResponseErrorStatus.INVALID_PRE_SIGNED_URL_INPUT_DATA_400.label,
+                error_code=InvalidInputResponseErrorStatus.INVALID_PRE_SIGNED_URL_INPUT_DATA_400.value,
+                errors=e.errors(),
+            )
+
+        if constance_type not in FILE_CONSTANCE_TYPES:
             raise InvalidPathParameterException()
 
         try:

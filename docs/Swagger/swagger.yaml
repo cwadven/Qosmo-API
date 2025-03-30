@@ -743,6 +743,77 @@ paths:
               schema:
                 $ref: "#/components/schemas/NotUserAuthPermission"
 
+  /v1/common/file/{constance_type}/{transaction_pk}/url:
+    post:
+      tags:
+        - Common
+      summary: Give Presigned Url for Files
+      description: To upload any file types to AWS S3
+      parameters:
+        - in: path
+          name: constance_type
+          required: true
+          schema:
+            type: string
+            enum: ["answer_submit"]
+          description: Type of constance_type
+        - in: path
+          name: transaction_pk
+          required: true
+          schema:
+            type: string
+          description: Type of constance_type pk
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - file_name
+              properties:
+                file_name:
+                  type: string
+                  description: "파일 이름 확장자까지 필요"
+                  example: "report.pdf"
+      responses:
+        "200":
+          description: Created Presigned URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    example: "https://s3-bucket-url.com"
+                  data:
+                    type: object
+                    properties:
+                      key:
+                        type: string
+                        example: "answer_submit/1/report.pdf"
+                      x-amz-algorithm:
+                        type: string
+                        example: "AWS4-HMAC-SHA256"
+                      x-amz-credential:
+                        type: string
+                        example: "......./20240720/ap-northeast-2/s3/aws4_request"
+                      x-amz-date:
+                        type: string
+                        example: "20240720T054525Z"
+                      policy:
+                        type: string
+                        example: "eyJleHBpcmF0aW9uIjogIjIwMjQtMDctMjBUMDY6MDI6MDVaIiwgImNvbmRpdGlvbnMiOiBbWyJjb250ZW50LWxlbmd0aC1yYW5nZSIsIDAsIDEwNDg1NzYwXSwgeyJidWNrZXQiOiAic2lwbGUtZGV2In0sIHsia2V5IjogInByb2plY3QtaW1hZ2UvMS90ZXN0LnBuZyJ9LCB7IngtYW16LWFsZ29yaXRobSI6ICJBV1M0LUhNQUMtU0hBMjU2In0sIHsieC1hbXotY3JlZGVudGlhbCI6ICJBS0lBMlVDM0ZHUTZaNU5NUkJZUS8yMDI0MDcyMC9hcC1ub3J0aGVhc3QtMi9zMy9hd3M0X3JlcXVlc3QifSwgeyJ4LWFtei1kYXRlIjogIjIwMjQwNzIwVDA1NDUyNVoifV19"
+                      x-amz-signature:
+                        type: string
+                        example: "11a8ebd3d1b1c404c48d686727e96f1b6689906f87e89442487aa31db4b4b3eb"
+        "401":
+          description: No Auth
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotUserAuthPermission"
+
   /v1/common/{constance_type}/type:
     get:
       tags:

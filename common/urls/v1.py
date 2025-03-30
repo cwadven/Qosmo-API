@@ -1,5 +1,6 @@
 from common.views import (
     ConstanceTypeView,
+    GetFilePreSignedURLView,
     GetImagePreSignedURLView,
     HealthCheckView,
 )
@@ -13,4 +14,5 @@ urlpatterns = [
     path('/<str:constance_type>/type', ConstanceTypeView.as_view(), name='constance_type'),
 
     path('/image/<str:constance_type>/<str:transaction_pk>/url', GetImagePreSignedURLView.as_view(), name='get_pre_signed_url'),
+    path('/file/<str:constance_type>/<str:transaction_pk>/url', GetFilePreSignedURLView.as_view(), name='get_file_pre_signed_url'),
 ]
