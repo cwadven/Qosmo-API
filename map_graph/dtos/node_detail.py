@@ -11,8 +11,8 @@ from question.models import UserQuestionAnswer
 
 class FileDTO(BaseModel):
     id: int
-    file: str
     name: Optional[str]
+    url: str
 
 
 class ReviewerDTO(BaseModel):
@@ -64,7 +64,7 @@ class MyAnswerDTO(BaseModel):
                 FileDTO(
                     id=file.id,
                     name=file.name,
-                    file=file.file,
+                    url=file.file,
                 )
                 for file in user_question_answer.files.filter(
                     is_deleted=False,

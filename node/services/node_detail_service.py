@@ -348,7 +348,7 @@ class NodeDetailService:
                         question_files=[
                             FileDTO(
                                 id=file.id,
-                                file=file.file,
+                                url=file.file,
                                 name=file.name,
                             )
                             for file in question_files_by_question_id.get(arrow.question_id, [])
