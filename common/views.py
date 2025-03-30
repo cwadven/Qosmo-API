@@ -37,7 +37,7 @@ class ConstanceTypeView(APIView):
         )
 
 
-class GetPreSignedURLView(APIView):
+class GetImagePreSignedURLView(APIView):
     permission_classes = [
         IsMemberLogin,
     ]
