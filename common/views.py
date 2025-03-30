@@ -1,7 +1,13 @@
+import boto3
+from django.conf import settings
+
 from common.common_consts.common_error_messages import InvalidInputResponseErrorStatus
 from common.common_exceptions import PydanticAPIException
 from common.common_utils import generate_pre_signed_url_info
-from common.consts import IMAGE_CONSTANCE_TYPES, FILE_CONSTANCE_TYPES
+from common.consts import (
+    FILE_CONSTANCE_TYPES,
+    IMAGE_CONSTANCE_TYPES,
+)
 from common.dtos.request_dtos import GetPreSignedURLRequest
 from common.dtos.response_dtos import (
     ConstanceTypeResponse,
@@ -19,6 +25,14 @@ from member.permissions import IsMemberLogin
 from pydantic import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+
+BOTO_CLIENT = boto3.client(
+    's3',
+    region_name='ap-northeast-2',
+    aws_access_key_id=settings.AWS_IAM_ACCESS_KEY,
+    aws_secret_access_key=settings.AWS_IAM_SECRET_ACCESS_KEY,
+)
 
 
 class HealthCheckView(APIView):
@@ -58,6 +72,8 @@ class GetImagePreSignedURLView(APIView):
 
         try:
             info = generate_pre_signed_url_info(
+                BOTO_CLIENT,
+                settings.AWS_S3_BUCKET_NAME,
                 pre_signed_url_request.file_name,
                 constance_type,
                 transaction_pk,
@@ -98,14 +114,17 @@ class GetFilePreSignedURLView(APIView):
 
         try:
             info = generate_pre_signed_url_info(
+                BOTO_CLIENT,
+                settings.AWS_S3_BUCKET_NAME,
                 pre_signed_url_request.file_name,
                 constance_type,
                 transaction_pk,
-                same_file_name=True,
+                same_file_name=False,
             )
             url = info['url']
             data = info['fields']
-        except Exception:
+        except Exception as e:
+            print(e)
             raise ExternalAPIException()
 
         return Response(

@@ -69,7 +69,14 @@ class AnswerSubmitView(APIView):
             AnswerRequestDto.set_question(question)
             request_dto = AnswerRequestDto(
                 answer=request.data.get('answer'),
-                files=request.FILES.getlist('files'),
+                answer_file_infos=[
+                    MemberAnswerFileDto(
+                        id=None,
+                        name=file['name'],
+                        url=file['url'],
+                    )
+                    for file in request.data.get('file_infos', [])
+                ],
             )
         except ValidationError as e:
             raise PydanticAPIException(
@@ -78,40 +85,9 @@ class AnswerSubmitView(APIView):
                 error_code=QuestionInvalidInputResponseErrorStatus.INVALID_INPUT_ANSWER_PARAM_ERROR_400.value,
                 errors=e.errors(),
             )
-
-        files = []
-        client = boto3.client(
-            's3',
-            region_name='ap-northeast-2',
-            aws_access_key_id=settings.AWS_IAM_ACCESS_KEY,
-            aws_secret_access_key=settings.AWS_IAM_SECRET_ACCESS_KEY,
-            config=Config(signature_version='s3v4')
-        )
-        for file in request_dto.files:
-            response = generate_pre_signed_url_info(
-                client,
-                settings.AWS_S3_BUCKET_NAME,
-                file.name,
-                'member-answer-file',
-                str(question_id),
-            )
-            upload_file_to_pre_signed_url(
-                response['url'],
-                response['fields'],
-                file.read(),
-            )
-            files.append(
-                MemberAnswerFileDto(
-                    id=None,
-                    name=file.name,
-                    url=response['url'] + response['fields']['key'],
-                )
-            )
-
-        # 추후에 s3 올리는 file 로직 필요
         member_answer = member_answer_service.create_answer(
             answer=request_dto.answer,
-            files=files,
+            files=request_dto.answer_file_infos,
         )
         completed_node_ids = [
             node_history.node_id
