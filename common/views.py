@@ -179,7 +179,7 @@ class UploadFilePreSignedURLView(APIView):
                     {
                         'data': {
                             'message': '파일 업로드 성공',
-                            'path': f'{settings.AWS_S3_PRE_SIGNED_UPLOAD_URL}{m["key"]}'
+                            'path': f'{settings.AWS_S3_PRE_SIGNED_UPLOAD_URL}/{m["key"]}'
                         }
                     },
                     status=status.HTTP_200_OK,

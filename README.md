@@ -242,7 +242,7 @@ AWS settings.
 "AWS_IAM_ACCESS_KEY" Example: AKIAYXZ223G...
 "AWS_IAM_SECRET_ACCESS_KEY" Example: AKIAYXZ223G...
 "AWS_S3_BUCKET_NAME" Example: nully
-"AWS_S3_BUCKET_NAME" Example: https://XXX.s3.amazonaws.com/
+"AWS_S3_BUCKET_NAME" Example: https://XXX.s3.amazonaws.com
 "AWS_SQS_URL" Example: https://sqs.ap-northeast-2.amazonaws.com/1234/nully
 ----------------------------------------
 

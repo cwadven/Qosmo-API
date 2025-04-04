@@ -20,7 +20,7 @@ GOOGLE_REDIRECT_URL = 'development_GOOGLE_REDIRECT_URL'
 AWS_IAM_ACCESS_KEY = 'development_AWS_IAM_ACCESS_KEY'
 AWS_IAM_SECRET_ACCESS_KEY = 'development_AWS_IAM_SECRET_ACCESS_KEY'
 AWS_S3_BUCKET_NAME = 'bucket_name'
-AWS_S3_PRE_SIGNED_UPLOAD_URL = 'https://XXX.s3.amazonaws.com/'
+AWS_S3_PRE_SIGNED_UPLOAD_URL = 'https://XXX.s3.amazonaws.com'
 
 AWS_SQS_URL = 'development_AWS_SQS_URL'
 
