@@ -152,7 +152,7 @@ class UploadFilePreSignedURLView(APIView):
 
     @mandatories('file', 'key', 'x-amz-algorithm', 'x-amz-credential', 'x-amz-date', 'policy', 'x-amz-signature')
     def post(self, request, m):
-        file = request.FILES['file']
+        file = request.FILES.getlist('file')[0]
         
         try:
             # 클라이언트가 제공한 pre-signed URL 데이터로 구성
