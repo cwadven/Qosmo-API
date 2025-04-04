@@ -32,6 +32,10 @@ class GetPreSignedURLResponse(BaseModel):
     data: Dict[str, Any] = Field(default_factory=dict)
 
 
+class GetServerPreSignedURLResponse(BaseModel):
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
 class CursorPaginatorResponse(BaseModel):
     data: list = Field(...)
     next_cursor: Optional[str] = Field(None)

@@ -783,36 +783,135 @@ paths:
               schema:
                 type: object
                 properties:
-                  url:
-                    type: string
-                    example: "https://s3-bucket-url.com"
                   data:
                     type: object
                     properties:
-                      key:
+                      url:
                         type: string
-                        example: "answer_submit/1/report.pdf"
-                      x-amz-algorithm:
-                        type: string
-                        example: "AWS4-HMAC-SHA256"
-                      x-amz-credential:
-                        type: string
-                        example: "......./20240720/ap-northeast-2/s3/aws4_request"
-                      x-amz-date:
-                        type: string
-                        example: "20240720T054525Z"
-                      policy:
-                        type: string
-                        example: "eyJleHBpcmF0aW9uIjogIjIwMjQtMDctMjBUMDY6MDI6MDVaIiwgImNvbmRpdGlvbnMiOiBbWyJjb250ZW50LWxlbmd0aC1yYW5nZSIsIDAsIDEwNDg1NzYwXSwgeyJidWNrZXQiOiAic2lwbGUtZGV2In0sIHsia2V5IjogInByb2plY3QtaW1hZ2UvMS90ZXN0LnBuZyJ9LCB7IngtYW16LWFsZ29yaXRobSI6ICJBV1M0LUhNQUMtU0hBMjU2In0sIHsieC1hbXotY3JlZGVudGlhbCI6ICJBS0lBMlVDM0ZHUTZaNU5NUkJZUS8yMDI0MDcyMC9hcC1ub3J0aGVhc3QtMi9zMy9hd3M0X3JlcXVlc3QifSwgeyJ4LWFtei1kYXRlIjogIjIwMjQwNzIwVDA1NDUyNVoifV19"
-                      x-amz-signature:
-                        type: string
-                        example: "11a8ebd3d1b1c404c48d686727e96f1b6689906f87e89442487aa31db4b4b3eb"
+                        description: "파일 업로드 엔드포인트 URL"
+                        example: "/v1/common/file/upload"
+                      extra_data:
+                        type: object
+                        properties:
+                          key:
+                            type: string
+                            example: "answer_submit/1/report.pdf"
+                          x-amz-algorithm:
+                            type: string
+                            example: "AWS4-HMAC-SHA256"
+                          x-amz-credential:
+                            type: string
+                            example: "......./20240720/ap-northeast-2/s3/aws4_request"
+                          x-amz-date:
+                            type: string
+                            example: "20240720T054525Z"
+                          policy:
+                            type: string
+                            example: "eyJleHBpcmF0aW9uIjogIjIwMjQtMDctMjBUMDY6MDI6MDVaIiwgImNvbmRpdGlvbnMiOiBbWyJjb250ZW50LWxlbmd0aC1yYW5nZSIsIDAsIDEwNDg1NzYwXSwgeyJidWNrZXQiOiAic2lwbGUtZGV2In0sIHsia2V5IjogInByb2plY3QtaW1hZ2UvMS90ZXN0LnBuZyJ9LCB7IngtYW16LWFsZ29yaXRobSI6ICJBV1M0LUhNQUMtU0hBMjU2In0sIHsieC1hbXotY3JlZGVudGlhbCI6ICJBS0lBMlVDM0ZHUTZaNU5NUkJZUS8yMDI0MDcyMC9hcC1ub3J0aGVhc3QtMi9zMy9hd3M0X3JlcXVlc3QifSwgeyJ4LWFtei1kYXRlIjogIjIwMjQwNzIwVDA1NDUyNVoifV19"
+                          x-amz-signature:
+                            type: string
+                            example: "11a8ebd3d1b1c404c48d686727e96f1b6689906f87e89442487aa31db4b4b3eb"
         "401":
           description: No Auth
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotUserAuthPermission"
+
+  /v1/common/file/upload:
+    post:
+      tags:
+        - Common
+      summary: Direct File Upload with Pre-signed URL data
+      description: Upload file directly to server with pre-signed URL data and then to AWS S3
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - key
+                - x-amz-algorithm
+                - x-amz-credential
+                - x-amz-date
+                - policy
+                - x-amz-signature
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: "File to upload"
+                key:
+                  type: string
+                  description: "S3 key path"
+                  example: "answer_submit/1/report.pdf"
+                x-amz-algorithm:
+                  type: string
+                  description: "AWS algorithm"
+                  example: "AWS4-HMAC-SHA256"
+                x-amz-credential:
+                  type: string
+                  description: "AWS credential"
+                  example: "......./20240720/ap-northeast-2/s3/aws4_request"
+                x-amz-date:
+                  type: string
+                  description: "AWS date"
+                  example: "20240720T054525Z"
+                policy:
+                  type: string
+                  description: "AWS policy"
+                  example: "eyJleHBpcmF0aW9uIjogIjIwMjQtMDctMjBUMDY6MDI6MDVaIiwgImNvbmRpdGlvbnMiOiBbWyJjb250ZW50LWxlbmd0aC1yYW5nZSIsIDAsIDEwNDg1NzYwXSwgeyJidWNrZXQiOiAic2lwbGUtZGV2In0sIHsia2V5IjogInByb2plY3QtaW1hZ2UvMS90ZXN0LnBuZyJ9LCB7IngtYW16LWFsZ29yaXRobSI6ICJBV1M0LUhNQUMtU0hBMjU2In0sIHsieC1hbXotY3JlZGVudGlhbCI6ICJBS0lBMlVDM0ZHUTZaNU5NUkJZUS8yMDI0MDcyMC9hcC1ub3J0aGVhc3QtMi9zMy9hd3M0X3JlcXVlc3QifSwgeyJ4LWFtei1kYXRlIjogIjIwMjQwNzIwVDA1NDUyNVoifV19"
+                x-amz-signature:
+                  type: string
+                  description: "AWS signature"
+                  example: "11a8ebd3d1b1c404c48d686727e96f1b6689906f87e89442487aa31db4b4b3eb"
+      responses:
+        "200":
+          description: File Uploaded Successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: "성공 메시지"
+                        example: "파일 업로드 성공"
+                      path:
+                        type: string
+                        description: "업로드된 파일의 전체 URL 경로"
+                        example: "https://s3-bucket-url.com/answer_submit/1/report.pdf"
+        "400":
+          description: Missing Required Fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "file 필드가 필요합니다."
+        "401":
+          description: No Auth
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotUserAuthPermission"
+        "500":
+          description: Upload Failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "파일 업로드에 실패했습니다."
 
   /v1/common/{constance_type}/type:
     get:

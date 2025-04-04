@@ -62,6 +62,7 @@ def generate_env(c):
         'AWS_IAM_ACCESS_KEY': _get_or_set_environment('AWS_IAM_ACCESS_KEY'),
         'AWS_IAM_SECRET_ACCESS_KEY': _get_or_set_environment('AWS_IAM_SECRET_ACCESS_KEY'),
         'AWS_S3_BUCKET_NAME': _get_or_set_environment('AWS_S3_BUCKET_NAME'),
+        'AWS_S3_PRE_SIGNED_UPLOAD_URL': _get_or_set_environment('AWS_S3_PRE_SIGNED_UPLOAD_URL'),
         'AWS_SQS_URL': _get_or_set_environment('AWS_SQS_URL'),
         'CRONTAB_PREFIX_COMMAND': _get_or_set_environment('CRONTAB_PREFIX_COMMAND'),
         'OPENAI_API_KEY': _get_or_set_environment('OPENAI_API_KEY'),
