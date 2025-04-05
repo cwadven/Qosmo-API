@@ -70,7 +70,7 @@ class PlayMemberNoPermissionException(CommonAPIException):
 class PlayLastAdminException(CommonAPIException):
     status_code = 400
     default_code = 'play-last-admin'
-    default_detail = '마지막 admin은 이 작업을 수행할 수 없습니다.'
+    default_detail = '마지막 관리자는 이 작업을 수행할 수 없습니다.'
 
 
 class PlayAdminDeactivateException(CommonAPIException):
