@@ -5,7 +5,7 @@ from typing import (
     Set,
 )
 
-from django.db.models import F, Q
+from django.db.models import F, Q, Case, When, Value, IntegerField
 
 from map.models import (
     Arrow,
@@ -244,8 +244,15 @@ class NodeDetailService:
             Q(map_play_member_id=self.map_play_member_id) | Q(is_correct=True),
         ).prefetch_related(
             'files',
+        ).annotate(
+            is_correct_order=Case(
+                When(is_correct=True, then=Value(0)),
+                When(is_correct=None, then=Value(1)),
+                When(is_correct=False, then=Value(2)),
+                output_field=IntegerField(),
+            )
         ).order_by(
-            'is_correct',
+            'is_correct_order',
             '-created_at',
         )
         users_answers_by_question_id = {}
