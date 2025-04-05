@@ -18,3 +18,9 @@ class MyMapListCursorCriteria(CursorCriteria):
     cursor_keys = [
         'id__lt',
     ]
+
+
+class FeedbackAnswersCursorCriteria(CursorCriteria):
+    cursor_keys = [
+        'id__lt',
+    ]

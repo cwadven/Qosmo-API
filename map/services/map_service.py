@@ -1,7 +1,10 @@
 from typing import (
+    Dict,
     List,
     Optional,
-    Tuple, Type,
+    Set,
+    Tuple,
+    Type,
 )
 
 from django_redis import get_redis_connection
@@ -222,16 +225,19 @@ class MapService:
         )
         return paginated_maps, has_more, next_cursor
 
-    def get_feedback_answers(self, map_id: int, status: str) -> List['UserQuestionAnswer']:
+    def get_feedback_answers(self, map_id: int, status: str, cursor_criteria=None, decoded_next_cursor=None, size=10) -> Tuple[List['UserQuestionAnswer'], bool, Optional[str]]:
         """
         Map의 피드백 답변 목록 조회
         
         Args:
             map_id: Map ID
             status: 피드백 상태 (pending/completed)
+            cursor_criteria: 커서 기준 클래스
+            decoded_next_cursor: 디코딩된 다음 커서
+            size: 페이지 크기
             
         Returns:
-            List[UserQuestionAnswer]: 피드백 답변 목록
+            Tuple[List[UserQuestionAnswer], bool, Optional[str]]: 피드백 답변 목록, 다음 페이지 여부, 다음 커서
         """
         from question.models import UserQuestionAnswer
         
@@ -245,8 +251,8 @@ class MapService:
         except Map.DoesNotExist:
             raise MapNotFoundException()
 
-        # 피드백 답변 조회
-        answers = UserQuestionAnswer.objects.select_related(
+        # 피드백 답변 목록 쿼리
+        base_query = UserQuestionAnswer.objects.select_related(
             'question',
             'map_play_member',
             'map_play_member__member',
@@ -259,5 +265,10 @@ class MapService:
         ).order_by(
             '-reviewed_at' if status == 'completed' else '-created_at',
         )
-        
-        return answers
+        paginated_user_question_answers, has_more, next_cursor = get_objects_with_cursor_pagination(
+            base_query,
+            cursor_criteria,
+            decoded_next_cursor,
+            size,
+        )
+        return paginated_user_question_answers, has_more, next_cursor

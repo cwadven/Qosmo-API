@@ -5,6 +5,7 @@ from common.common_decorators.request_decorators import cursor_pagination
 from common.common_exceptions import PydanticAPIException
 from common.dtos.response_dtos import BaseFormatResponse
 from map.cursor_criteria.cursor_criteria import (
+    FeedbackAnswersCursorCriteria,
     MapListCursorCriteria,
     MapSubscriptionListCursorCriteria,
     MyMapListCursorCriteria,
@@ -332,7 +333,8 @@ class MapShareValidateView(APIView):
 class MapFeedbackAnswersView(APIView):
     permission_classes = [IsMemberLogin]
 
-    def get(self, request, map_id: int):
+    @cursor_pagination(default_size=20, cursor_criteria=[FeedbackAnswersCursorCriteria])
+    def get(self, request, map_id: int, decoded_next_cursor: dict, size: int):
         """
         Map의 피드백 답변 목록 조회
         - Map 생성자만 조회 가능
@@ -351,9 +353,12 @@ class MapFeedbackAnswersView(APIView):
             )
 
         map_service = MapService(member_id=request.guest.member_id)
-        answers = map_service.get_feedback_answers(
+        answers, has_more, next_cursor = map_service.get_feedback_answers(
             map_id=map_id,
             status=feedback_status,
+            cursor_criteria=FeedbackAnswersCursorCriteria,
+            decoded_next_cursor=decoded_next_cursor,
+            size=size,
         )
 
         return Response(
@@ -385,7 +390,9 @@ class MapFeedbackAnswersView(APIView):
                             'submitted_at': answer.created_at,
                         }
                         for answer in answers
-                    ]
+                    ],
+                    'next_cursor': next_cursor,
+                    'has_more': has_more,
                 }
             ).model_dump(),
             status=status.HTTP_200_OK,
