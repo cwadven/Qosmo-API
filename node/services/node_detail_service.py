@@ -286,7 +286,9 @@ class NodeDetailService:
         # 해결된 Node 면 completed
         # 아니면 locked
         node_status = 'locked'
-        if node.id in members_completed_node_ids:
+        if not node.is_active:
+            node_status = 'deactivated'
+        elif node.id in members_completed_node_ids:
             node_status = 'completed'
         elif bool(len({arrow.id for arrow in arrows} & members_completed_arrow_ids)):
             node_status = 'in_progress'
@@ -329,6 +331,8 @@ class NodeDetailService:
             question_status = 'locked'
             if arrow.question_id in members_completed_question_ids:
                 question_status = 'completed'
+            elif not node.is_active:
+                question_status = 'deactivated'
             elif is_start_node:
                 question_status = 'in_progress'
             elif arrow.start_node_id in members_completed_node_ids:
