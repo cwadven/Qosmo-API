@@ -28,6 +28,12 @@ class MapThemeDTO(BaseModel):
             "border": "#666666",
             "text": "#666666",
             "icon": "lock-closed"
+        },
+        "deactivated": {
+            "background": "#FFFFFF",
+            "border": "#FF0000",
+            "text": "#FF0000",
+            "icon": "warning"
         }
     }
     arrow: Dict = {
