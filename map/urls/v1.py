@@ -1,5 +1,5 @@
 from django.urls import path
-from map.views import (
+from map.views.client import (
     MapDetailView,
     MapListView,
     MapPopularDailyListView,
@@ -7,7 +7,8 @@ from map.views import (
     MapSubscribedListView,
     MyMapListView,
     MapShareLinkView,
-    MapShareValidateView, MapFeedbackAnswersView,
+    MapShareValidateView,
+    MapFeedbackAnswersView,
 )
 
 app_name = 'map'

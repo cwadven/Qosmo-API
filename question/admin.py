@@ -63,10 +63,26 @@ class QuestionAdmin(admin.ModelAdmin):
     )
     search_fields = ('title', 'description', 'map__name')
     readonly_fields = ('created_at', 'updated_at')
+    autocomplete_fields = ['map']
+
+    class Media:
+        js = ('map/js/admin_chained_selects.js',)
 
     def get_question_types_display(self, obj):
         return ', '.join(obj.question_types)
     get_question_types_display.short_description = '문제 유형'
+    
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if obj and obj.map_id:
+            # 수정 시 map_id가 있는 경우 해당 map에 속한 arrow만 표시
+            from map.models import Arrow
+            form.base_fields['arrow'].queryset = Arrow.objects.filter(map_id=obj.map_id, is_deleted=False)
+        elif not obj:
+            # 새로운 객체 생성 시 초기에 관련 객체를 숨김
+            from map.models import Arrow
+            form.base_fields['arrow'].queryset = Arrow.objects.none()
+        return form
 
 
 @admin.register(QuestionAnswer)

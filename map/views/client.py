@@ -264,29 +264,21 @@ class MapShareLinkView(APIView):
     permission_classes = [IsMemberLogin]
 
     def post(self, request, map_id: int):
-        """
-        Map 공유 링크 생성
-        
-        Args:
-            request: Request 객체
-            map_id: Map ID
-            
-        Returns:
-            Response: 공유 링크
-        """
-        map_share_service = MapShareService(
-            member_id=request.guest.member_id,
-        )
-        share_key = map_share_service.create_share_link(map_id)
+        map_share_service = MapShareService(member_id=request.guest.member_id)
+        share_code, validity_days = map_share_service.create_map_share_link(map_id)
+
+        absolute_share_url = request.build_absolute_uri(reverse('map:map-validate-share-link', args=[map_id])) + f'?code={share_code}'
 
         return Response(
             BaseFormatResponse(
                 status_code=SuccessStatusCode.SUCCESS.value,
                 data={
-                    'share_key': share_key,
-                }
+                    'share_url': absolute_share_url,
+                    'share_code': share_code,
+                    'validity_days': validity_days,
+                },
             ).model_dump(),
-            status=status.HTTP_201_CREATED
+            status=status.HTTP_200_OK
         )
 
 
@@ -297,34 +289,36 @@ class MapShareValidateView(APIView):
     permission_classes = [IsGuestExists]
 
     def get(self, request, map_id: int):
-        """
-        Map 공유 링크 검증
-        
-        Args:
-            request: Request 객체
-            map_id: 공유 키
-            
-        Returns:
-            Response: Map 상세 정보
-        """
-        map_share_service = MapShareService(
-            member_id=request.guest.member_id,
-        )
-        map_obj = map_share_service.validate_share_map(map_id)
-        subscription_service = MapSubscriptionService(member_id=request.guest.member_id)
-        subscription_status = subscription_service.get_subscription_status_by_map_ids([map_obj.id])
-        is_subscribed = subscription_status[map_obj.id]
-        nodes = get_nodes_by_map_id(map_obj.id)
+        code = request.query_params.get('code')
+        if not code:
+            return Response(
+                BaseFormatResponse(
+                    status_code=400,
+                    error_summary='Invalid code',
+                    error_code='INVALID_CODE',
+                    message='유효하지 않은 코드입니다.',
+                ).model_dump(),
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        map_share_service = MapShareService(member_id=request.guest.member_id)
+        is_valid = map_share_service.validate_map_share_link(map_id, code)
+
+        if not is_valid:
+            return Response(
+                BaseFormatResponse(
+                    status_code=400,
+                    error_summary='Invalid code',
+                    error_code='INVALID_CODE',
+                    message='유효하지 않은 코드입니다.',
+                ).model_dump(),
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         return Response(
             BaseFormatResponse(
                 status_code=SuccessStatusCode.SUCCESS.value,
-                data=MapDetailDTO.from_entity(
-                    map_obj,
-                    is_subscribed=is_subscribed,
-                    is_owner=map_obj.created_by_id == request.guest.member_id,
-                    total_node_count=len(nodes),
-                ).model_dump(),
+                data={'is_valid': True},
             ).model_dump(),
             status=status.HTTP_200_OK
         )
@@ -335,28 +329,22 @@ class MapFeedbackAnswersView(APIView):
 
     @cursor_pagination(default_size=20, cursor_criteria=[FeedbackAnswersCursorCriteria])
     def get(self, request, map_id: int, decoded_next_cursor: dict, size: int):
-        """
-        Map의 피드백 답변 목록 조회
-        - Map 생성자만 조회 가능
-        - status로 피드백 상태 필터링 (pending/completed)
-        """
-        feedback_status = request.GET.get('status', 'pending')
-        try:
-            if feedback_status not in ['pending', 'completed']:
-                raise ValidationError('Invalid status')
-        except ValidationError as e:
-            raise PydanticAPIException(
-                status_code=400,
-                error_summary=MapInvalidInputResponseErrorStatus.INVALID_INPUT_FEEDBACK_ANSWERS_ERROR_400.label,
-                error_code=MapInvalidInputResponseErrorStatus.INVALID_INPUT_FEEDBACK_ANSWERS_ERROR_400.value,
-                errors=e.errors(),
+        map_service = MapService(member_id=request.guest.member_id)
+        map_obj = map_service.get_map_entity(map_id)
+        if not map_obj or map_obj.created_by_id != request.guest.member_id:
+            return Response(
+                BaseFormatResponse(
+                    status_code=403,
+                    error_summary='Not your map',
+                    error_code='NOT_YOUR_MAP',
+                    message='내가 만든 맵만 확인할 수 있습니다.',
+                ).model_dump(),
+                status=status.HTTP_403_FORBIDDEN
             )
 
-        map_service = MapService(member_id=request.guest.member_id)
-        answers, has_more, next_cursor = map_service.get_feedback_answers(
+        paginated_answers, has_more, next_cursor = map_service.get_feedback_answers(
+            FeedbackAnswersCursorCriteria,
             map_id=map_id,
-            status=feedback_status,
-            cursor_criteria=FeedbackAnswersCursorCriteria,
             decoded_next_cursor=decoded_next_cursor,
             size=size,
         )
@@ -365,35 +353,10 @@ class MapFeedbackAnswersView(APIView):
             BaseFormatResponse(
                 status_code=SuccessStatusCode.SUCCESS.value,
                 data={
-                    'answers': [
-                        {
-                            'id': answer.id,
-                            'question': {
-                                'id': answer.question.id,
-                                'title': answer.question.title,
-                            },
-                            'member': {
-                                'id': answer.map_play_member.member.id,
-                                'nickname': answer.map_play_member.member.nickname,
-                            },
-                            'answer': answer.answer,
-                            'files': [
-                                {
-                                    'id': file.id,
-                                    'name': file.name,
-                                    'file': file.file,
-                                }
-                                for file in answer.files.filter(
-                                    is_deleted=False,
-                                )
-                            ],
-                            'submitted_at': answer.created_at,
-                        }
-                        for answer in answers
-                    ],
+                    'answers': paginated_answers,
                     'next_cursor': next_cursor,
                     'has_more': has_more,
-                }
+                },
             ).model_dump(),
-            status=status.HTTP_200_OK,
-        )
+            status=status.HTTP_200_OK
+        ) 
