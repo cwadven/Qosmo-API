@@ -165,9 +165,9 @@ def find_activatable_node_ids_after_completion(
             start_node_id__in=node_ids,
             is_deleted=False,
         ).exclude(
-            start_node_id=F('end_node_id'),
+            start_node_id=F('node_complete_rule__node_id'),
         ).values_list(
-            'end_node_id',
+            'node_complete_rule__node_id',
             flat=True,
         )
     )
@@ -476,7 +476,7 @@ class NodeDetailService:
             return 0
         start_node_ids = set(
             Arrow.objects.filter(
-                end_node_id=node_id,
+                node_complete_rule__node_id=node_id,
             ).values_list(
                 'start_node_id',
                 flat=True,

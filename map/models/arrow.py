@@ -1,3 +1,5 @@
+from typing import Type
+
 from django.db import models
 
 
@@ -12,12 +14,6 @@ class Arrow(models.Model):
         on_delete=models.DO_NOTHING,
         related_name='starting_arrows',
         help_text='시작 Node',
-    )
-    end_node = models.ForeignKey(
-        'map.Node',
-        on_delete=models.DO_NOTHING,
-        related_name='ending_arrows',
-        help_text='타겟 Node',
     )
     node_complete_rule = models.ForeignKey(
         'map.NodeCompleteRule',
@@ -42,4 +38,11 @@ class Arrow(models.Model):
         verbose_name_plural = '화살표'
 
     def __str__(self):
-        return f'{self.map.name} - {self.start_node.name} -> {self.end_node.name}'
+        return f'{self.map.name} - {self.start_node.name} -> {self.node_complete_rule.node.name}'
+
+    @property
+    def end_node_id(self) -> Type[int]:
+        """
+        end_node_id를 반환합니다.
+        """
+        return self.node_complete_rule.node_id

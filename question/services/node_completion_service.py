@@ -111,7 +111,10 @@ class NodeCompletionService:
         arrows = Arrow.objects.filter(
             map_id=map_id,
             is_deleted=False
-        ).select_related('start_node', 'end_node', 'node_complete_rule')
+        ).select_related(
+            'start_node',
+            'node_complete_rule__node',
+        )
 
         # NodeCompleteRule 가져오기
         rules = NodeCompleteRule.objects.filter(

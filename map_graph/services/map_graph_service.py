@@ -41,7 +41,7 @@ class MapGraphService:
             is_deleted=False,
         ).select_related(
             'start_node',
-            'end_node',
+            'node_complete_rule__node',
         )
         start_node_ids_by_end_node_id = get_start_node_ids_by_end_node_id(arrows)
 

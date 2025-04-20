@@ -50,9 +50,14 @@ class NodeAdmin(admin.ModelAdmin):
 
 @admin.register(Arrow)
 class ArrowAdmin(admin.ModelAdmin):
-    list_display = ('map', 'start_node', 'end_node', 'node_complete_rule', 'created_at')
+    list_display = (
+        'map',
+        'start_node',
+        'node_complete_rule',
+        'created_at',
+    )
     list_filter = ('is_deleted',)
-    search_fields = ('map__name', 'start_node__name', 'end_node__name')
+    search_fields = ('map__name', 'start_node__name')
     readonly_fields = ('created_at', 'updated_at')
 
 

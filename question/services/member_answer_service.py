@@ -57,7 +57,7 @@ class MemberAnswerService:
             is_deleted=False
         ).select_related(
             'start_node',
-            'end_node',
+            'node_complete_rule__node',
         ).first()
 
         if not arrow:
@@ -65,9 +65,9 @@ class MemberAnswerService:
             return
 
         from_before_arrows = Arrow.objects.filter(
-            end_node_id=arrow.start_node_id
+            node_complete_rule__node_id=arrow.start_node_id
         ).exclude(
-            end_node_id=F('start_node_id'),
+            node_complete_rule__node_id=F('start_node_id'),
         )
 
         from_before_arrows_node_completed_ids = NodeCompletedHistory.objects.filter(
