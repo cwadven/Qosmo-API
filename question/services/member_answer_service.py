@@ -48,47 +48,54 @@ class MemberAnswerService:
         if self._permission_checked:
             if self._not_completed_node_names:
                 raise AnswerPermissionDeniedException(
-                    error_summary=f"Node '{', '.join(self._not_completed_node_names)}'가 완료되지 않아 답변을 제출할 수 없습니다."
+                    error_summary=f"'{', '.join(self._not_completed_node_names)}'가 완료되지 않아 답변을 제출할 수 없습니다."
                 )
             return
 
-        arrow = Arrow.objects.filter(
-            question=self.question,
-            is_deleted=False
-        ).select_related(
-            'start_node',
-            'node_complete_rule__node',
-        ).first()
-
-        if not arrow:
+        if not self.question.arrow:
             self._permission_checked = True
             return
 
-        from_before_arrows = Arrow.objects.filter(
-            node_complete_rule__node_id=arrow.start_node_id
+        # 문제를 제외한 (exclude : node_complete_rule__node_id==start_node_id)
+        # 현재 NodeCompleteRule 을 바라보고 있는 모든 화살표들
+        from_before_node_complete_rule_arrows = Arrow.objects.select_related(
+            'start_node',
+        ).filter(
+            node_complete_rule_id=self.question.arrow.node_complete_rule_id,
         ).exclude(
             node_complete_rule__node_id=F('start_node_id'),
         )
-
+        # 바라보는 화살표들의 해당 Node 들
+        before_nodes = [
+            from_before_node_complete_rule_arrow.start_node
+            for from_before_node_complete_rule_arrow in from_before_node_complete_rule_arrows
+        ]
+        before_node_ids = [before_node.id for before_node in before_nodes]
+        # 그 Node 중에서 해결된 것들을 확인하는 쿼리
         from_before_arrows_node_completed_ids = NodeCompletedHistory.objects.filter(
             map_id=self.question.map_id,
-            node_id__in=from_before_arrows.values_list('start_node_id', flat=True),
+            node_id__in=before_node_ids,
             map_play_member__map_play_id=self.map_play_id,
         ).values_list('node_id', flat=True)
 
-        not_completed_node_ids = set(from_before_arrows.values_list('start_node_id', flat=True)) - set(from_before_arrows_node_completed_ids)
+        # 모든 것과 완결된 거를 차집합 하는 경우, 만약 풀리지 않은 게 있으면 그 id
+        not_completed_node_ids = set(before_node_ids) - set(from_before_arrows_node_completed_ids)
 
         self._permission_checked = True
 
         if not_completed_node_ids:
-            self._not_completed_node_names = list(Node.objects.filter(
-                id__in=not_completed_node_ids
-            ).values_list(
-                'name',
-                flat=True,
-            ))
+            # 해결되지 않은 Node 이름을 가져옵니다.
+            self._not_completed_node_names = list(
+                map(
+                    lambda x: x.name,
+                    filter(
+                        lambda x: x.id in not_completed_node_ids,
+                        before_nodes,
+                    )
+                )
+            )
             raise AnswerPermissionDeniedException(
-                error_summary=f"Node '{', '.join(self._not_completed_node_names)}'가 완료되지 않아 답변을 제출할 수 없습니다."
+                error_summary=f"'{', '.join(self._not_completed_node_names)}'가 완료되지 않아 답변을 제출할 수 없습니다."
             )
 
     def create_answer(self, answer: Optional[str], files: List[MemberAnswerFileDto]) -> UserQuestionAnswer:
