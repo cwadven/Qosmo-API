@@ -28,7 +28,7 @@ from play.models import MapPlayMember
 from question.consts import QuestionType
 from question.models import (
     QuestionFile,
-    UserQuestionAnswer,
+    UserQuestionAnswer, Question,
 )
 from subscription.services.subscription_service import MapSubscriptionService
 
@@ -63,16 +63,24 @@ def get_map_play_completed_question_ids(
     if not question_ids:
         return set()
 
-    return set(
-        ArrowProgress.objects.filter(
-            arrow__question_id__in=question_ids,
-            is_resolved=True,
-            map_play_member__map_play_id=map_play_id,
+    question_id_by_arrow_id = dict(
+        Question.objects.filter(
+            id__in=question_ids,
+            arrow__isnull=False,
         ).values_list(
-            'arrow__question_id',
-            flat=True,
+            'arrow_id',
+            'id',
         )
     )
+    resolved_arrow_ids = ArrowProgress.objects.filter(
+        arrow__in=question_id_by_arrow_id.keys(),
+        is_resolved=True,
+        map_play_member__map_play_id=map_play_id,
+    ).values_list(
+        'arrow_id',
+        flat=True,
+    )
+    return set(question_id_by_arrow_id[resolved_arrow_id] for resolved_arrow_id in resolved_arrow_ids)
 
 
 def get_map_play_member_completed_arrow_ids(
@@ -227,12 +235,16 @@ class NodeDetailService:
             is_deleted=False,
         ).select_related(
             'start_node',
-            'question',
         )
 
         # Rule별 Question 매핑
         questions_by_rule_id = {}
-        questions = []
+        questions = list(
+            Question.objects.filter(
+                arrow_id__in=[arrow.id for arrow in arrows],
+                is_deleted=False,
+            )
+        )
         members_completed_arrow_ids = get_map_play_completed_arrow_ids(
             self.map_play_id,
             [arrow.id for arrow in arrows]
@@ -264,10 +276,6 @@ class NodeDetailService:
             )
 
         is_start_node = all([arrow.start_node_id == arrow.end_node_id for arrow in arrows])
-        for arrow in arrows:
-            if arrow.question:
-                questions.append(arrow.question)
-
         question_ids = [question.id for question in questions]
         members_completed_question_ids = get_map_play_completed_question_ids(
             self.map_play_id,
@@ -324,12 +332,16 @@ class NodeDetailService:
                 question_files_by_question_id[question_file.question_id] = []
             question_files_by_question_id[question_file.question_id].append(question_file)
 
+        question_by_arrow_id = {
+            question.arrow_id: question for question in questions if question.arrow_id
+        }
         for arrow in arrows:
             if arrow.node_complete_rule_id not in question_dtos_by_rule_id:
                 question_dtos_by_rule_id[arrow.node_complete_rule_id] = []
 
             question_status = 'locked'
-            if arrow.question_id in members_completed_question_ids:
+            mapping_question = question_by_arrow_id.get(arrow.id, Question(id=None))
+            if mapping_question.id in members_completed_question_ids:
                 question_status = 'completed'
             elif not node.is_active:
                 question_status = 'deactivated'
@@ -348,34 +360,34 @@ class NodeDetailService:
                 and is_subscribed
             )
 
-            if arrow.question:
+            if mapping_question.id:
                 question_dtos_by_rule_id[arrow.node_complete_rule_id].append(
                     # QuestionDTO 안에 문제를 해결할 수 있는 버튼 만들기 혹은 아니기 만들기 (비회원 및 나중을 위해)
                     QuestionDTO(
-                        id=arrow.question.id,
+                        id=mapping_question.id,
                         arrow_id=arrow.id,
-                        title=arrow.question.title,
-                        description=arrow.question.description,
+                        title=mapping_question.title,
+                        description=mapping_question.description,
                         question_files=[
                             FileDTO(
                                 id=file.id,
                                 url=file.file,
                                 name=file.name,
                             )
-                            for file in question_files_by_question_id.get(arrow.question_id, [])
+                            for file in question_files_by_question_id.get(mapping_question.id, [])
                         ],
                         status=question_status,
                         by_node_id=arrow.start_node_id,
-                        answer_submit_with_text=QuestionType.TEXT.value in arrow.question.question_types,
-                        answer_submit_with_file=QuestionType.FILE.value in arrow.question.question_types,
+                        answer_submit_with_text=QuestionType.TEXT.value in mapping_question.question_types,
+                        answer_submit_with_file=QuestionType.FILE.value in mapping_question.question_types,
                         answer_submittable=answer_submittable,
-                        my_answers=users_answers_by_question_id.get(arrow.question_id, []),
+                        my_answers=users_answers_by_question_id.get(mapping_question.id, []),
                     )
                 )
 
                 if arrow.node_complete_rule_id not in questions_by_rule_id:
                     questions_by_rule_id[arrow.node_complete_rule_id] = []
-                questions_by_rule_id[arrow.node_complete_rule_id].append(arrow.question)
+                questions_by_rule_id[arrow.node_complete_rule_id].append(mapping_question)
             else:
                 question_dtos_by_rule_id[arrow.node_complete_rule_id].append(
                     QuestionDTO(

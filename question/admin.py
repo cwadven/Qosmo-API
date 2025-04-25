@@ -197,20 +197,16 @@ class UserQuestionAnswerAdmin(admin.ModelAdmin):
                     feedback_obj.reviewed_at = timezone.now()
                     feedback_obj.save()
 
-                    arrow = Arrow.objects.filter(
-                        question=user_answer.question,
-                        is_deleted=False
-                    ).first()
                     # 정답인 경우 노드 완료 처리
                     if feedback_obj.is_correct:
-                        if arrow and arrow.start_node:
+                        if user_answer.question.arrow and user_answer.question.arrow.start_node:
                             node_completion_service = NodeCompletionService(
                                 member_id=user_answer.member_id,
                                 map_play_member_id=user_answer.map_play_member_id,
                                 map_play_id=user_answer.map_play_member.map_play_id,
                             )
                             node_completion_service.process_nodes_completion(
-                                nodes=[arrow.start_node]
+                                nodes=[user_answer.question.arrow.start_node]
                             )
                     map_play_members = MapPlayMember.objects.filter(
                         map_play_id=user_answer.map_play_member.map_play.id,
@@ -231,7 +227,7 @@ class UserQuestionAnswerAdmin(admin.ModelAdmin):
                             data={
                                 "type": "question_feedback",
                                 "question_id": str(user_answer.question.id),
-                                "map_id": str(arrow.map_id),
+                                "map_id": str(user_answer.question.arrow.map_id),
                                 "map_play_member_id": str(user_answer.map_play_member_id),
                                 "is_correct": str(feedback_obj.is_correct).lower(),
                             },
@@ -253,7 +249,7 @@ class UserQuestionAnswerAdmin(admin.ModelAdmin):
                                     data={
                                         "type": "question_solved_alert",
                                         "question_id": str(user_answer.question.id),
-                                        "map_id": str(arrow.map_id),
+                                        "map_id": str(user_answer.question.arrow.map_id),
                                         "map_play_id": str(user_answer.map_play_member.map_play_id),
                                         "is_correct": True,
                                     },

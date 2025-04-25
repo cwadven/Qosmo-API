@@ -2,6 +2,7 @@ import boto3
 import jwt
 from botocore.config import Config
 from django.conf import settings
+from rest_framework_simplejwt.exceptions import TokenError
 
 from common.common_consts.common_error_messages import InvalidInputResponseErrorStatus
 from common.common_consts.common_status_codes import SuccessStatusCode
@@ -176,7 +177,7 @@ class RefreshTokenView(APIView):
                 access_token=get_jwt_login_token(member),
                 refresh_token=get_jwt_refresh_token(member.guest),
             )
-        except jwt.InvalidTokenError:
+        except (jwt.InvalidTokenError, TokenError):
             raise InvalidRefreshTokenErrorException()
         except Member.DoesNotExist:
             raise NoMemberRefreshTokenErrorException()
