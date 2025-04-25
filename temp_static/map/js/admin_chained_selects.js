@@ -51,7 +51,8 @@ window.addEventListener('load', function() {
                 $.ajax({
                     url: '/v1/map-admin/get-arrows-by-map',
                     data: {
-                        'map_id': currentMapId
+                        'map_id': currentMapId,
+                        'same_node': 'true',
                     },
                     dataType: 'json',
                     success: function(data) {
@@ -86,12 +87,12 @@ window.addEventListener('load', function() {
                     $('#id_arrow').html(initialArrowHtml);
                     return;
                 }
-                
                 // AJAX 요청 - Arrow 필터링
                 $.ajax({
                     url: '/v1/map-admin/get-arrows-by-map',
                     data: {
-                        'map_id': mapId
+                        'map_id': mapId,
+                        'same_node': 'true',
                     },
                     dataType: 'json',
                     success: function(data) {

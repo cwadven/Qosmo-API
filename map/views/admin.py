@@ -1,3 +1,4 @@
+from django.db.models import F
 from django.http import JsonResponse
 from django.contrib.admin.views.decorators import staff_member_required
 from django.views.decorators.http import require_GET
@@ -47,10 +48,16 @@ def get_questions_by_map(request):
 def get_arrows_by_map(request):
     """맵 ID에 해당하는 화살표 목록을 반환합니다."""
     map_id = request.GET.get('map_id')
+    same_node = request.GET.get('same_node', 'false').lower() == 'true'
     if not map_id:
         return JsonResponse([])
-    
-    arrows = Arrow.objects.filter(map_id=map_id, is_deleted=False).values('id', 'start_node__name')
+
+    arrow_qs = Arrow.objects.filter(map_id=map_id, is_deleted=False)
+    if same_node:
+        arrow_qs = arrow_qs.filter(
+            start_node_id=F('node_complete_rule__node_id')
+        )
+    arrows = arrow_qs.values('id', 'start_node__name')
     
     # start_node__name을 name 필드로 변환
     result = []
