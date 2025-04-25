@@ -135,6 +135,9 @@ class NodeAdmin(admin.ModelAdmin):
     form = NodeAdminForm
     autocomplete_fields = ['map']
 
+    class Media:
+        js = ('map/js/node_admin.js',)
+
 
 @admin.register(Arrow)
 class ArrowAdmin(admin.ModelAdmin):
@@ -151,7 +154,7 @@ class ArrowAdmin(admin.ModelAdmin):
     autocomplete_fields = ['map']
 
     class Media:
-        js = ('map/js/admin_chained_selects.js',)
+        js = ('map/js/arrow_admin.js',)
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
@@ -203,7 +206,7 @@ class NodeCompleteRuleAdmin(admin.ModelAdmin):
     autocomplete_fields = ['map']
 
     class Media:
-        js = ('map/js/admin_chained_selects.js',)
+        js = ('map/js/node_complete_rule_admin.js',)
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)

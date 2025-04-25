@@ -80,7 +80,7 @@ class QuestionAdmin(admin.ModelAdmin):
     autocomplete_fields = ['map']
 
     class Media:
-        js = ('map/js/admin_chained_selects.js',)
+        js = ('map/js/question_admin.js',)
 
     def get_question_types_display(self, obj):
         return ', '.join(obj.question_types)
