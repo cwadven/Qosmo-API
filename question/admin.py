@@ -48,20 +48,13 @@ class QuestionAdminForm(ModelForm):
         """유효성 검사를 수행합니다"""
         cleaned_data = super().clean()
         
-        # 로깅 추가
-        print("===== QUESTION FORM CLEAN =====")
-        print(f"Cleaned data keys: {cleaned_data.keys()}")
-        
         # map이 변경되었는지 확인
         if 'map' in cleaned_data:
             map_obj = cleaned_data['map']
             arrow = cleaned_data.get('arrow')
-            
-            # arrow가 선택되어 있고 맵이 일치하지 않는 경우
+
             if arrow and arrow.map_id != map_obj.id:
-                # 오류 메시지만 표시하고 값은 그대로 유지
-                print(f"Arrow {arrow.id} does not belong to map {map_obj.id}")
-                # self.add_error('arrow', '선택한 화살표는 현재 맵에 속하지 않습니다. 다시 선택해주세요.')
+                pass
         
         return cleaned_data
 
@@ -95,47 +88,31 @@ class QuestionAdmin(admin.ModelAdmin):
     
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
-        print("===== QUESTION GET FORM =====")
-        print(f"Request method: {request.method}")
         
         # map_id 결정: 기존 객체 -> POST 데이터 -> GET 파라미터 순으로 확인
         map_id = None
         if obj and obj.map_id:
             map_id = obj.map_id
-            print(f"Using map_id from existing object: {map_id}")
         elif request.method == 'POST' and 'map' in request.POST:
             map_id = request.POST.get('map')
-            print(f"Using map_id from POST data: {map_id}")
         elif 'map' in request.GET:
             map_id = request.GET.get('map')
-            print(f"Using map_id from GET parameter: {map_id}")
         
         if map_id:
             # 맵 ID가 있으면 관련 필드의 쿼리셋을 설정
-            print(f"Setting querysets for map_id: {map_id}")
             
             # 화살표 쿼리셋 설정
             from map.models import Arrow
             arrows_queryset = Arrow.objects.filter(map_id=map_id, is_deleted=False)
-            print(f"Available arrows count: {arrows_queryset.count()}")
             form.base_fields['arrow'].queryset = arrows_queryset
-            
-            # 기존 객체가 있을 경우 현재 값들의 맵 ID 확인
-            if obj and obj.arrow:
-                print(f"Current arrow ID: {obj.arrow.id}, belongs to map: {obj.arrow.map_id}")
         else:
             # 맵 ID가 없으면 빈 쿼리셋 설정
-            print("No map_id available - using empty querysets")
             from map.models import Arrow
             form.base_fields['arrow'].queryset = Arrow.objects.none()
         
         return form
         
     def save_model(self, request, obj, form, change):
-        """모델 저장 전에 로깅합니다"""
-        print("===== QUESTION SAVE MODEL =====")
-        print(f"Map: {obj.map_id}")
-        print(f"Arrow: {obj.arrow_id}")
         # 저장 로직은 수정하지 않고 그대로 진행
         super().save_model(request, obj, form, change)
 
