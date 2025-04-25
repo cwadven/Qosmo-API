@@ -162,60 +162,52 @@ class MemberAnswerService:
             # 정답인 경우 Arrow 진행 상태 처리
             if is_correct:
                 # Question과 연결된 Arrow 찾기
-                arrow = Arrow.objects.filter(
+                now = timezone.now()
+                # 현재 Arrow의 ArrowProgress 생성
+                _, created = ArrowProgress.objects.get_or_create(
                     map=self.question.map,
-                    question=self.question,
+                    arrow=self.question.arrow,
+                    member_id=self.member_id,
+                    map_play_member_id=self.map_play_member_id,
+                    is_resolved=True,
+                    resolved_at=now
+                )
+                if not created:
+                    return user_answer
+
+                # 같은 규칙에 묶인 Arrow들의 진행 상태 확인
+                rule_connected_arrow_ids = Arrow.objects.filter(
+                    node_complete_rule=self.question.arrow.node_complete_rule,
                     is_deleted=False
-                ).select_related(
-                    'start_node',
-                    'node_complete_rule',
-                ).first()
-
-                if arrow:
-                    now = timezone.now()
-                    # 현재 Arrow의 ArrowProgress 생성
-                    _, created = ArrowProgress.objects.get_or_create(
-                        map=self.question.map,
-                        arrow=arrow,
-                        member_id=self.member_id,
-                        map_play_member_id=self.map_play_member_id,
-                        is_resolved=True,
-                        resolved_at=now
-                    )
-                    if not created:
-                        return user_answer
-
-                    # 같은 규칙에 묶인 Arrow들의 진행 상태 확인
-                    rule_arrow_ids = Arrow.objects.filter(
-                        node_complete_rule=arrow.node_complete_rule,
-                        is_deleted=False
+                ).values_list(
+                    'id',
+                    flat=True,
+                )
+                completed_arrow_ids = set(
+                    ArrowProgress.objects.filter(
+                        arrow__in=rule_connected_arrow_ids,
+                        map_play_member__map_play_id=self.map_play_id,
+                        is_resolved=True
                     ).values_list(
-                        'id',
+                        'arrow_id',
                         flat=True,
                     )
-                    completed_arrow_ids = set(
-                        ArrowProgress.objects.filter(
-                            arrow__in=rule_arrow_ids,
-                            map_play_member__map_play_id=self.map_play_id,
-                            is_resolved=True
-                        ).values_list(
-                            'arrow_id',
-                            flat=True,
-                        )
+                )
+
+                # 모든 Arrow가 completed 상태인 경우 NodeCompletionService 호출
+                if len(rule_connected_arrow_ids) <= len(completed_arrow_ids):
+                    node_completion_service = NodeCompletionService(
+                        member_id=self.member_id,
+                        map_play_member_id=self.map_play_member_id,
+                        map_play_id=self.map_play_id,
+                    )
+                    completion_result = node_completion_service.process_nodes_completion(
+                        nodes=[self.question.arrow.start_node]
                     )
 
-                    # 모든 Arrow가 completed 상태인 경우 NodeCompletionService 호출
-                    if len(rule_arrow_ids) <= len(completed_arrow_ids):
-                        node_completion_service = NodeCompletionService(
-                            member_id=self.member_id,
-                            map_play_member_id=self.map_play_member_id,
-                            map_play_id=self.map_play_id,
-                        )
-                        completion_result = node_completion_service.process_nodes_completion(nodes=[arrow.start_node])
-
-                        # 결과 누적
-                        self.new_arrow_progresses.extend(completion_result.new_arrow_progresses)
-                        self.new_completed_node_histories.extend(completion_result.new_completed_node_histories)
+                    # 결과 누적
+                    self.new_arrow_progresses.extend(completion_result.new_arrow_progresses)
+                    self.new_completed_node_histories.extend(completion_result.new_completed_node_histories)
 
                 push_service = PushService()
                 map_play_members = MapPlayMember.objects.filter(
@@ -238,7 +230,7 @@ class MemberAnswerService:
                             data={
                                 "type": "question_solved_alert",
                                 "question_id": str(user_answer.question.id),
-                                "map_id": str(arrow.map_id),
+                                "map_id": str(self.question.arrow.map_id),
                                 "map_play_id": str(user_answer.map_play_member.map_play_id),
                                 "is_correct": True,
                             },

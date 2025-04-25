@@ -41,6 +41,8 @@ class AnswerSubmitView(APIView):
         try:
             question = Question.objects.select_related(
                 'map',
+                'arrow__start_node',
+                'arrow__node_complete_rule',
             ).get(
                 id=question_id,
                 is_deleted=False,

@@ -21,14 +21,6 @@ class Arrow(models.Model):
         related_name='arrows',
         help_text='타겟 Node 해금 규칙',
     )
-    question = models.ForeignKey(
-        'question.Question',
-        on_delete=models.DO_NOTHING,
-        null=True,
-        blank=True,
-        related_name='arrows',
-        help_text='Arrow 해결 조건을 가진 문제',
-    )
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
