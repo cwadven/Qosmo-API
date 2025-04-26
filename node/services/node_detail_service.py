@@ -33,27 +33,6 @@ from question.models import (
 from subscription.services.subscription_service import MapSubscriptionService
 
 
-def get_map_play_member_completed_question_ids(
-        map_play_member_id: Optional[int],
-        question_ids: List[int]
-) -> Set[int]:
-    if not map_play_member_id:
-        return set()
-    if not question_ids:
-        return set()
-
-    return set(
-        ArrowProgress.objects.filter(
-            arrow__question_id__in=question_ids,
-            is_resolved=True,
-            map_play_member_id=map_play_member_id,
-        ).values_list(
-            'arrow__question_id',
-            flat=True,
-        )
-    )
-
-
 def get_map_play_completed_question_ids(
         map_play_id: Optional[int],
         question_ids: List[int]
