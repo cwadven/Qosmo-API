@@ -131,6 +131,29 @@ class QuestionAnswerAdmin(admin.ModelAdmin):
         'description',
     )
     readonly_fields = ('created_at', 'updated_at')
+    autocomplete_fields = ['map']
+    
+    class Media:
+        js = ('map/js/question_answer_admin.js',)
+    
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        
+        # 만약 객체가 이미 존재하거나 POST 요청에 question_id가 있다면
+        question_id = None
+        if obj and obj.question_id:
+            question_id = obj.question_id
+        elif request.method == 'POST' and 'question' in request.POST:
+            question_id = request.POST.get('question')
+        elif 'question' in request.GET:
+            question_id = request.GET.get('question')
+            
+        # form에 데이터 초기값 설정 또는 추가 설정
+        if question_id:
+            # 필요한 경우 이 부분에 질문 ID에 따른 추가 로직 구현
+            pass
+            
+        return form
 
 
 @admin.register(UserQuestionAnswer)

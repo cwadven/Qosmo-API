@@ -67,4 +67,29 @@ def get_arrows_by_map(request):
             'name': f"Start: {arrow['start_node__name']}" if arrow['start_node__name'] else f"Arrow ID: {arrow['id']}"
         })
     
-    return JsonResponse(result, safe=False) 
+    return JsonResponse(result, safe=False)
+
+
+@staff_member_required
+@require_GET
+def get_question_info(request):
+    """질문 ID에 해당하는 질문 정보를 반환합니다."""
+    question_id = request.GET.get('question_id')
+    if not question_id:
+        return JsonResponse({})
+    
+    try:
+        question = Question.objects.select_related('map').get(id=question_id, is_deleted=False)
+        
+        result = {
+            'id': question.id,
+            'title': question.title,
+            'description': question.description,
+            'question_types': question.question_types,
+            'map_id': question.map_id,
+            'map_name': question.map.name if question.map else None,
+        }
+        
+        return JsonResponse(result)
+    except Question.DoesNotExist:
+        return JsonResponse({'error': '질문을 찾을 수 없습니다.'}, status=404) 
