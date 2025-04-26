@@ -31,7 +31,7 @@ window.addEventListener('load', function() {
 function initArrowAdmin($) {
     console.log('Arrow admin 스크립트 초기화');
     
-    if ($('#id_map').length > 0 && $('#id_start_node').length > 0 && $('#id_end_node').length > 0) {
+    if ($('#id_map').length > 0 && $('#id_start_node').length > 0 && $('#id_node_complete_rule').length > 0) {
         console.log('Arrow admin form 감지됨');
         
         // 처음 페이지 로딩 시 초기 상태 저장
@@ -88,7 +88,7 @@ function initArrowAdmin($) {
             // 맵이 선택되지 않았으면 초기 상태로 돌림
             if (!mapId) {
                 $('#id_start_node').html(initialStartNodeHtml);
-                $('#id_end_node').html(initialEndNodeHtml);
+                $('#id_node_complete_rule').html(initialEndNodeHtml);
                 return;
             }
             
@@ -106,10 +106,31 @@ function initArrowAdmin($) {
                         options += '<option value="' + item.id + '">' + item.name + '</option>';
                     });
                     $('#id_start_node').html(options);
-                    $('#id_end_node').html(options);
                 },
                 error: function(xhr, status, error) {
                     console.error('노드 데이터를 가져오는 중 오류 발생:', error);
+                    console.error('상태 코드:', xhr.status);
+                    console.error('응답 텍스트:', xhr.responseText);
+                }
+            });
+
+            // AJAX 요청 - Node complete rule 필터링
+            $.ajax({
+                url: '/v1/map-admin/get-node-complete-rules-by-map',
+                data: {
+                    'map_id': mapId
+                },
+                dataType: 'json',
+                success: function(data) {
+                    console.log('Node Complete Rule 로드됨:', data.length);
+                    var options = '<option value="">---------</option>';
+                    $.each(data, function(index, item) {
+                        options += '<option value="' + item.id + '">' + item.name + '</option>';
+                    });
+                    $('#id_node_complete_rule').html(options);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Node Complete Rule 데이터를 가져오는 중 오류 발생:', error);
                     console.error('상태 코드:', xhr.status);
                     console.error('응답 텍스트:', xhr.responseText);
                 }
