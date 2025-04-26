@@ -177,17 +177,10 @@ class ArrowAdmin(admin.ModelAdmin):
             # 노드 완료 규칙 쿼리셋 설정
             rules_queryset = NodeCompleteRule.objects.filter(map_id=map_id, is_deleted=False)
             form.base_fields['node_complete_rule'].queryset = rules_queryset
-            
-            # 문제 쿼리셋 설정
-            from question.models import Question
-            questions_queryset = Question.objects.filter(map_id=map_id, is_deleted=False)
-            form.base_fields['question'].queryset = questions_queryset
         else:
             # 맵 ID가 없으면 빈 쿼리셋 설정
             form.base_fields['start_node'].queryset = Node.objects.none()
             form.base_fields['node_complete_rule'].queryset = NodeCompleteRule.objects.none()
-            from question.models import Question
-            form.base_fields['question'].queryset = Question.objects.none()
         
         return form
         
