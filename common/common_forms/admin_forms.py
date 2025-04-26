@@ -59,7 +59,6 @@ class PreSignedUrlAdminForm(forms.ModelForm):
             if self.base_fields.get(target_field).required:
                 raise AttributeError(f'Cannot set "{target_field}" as required in form. Please reset "required=False" in form.')
 
-
     def _get_meta(self):
         return getattr(self, 'Meta')
 
