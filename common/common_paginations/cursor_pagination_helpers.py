@@ -10,10 +10,12 @@ from django.db.models import (
 )
 
 
-def get_objects_with_cursor_pagination(qs: QuerySet,
-                                       cursor_criteria: Type[CursorCriteria],
-                                       filtering_operator: dict,
-                                       size: int) -> tuple[List[Any], bool, str]:
+def get_objects_with_cursor_pagination(
+        qs: QuerySet,
+        cursor_criteria: Type[CursorCriteria],
+        filtering_operator: dict,
+        size: int,
+) -> tuple[List[Any], bool, str]:
     objects = list(
         qs.filter(
             **filtering_operator

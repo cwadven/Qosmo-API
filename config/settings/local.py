@@ -20,6 +20,7 @@ GOOGLE_REDIRECT_URL = 'development_GOOGLE_REDIRECT_URL'
 AWS_IAM_ACCESS_KEY = 'development_AWS_IAM_ACCESS_KEY'
 AWS_IAM_SECRET_ACCESS_KEY = 'development_AWS_IAM_SECRET_ACCESS_KEY'
 AWS_S3_BUCKET_NAME = 'bucket_name'
+AWS_S3_PRE_SIGNED_UPLOAD_URL = 'https://XXX.s3.amazonaws.com'
 
 AWS_SQS_URL = 'development_AWS_SQS_URL'
 
@@ -32,6 +33,15 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3', # noqa
     }
+}
+
+# Push Notification 설정
+PUSH_SETTINGS = {
+    "APP_NAME": "Qosmo",
+    "ONE_DEVICE_PER_USER": False,
+    "DELETE_INACTIVE_DEVICES": True,
+    "FCM_API_KEY": FCM_SERVER_KEY,
+    "FCM_SENDER_ID": FCM_SENDER_ID,
 }
 
 # CELERY SETTINGS

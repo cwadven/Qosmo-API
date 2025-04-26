@@ -1,3 +1,4 @@
 PATH=/usr/local/bin:/usr/bin:/bin
 MAILTO=""
-* * * * * {{ prefix_command }} check >> /tmp/log/django_commands.log 2>&1
+0 15 * * * {{ prefix_command }} set_popular_maps daily >> /tmp/log/django_commands.log 2>&1
+0 15 * * * {{ prefix_command }} set_popular_maps monthly >> /tmp/log/django_commands.log 2>&1

@@ -60,6 +60,7 @@ def get_active_member_extra_link_qa(member_id: int):
 def get_member_profile(member_id: int) -> dict:
     """회원의 프로필 정보를 조회합니다."""
     member = Member.objects.get(id=member_id)
+    member.raise_if_inaccessible()
     subscription_service = MapSubscriptionService(member_id=member_id)
     subscribed_map_count = subscription_service.get_member_subscription_count()
 

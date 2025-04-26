@@ -222,9 +222,10 @@ paths:
 
         "401":
           description: |
-            Social Login failed<br>
+            Refresh Token failed<br>
             [ status_code ENUM ]<br>
             invalid-refresh-token<br>
+            no-member-token<br>
             [ errors ENUM ]<br>
           content:
             application/json:
@@ -265,15 +266,11 @@ paths:
             schema:
               type: object
               required:
-                - username
                 - email
                 - nickname
                 - password1
                 - password2
               properties:
-                username:
-                  type: string
-                  example: "test"
                 email:
                   type: string
                   format: email
@@ -329,7 +326,6 @@ paths:
               type: object
               required:
                 - email
-                - username
                 - nickname
                 - password2
               properties:
@@ -337,9 +333,6 @@ paths:
                   type: string
                   format: email
                   example: "test@naver.com"
-                username:
-                  type: string
-                  example: "username"
                 nickname:
                   type: string
                   example: "nickname"
@@ -750,6 +743,176 @@ paths:
               schema:
                 $ref: "#/components/schemas/NotUserAuthPermission"
 
+  /v1/common/file/{constance_type}/{transaction_pk}/url:
+    post:
+      tags:
+        - Common
+      summary: Give Presigned Url for Files
+      description: To upload any file types to AWS S3
+      parameters:
+        - in: path
+          name: constance_type
+          required: true
+          schema:
+            type: string
+            enum: ["answer_submit"]
+          description: Type of constance_type
+        - in: path
+          name: transaction_pk
+          required: true
+          schema:
+            type: string
+          description: Type of constance_type pk
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - file_name
+              properties:
+                file_name:
+                  type: string
+                  description: "파일 이름 확장자까지 필요"
+                  example: "report.pdf"
+      responses:
+        "200":
+          description: Created Presigned URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      url:
+                        type: string
+                        description: "파일 업로드 엔드포인트 URL"
+                        example: "/v1/common/file/upload"
+                      extra_data:
+                        type: object
+                        properties:
+                          key:
+                            type: string
+                            example: "answer_submit/1/report.pdf"
+                          x-amz-algorithm:
+                            type: string
+                            example: "AWS4-HMAC-SHA256"
+                          x-amz-credential:
+                            type: string
+                            example: "......./20240720/ap-northeast-2/s3/aws4_request"
+                          x-amz-date:
+                            type: string
+                            example: "20240720T054525Z"
+                          policy:
+                            type: string
+                            example: "eyJleHBpcmF0aW9uIjogIjIwMjQtMDctMjBUMDY6MDI6MDVaIiwgImNvbmRpdGlvbnMiOiBbWyJjb250ZW50LWxlbmd0aC1yYW5nZSIsIDAsIDEwNDg1NzYwXSwgeyJidWNrZXQiOiAic2lwbGUtZGV2In0sIHsia2V5IjogInByb2plY3QtaW1hZ2UvMS90ZXN0LnBuZyJ9LCB7IngtYW16LWFsZ29yaXRobSI6ICJBV1M0LUhNQUMtU0hBMjU2In0sIHsieC1hbXotY3JlZGVudGlhbCI6ICJBS0lBMlVDM0ZHUTZaNU5NUkJZUS8yMDI0MDcyMC9hcC1ub3J0aGVhc3QtMi9zMy9hd3M0X3JlcXVlc3QifSwgeyJ4LWFtei1kYXRlIjogIjIwMjQwNzIwVDA1NDUyNVoifV19"
+                          x-amz-signature:
+                            type: string
+                            example: "11a8ebd3d1b1c404c48d686727e96f1b6689906f87e89442487aa31db4b4b3eb"
+        "401":
+          description: No Auth
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotUserAuthPermission"
+
+  /v1/common/file/upload:
+    post:
+      tags:
+        - Common
+      summary: Direct File Upload with Pre-signed URL data
+      description: Upload file directly to server with pre-signed URL data and then to AWS S3
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - key
+                - x-amz-algorithm
+                - x-amz-credential
+                - x-amz-date
+                - policy
+                - x-amz-signature
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: "File to upload"
+                key:
+                  type: string
+                  description: "S3 key path"
+                  example: "answer_submit/1/report.pdf"
+                x-amz-algorithm:
+                  type: string
+                  description: "AWS algorithm"
+                  example: "AWS4-HMAC-SHA256"
+                x-amz-credential:
+                  type: string
+                  description: "AWS credential"
+                  example: "......./20240720/ap-northeast-2/s3/aws4_request"
+                x-amz-date:
+                  type: string
+                  description: "AWS date"
+                  example: "20240720T054525Z"
+                policy:
+                  type: string
+                  description: "AWS policy"
+                  example: "eyJleHBpcmF0aW9uIjogIjIwMjQtMDctMjBUMDY6MDI6MDVaIiwgImNvbmRpdGlvbnMiOiBbWyJjb250ZW50LWxlbmd0aC1yYW5nZSIsIDAsIDEwNDg1NzYwXSwgeyJidWNrZXQiOiAic2lwbGUtZGV2In0sIHsia2V5IjogInByb2plY3QtaW1hZ2UvMS90ZXN0LnBuZyJ9LCB7IngtYW16LWFsZ29yaXRobSI6ICJBV1M0LUhNQUMtU0hBMjU2In0sIHsieC1hbXotY3JlZGVudGlhbCI6ICJBS0lBMlVDM0ZHUTZaNU5NUkJZUS8yMDI0MDcyMC9hcC1ub3J0aGVhc3QtMi9zMy9hd3M0X3JlcXVlc3QifSwgeyJ4LWFtei1kYXRlIjogIjIwMjQwNzIwVDA1NDUyNVoifV19"
+                x-amz-signature:
+                  type: string
+                  description: "AWS signature"
+                  example: "11a8ebd3d1b1c404c48d686727e96f1b6689906f87e89442487aa31db4b4b3eb"
+      responses:
+        "200":
+          description: File Uploaded Successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: "성공 메시지"
+                        example: "파일 업로드 성공"
+                      path:
+                        type: string
+                        description: "업로드된 파일의 전체 URL 경로"
+                        example: "https://s3-bucket-url.com/answer_submit/1/report.pdf"
+        "400":
+          description: Missing Required Fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "file 필드가 필요합니다."
+        "401":
+          description: No Auth
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotUserAuthPermission"
+        "500":
+          description: Upload Failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "파일 업로드에 실패했습니다."
+
   /v1/common/{constance_type}/type:
     get:
       tags:
@@ -936,12 +1099,11 @@ paths:
     get:
       tags:
         - Map
-      summary: "[TODO] 전체 Map 목록 조회"
+      summary: "전체 Map 목록 조회"
       description: |
-        Status: Not Implemented
         Map 목록을 페이지네이션하여 조회합니다.
       parameters:
-        - name: cursor
+        - name: next_cursor
           in: query
           description: base64로 인코딩된 커서 값
           required: false
@@ -994,9 +1156,8 @@ paths:
     get:
       tags:
         - Map
-      summary: "[TODO] Map 상세 조회"
+      summary: "Map 상세 조회"
       description: |
-        Status: Not Implemented
         특정 Map의 상세 정보를 조회합니다.
       parameters:
         - name: map_id
@@ -1026,9 +1187,8 @@ paths:
     get:
       tags:
         - Node
-      summary: "[TODO] Node 상세 정보 조회"
+      summary: "Node 상세 정보 조회"
       description: |
-        Status: Not Implemented
         특정 Node의 상세 정보를 조회합니다.
       parameters:
         - name: node_id
@@ -1058,9 +1218,8 @@ paths:
     post:
       tags:
         - Question
-      summary: "[TODO] Question 답변 제출"
+      summary: "Question 답변 제출"
       description: |
-        Status: Not Implemented
         특정 Question에 대한 답변을 제출합니다.
       parameters:
         - name: question_id
@@ -1110,9 +1269,8 @@ paths:
     get:
       tags:
         - MapGraph
-      summary: "[TODO] Map의 Node 목록 조회"
+      summary: "Map의 Node 목록 조회"
       description: |
-        Status: Not Implemented
         특정 Map에 속한 모든 Node의 위치와 상태 정보를 조회합니다.
       parameters:
         - name: map_id
@@ -1143,13 +1301,54 @@ paths:
         "404":
           $ref: "#/components/responses/MapNotFoundError"
 
+  /v1/map-graph/node/{map_id}/member_play/{map_play_member_id}:
+    get:
+      tags:
+        - MapGraph
+      summary: "Map의 Node 목록 조회 (특정 멤버의 진행 상황 포함)"
+      description: |
+        특정 Map에 속한 모든 Node의 위치와 상태 정보를 조회하며, 특정 맵 플레이 멤버의 진행 상황을 포함합니다.
+      parameters:
+        - name: map_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: map_play_member_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: "진행 상황을 조회할 맵 플레이 멤버 ID"
+      responses:
+        "200":
+          description: 성공적으로 Node 목록을 조회했습니다
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      nodes:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Node"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/MapNotFoundError"
+
   /v1/map-graph/arrow/{map_id}:
     get:
       tags:
         - MapGraph
-      summary: "[TODO] Map의 Arrow 목록 조회"
+      summary: "Map의 Arrow 목록 조회"
       description: |
-        Status: Not Implemented
         특정 Map에 속한 모든 Arrow의 연결 정보와 상태를 조회합니다.
       parameters:
         - name: map_id
@@ -1179,23 +1378,28 @@ paths:
         "404":
           $ref: "#/components/responses/MapNotFoundError"
 
-  /v1/map-graph/node-complete-rule/{map_id}:
+  /v1/map-graph/arrow/{map_id}/member_play/{map_play_member_id}:
     get:
       tags:
         - MapGraph
-      summary: "[TODO] Map의 CompleteRule 목록 조회"
+      summary: "Map의 Arrow 목록 조회 (특정 멤버의 진행 상황 포함)"
       description: |
-        Status: Not Implemented
-        특정 Map에 속한 모든 CompleteRule 정보를 조회합니다.
+        특정 Map에 속한 모든 Arrow의 연결 정보와 상태를 조회하며, 특정 맵 플레이 멤버의 진행 상황을 포함합니다.
       parameters:
         - name: map_id
           in: path
           required: true
           schema:
             type: integer
+        - name: map_play_member_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: "진행 상황을 조회할 맵 플레이 멤버 ID"
       responses:
         "200":
-          description: 성공적으로 CompleteRule 목록을 조회했습니다
+          description: 성공적으로 Arrow 목록을 조회했습니다
           content:
             application/json:
               schema:
@@ -1206,10 +1410,10 @@ paths:
                     example: "success"
                   data:
                     properties:
-                      node_complete_rules:
+                      arrows:
                         type: array
                         items:
-                          $ref: "#/components/schemas/CompleteRule"
+                          $ref: "#/components/schemas/Arrow"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
         "404":
@@ -1219,9 +1423,8 @@ paths:
     get:
       tags:
         - MapGraph
-      summary: "[TODO] Map 그래프 메타데이터 조회"
+      summary: "Map 그래프 메타데이터 조회"
       description: |
-        Status: Not Implemented
         Map 그래프의 메타데이터를 조회합니다.
       parameters:
         - name: map_id
@@ -1240,9 +1443,6 @@ paths:
                   status_code:
                     type: string
                     example: "success"
-                  message:
-                    type: string
-                    example: "성공"
                   data:
                     $ref: "#/components/schemas/MapGraphMeta"
         "401":
@@ -1250,16 +1450,104 @@ paths:
         "404":
           $ref: "#/components/responses/MapNotFoundError"
 
+  /v1/map-graph/meta/{map_id}/member_play/{map_play_member_id}:
+    get:
+      tags:
+        - MapGraph
+      summary: "Map 그래프 메타데이터 조회 (특정 멤버의 진행 상황 포함)"
+      description: |
+        Map 그래프의 메타데이터를 조회하며, 특정 맵 플레이 멤버의 진행 상황을 포함합니다.
+      parameters:
+        - name: map_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: map_play_member_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: "진행 상황을 조회할 맵 플레이 멤버 ID"
+      responses:
+        "200":
+          description: 성공적으로 메타데이터를 조회했습니다
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    $ref: "#/components/schemas/MapGraphMeta"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/MapNotFoundError"
+
+  /v1/map/popular/daily:
+    get:
+      tags:
+        - Map
+      summary: "인기 일별 순"
+      description: |
+        인기 일별 순
+      responses:
+        "200":
+          description: 인기 일별 순
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      maps:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/MapListItem"
+
+  /v1/map/popular/monthly:
+    get:
+      tags:
+        - Map
+      summary: "인기 월별 순"
+      description: |
+        인기 월별 순
+      responses:
+        "200":
+          description: 인기 월별 순
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      maps:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/MapListItem"
+
   /v1/map/subscribed:
     get:
       tags:
         - Map
-      summary: "[TODO] 구독 중인 Map 목록 조회"
+      summary: "구독 중인 Map 목록 조회"
       description: |
-        Status: Not Implemented
         사용자가 구독 중인 Map 목록을 페이지네이션하여 조회합니다.
       parameters:
-        - name: cursor
+        - name: next_cursor
           in: query
           description: base64로 인코딩된 커서 값
           required: false
@@ -1300,9 +1588,8 @@ paths:
     get:
       tags:
         - Map
-      summary: "[TODO] 인기 Map 목록 조회"
+      summary: "인기 Map 목록 조회"
       description: |
-        Status: Not Implemented
         구독자 수 기준으로 상위 5개의 인기 Map 목록을 조회합니다.
       responses:
         "200":
@@ -1324,6 +1611,113 @@ paths:
                           $ref: "#/components/schemas/MapListItem"
                         maxItems: 5
                         minItems: 5
+
+  /v1/map/my:
+    get:
+      tags:
+        - Map
+      summary: "내가 작성한 Map 목록 조회"
+      description: |
+        사용자가 작성한 Map 목록을 페이지네이션하여 조회합니다.
+      parameters:
+        - name: next_cursor
+          in: query
+          description: base64로 인코딩된 커서 값
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: 한 번에 가져올 개수
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: 성공적으로 구독 중인 Map 목록을 조회했습니다
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      maps:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/MapListItem"
+                      next_cursor:
+                        type: string
+                        description: base64 인코딩된 다음 커서 값
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /v1/subscription/map/{map_id}:
+    post:
+      tags:
+        - Subscription
+      summary: "구독하기"
+      description: |
+        특정 Map 을 구독합니다.
+      parameters:
+        - name: map_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 구독 완료
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    example: {}
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/MapNotFoundError"
+    delete:
+      tags:
+        - Subscription
+      summary: "구독 취소 하기"
+      description: |
+        특정 Map 을 구독 취소합니다.
+      parameters:
+        - name: map_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 구독 취소
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    example: { }
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/MapNotFoundError"
 
   /v1/member/profile:
     get:
@@ -1356,7 +1750,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
               properties:
@@ -1366,7 +1760,7 @@ paths:
                 profile_image:
                   type: string
                   format: binary
-                  description: "프로필 이미지 파일 (jpg, png만 가능)"
+                  description: "프로필 이미지 파일 (jpg, png, webp, gif 만 가능)"
       responses:
         "200":
           description: 프로필 수정 성공
@@ -1395,6 +1789,1424 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
+
+  /v1/play/map/<int:map_id>:
+    get:
+      tags:
+        - MapPlay
+      summary: "내가 참여 중인 플레이 목록 조회"
+      description: |
+        현재 로그인한 사용자가 참여 중인 플레이 목록을 조회합니다.
+        탈퇴하지 않은(deactivated=False) 플레이만 조회됩니다.
+      responses:
+        "200":
+          description: 플레이 목록 조회 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      plays:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            title:
+                              type: string
+                              example: "우리 팀의 React 학습"
+                            role:
+                              type: string
+                              enum: [participant, admin]
+                              example: "participant"
+                            joined_at:
+                              type: string
+                              format: date-time
+                              example: "2024-02-05T14:23:00Z"
+                            completed_node_count:
+                              type: integer
+                              example: 5
+                            recent_activated_nodes:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  node_id:
+                                    type: integer
+                                    example: 1
+                                  node_name:
+                                    type: string
+                                    example: "Java 공부하기"
+                                  activated_at:
+                                    type: string
+                                    format: date-time
+                                    example: 2025-02-14T12:19:46.770995Z
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+    post:
+      tags:
+        - MapPlay
+      summary: "맵 플레이 생성"
+      description: |
+        특정 맵의 플레이를 생성합니다. 생성자는 자동으로 admin 권한을 가집니다.
+      parameters:
+        - name: map_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                  example: "우리 팀의 React 학습"
+      responses:
+        "201":
+          description: 플레이 생성 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      map_play_id:
+                        type: integer
+                        example: 1
+                      map_id:
+                        type: integer
+                        example: 1
+                      title:
+                        type: string
+                        example: "우리 팀의 React 학습"
+                      created_at:
+                        type: string
+                        format: date-time
+                      updated_at:
+                        type: string
+                        format: date-time
+        "400":
+          description: |
+            플레이 생성 실패<br>
+            [ status_code ENUM ]<br>
+            INVALID_INPUT_CREATE_MAP_PLAY_ERROR_400<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: 맵을 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/responses/MapNotFoundError"
+
+  /v1/play/{map_play_member_id}/invite-codes:
+    get:
+      tags:
+        - MapPlay
+      summary: "초대 코드 목록 조회"
+      description: |
+        플레이의 활성화된 초대 코드 목록을 조회합니다.
+        admin만 조회할 수 있습니다.
+      parameters:
+        - name: map_play_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 초대 코드 목록 조회 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      invite_codes:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/MapPlayInviteCode"
+        "403":
+          description: |
+            초대 코드 목록 조회 실패<br>
+            [ status_code ENUM ]<br>
+            play-admin-permission-denied<br>
+            [ errors ]<br>
+            - 해당 플레이의 admin만 이 작업을 수행할 수 있습니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      tags:
+        - MapPlay
+      summary: "초대 코드 생성"
+      description: |
+        플레이의 초대 코드를 생성합니다.
+        admin만 생성할 수 있습니다.
+      parameters:
+        - name: map_play_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                max_uses:
+                  type: integer
+                  nullable: true
+                  description: "최대 사용 횟수 (null인 경우 무제한)"
+                  example: 10
+                expired_at:
+                  type: string
+                  format: date-time
+                  nullable: true
+                  description: "만료일시 (null인 경우 무기한)"
+      responses:
+        "201":
+          description: 초대 코드 생성 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    $ref: "#/components/schemas/MapPlayInviteCode"
+        "400":
+          description: |
+            초대 코드 생성 실패<br>
+            [ status_code ENUM ]<br>
+            INVALID_INPUT_CREATE_INVITE_CODE_ERROR_400<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: |
+            초대 코드 생성 실패<br>
+            [ status_code ENUM ]<br>
+            play-admin-permission-denied<br>
+            [ errors ]<br>
+            - 해당 플레이의 admin만 이 작업을 수행할 수 있습니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      tags:
+        - MapPlay
+      summary: "초대 코드 비활성화"
+      description: |
+        플레이의 초대 코드를 비활성화합니다.
+        admin만 비활성화할 수 있습니다.
+      parameters:
+        - name: map_play_id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 초대 코드 비활성화 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    example: {}
+        "403":
+          description: |
+            초대 코드 비활성화 실패<br>
+            [ status_code ENUM ]<br>
+            play-admin-permission-denied<br>
+            [ errors ]<br>
+            - 해당 플레이의 admin만 이 작업을 수행할 수 있습니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: |
+            초대 코드 비활성화 실패<br>
+            [ status_code ENUM ]<br>
+            play-invite-code-not-found<br>
+            [ errors ]<br>
+            - 존재하지 않거나 이미 비활성화된 초대 코드입니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /v1/play/join/{code}:
+    post:
+      tags:
+        - MapPlay
+      summary: "초대 코드로 플레이 참여"
+      description: |
+        초대 코드를 사용하여 플레이에 참여합니다.
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: 플레이 참여 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    $ref: "#/components/schemas/MapPlayMember"
+        "400":
+          description: |
+            플레이 참여 실패<br>
+            [ status_code ENUM ]<br>
+            play-invite-code-not-found<br>
+            play-member-not-found<br>
+            [ errors ]<br>
+            - 존재하지 않거나 이미 비활성화된 초대 코드입니다.<br>
+            - 초대 코드가 만료되었습니다.<br>
+            - 초대 코드 사용 횟수를 초과했습니다.<br>
+            - 이미 플레이 멤버입니다.<br>
+            - 이 초대 코드로는 더 이상 참여할 수 없습니다.<br>
+            - 이전에 추방된 이력이 있어 참여할 수 없습니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /v1/play/{map_play_member_id}/member/role:
+    patch:
+      tags:
+        - MapPlay
+      summary: "멤버 역할 변경"
+      description: |
+        플레이 멤버의 역할을 변경합니다. admin만 변경 가능합니다.
+      parameters:
+        - name: map_play_member_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: "역할을 변경할 맵 플레이 멤버 ID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - new_role
+              properties:
+                new_role:
+                  type: string
+                  enum: [participant, admin]
+                  example: "admin"
+                reason:
+                  type: string
+                  nullable: true
+                  example: "팀장으로 승진"
+      responses:
+        "200":
+          description: 역할 변경 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    $ref: "#/components/schemas/MapPlayMemberDTO"
+        "400":
+          description: |
+            역할 변경 실패<br>
+            [ status_code ENUM ]<br>
+            INVALID_INPUT_CHANGE_ROLE_ERROR_400<br>
+            play-member-not-found<br>
+            play-last-admin<br>
+            [ errors ]<br>
+            - 존재하지 않거나 이미 비활성화된 멤버입니다.<br>
+            - 이미 해당 역할입니다.<br>
+            - 마지막 admin은 역할 변경할 수 없습니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: |
+            역할 변경 실패<br>
+            [ status_code ENUM ]<br>
+            play-admin-permission-denied<br>
+            [ errors ]<br>
+            - 해당 플레이의 admin만 이 작업을 수행할 수 있습니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /v1/play/{map_play_member_id}/member/ban:
+    post:
+      tags:
+        - MapPlay
+      summary: "멤버 추방"
+      description: |
+        플레이 멤버를 추방합니다. admin만 추방 가능합니다.
+      parameters:
+        - name: map_play_member_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: "추방할 맵 플레이 멤버 ID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - banned_reason
+              properties:
+                banned_reason:
+                  type: string
+                  example: "부적절한 행동"
+                invite_code_id:
+                  type: integer
+                  nullable: true
+                  description: "특정 초대 코드로 추방 시 해당 코드로 재가입 불가"
+      responses:
+        "200":
+          description: 추방 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      banned_at:
+                        type: string
+                        format: date-time
+        "400":
+          description: |
+            추방 실패<br>
+            [ status_code ENUM ]<br>
+            INVALID_INPUT_BAN_MEMBER_ERROR_400<br>
+            play-member-not-found<br>
+            play-last-admin<br>
+            [ errors ]<br>
+            - 존재하지 않거나 이미 비활성화된 멤버입니다.<br>
+            - 마지막 admin은 추방할 수 없습니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: |
+            추방 실패<br>
+            [ status_code ENUM ]<br>
+            play-admin-permission-denied<br>
+            [ errors ]<br>
+            - 해당 플레이의 admin만 이 작업을 수행할 수 있습니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /v1/play/{map_play_member_id}/member/self-deactivate:
+    post:
+      tags:
+        - MapPlay
+      summary: "맵 플레이 멤버 자발적 탈퇴"
+      description: |
+        플레이에서 탈퇴합니다.
+        1. admin이 아닌 경우: 바로 탈퇴 가능
+        2. admin인 경우:
+           - 혼자만 있는 경우: 바로 탈퇴 가능
+           - admin이 2명 이상인 경우: 바로 탈퇴 가능
+           - 다른 멤버가 있고 admin이 혼자인 경우: admin 권한 위임 필요
+      parameters:
+        - name: map_play_member_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: "탈퇴할 맵 플레이 멤버 ID"
+      responses:
+        "200":
+          description: 탈퇴 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    enum: [success]
+                  data:
+                    $ref: "#/components/schemas/MapPlayMemberDTO"
+        "400":
+          description: |
+            탈퇴 실패<br>
+            [ status_code ENUM ]<br>
+            play-admin-deactivate<br>
+            [ errors ]<br>
+            - 다른 멤버가 있는 경우 admin 권한을 위임한 후에 탈퇴할 수 있습니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: |
+            탈퇴 실패<br>
+            [ status_code ENUM ]<br>
+            play-member-not-found<br>
+            [ errors ]<br>
+            - 존재하지 않거나 이미 비활성화된 멤버입니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /v1/push/device-token:
+    post:
+      tags:
+        - Push
+      summary: "디바이스 토큰 등록/갱신"
+      description: |
+        푸시 알림을 위한 디바이스 토큰을 등록하거나 갱신합니다.
+        이미 등록된 토큰인 경우 게스트 정보와 디바이스 타입이 갱신됩니다.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - device_type
+              properties:
+                token:
+                  type: string
+                  description: "Firebase 디바이스 토큰"
+                  example: "eKh6HBU1..."
+                device_type:
+                  type: string
+                  enum: [ios, android]
+                  description: "디바이스 타입"
+                  example: "ios"
+      responses:
+        "200":
+          description: 토큰 등록/갱신 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    enum: [success]
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                        description: "등록된 디바이스 토큰"
+                      device_type:
+                        type: string
+                        enum: [ios, android]
+                        description: "디바이스 타입"
+                      created_at:
+                        type: string
+                        format: date-time
+                        description: "등록 일시"
+        "400":
+          description: |
+            토큰 등록/갱신 실패<br>
+            [ errors ]<br>
+            - 토큰과 디바이스 타입은 필수입니다.<br>
+            - 디바이스 타입은 ios 또는 android만 가능합니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: |
+            토큰 등록/갱신 실패<br>
+            [ errors ]<br>
+            - 게스트 정보가 없습니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      tags:
+        - Push
+      summary: "디바이스 토큰 비활성화"
+      description: |
+        푸시 알림을 위한 디바이스 토큰을 비활성화합니다.
+        비활성화된 토큰으로는 더 이상 푸시 알림이 발송되지 않습니다.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+                  description: "비활성화할 Firebase 디바이스 토큰"
+                  example: "eKh6HBU1..."
+      responses:
+        "200":
+          description: 토큰 비활성화 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    enum: [success]
+                  data:
+                    type: object
+        "400":
+          description: |
+            토큰 비활성화 실패<br>
+            [ errors ]<br>
+            - 토큰은 필수입니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: |
+            토큰 비활성화 실패<br>
+            [ errors ]<br>
+            - 게스트 정보가 없습니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /v1/map/{map_id}/share:
+    post:
+      tags:
+        - Map
+      summary: Map 공유 링크 생성
+      description: |
+        Map의 공유 링크를 생성합니다.
+        - private map인 경우 30분간 유효한 공유 링크가 생성됩니다.
+        - public map인 경우에도 공유 링크가 생성되지만, 링크 없이도 접근 가능합니다.
+      security:
+        - jwt: []
+      parameters:
+        - name: map_id
+          in: path
+          description: Map ID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '201':
+          description: 공유 링크 생성 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      share_key:
+                        type: string
+                        example: "1"
+        '404':
+          description: Map을 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: map-not-found
+                  message:
+                    type: string
+                    example: Map을 찾을 수 없습니다.
+                  errors:
+                    type: object
+                    example: {}
+
+  /v1/map/share/{map_id}:
+    get:
+      tags:
+        - Map
+      summary: Map 공유 링크 검증
+      description: |
+        공유 링크를 통해 Map에 접근합니다.
+        - public map인 경우 바로 접근 가능합니다.
+        - private map인 경우 유효한 공유 키가 필요합니다.
+        - 공유 키는 30분간 유효합니다.
+      parameters:
+        - name: map_id
+          in: path
+          description: 공유 키
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Map 상세 정보 조회 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: success
+                  data:
+                    $ref: '#/components/schemas/MapDetail'
+        '404':
+          description: Map을 찾을 수 없거나 접근 권한이 없음
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: map-not-found
+                  message:
+                    type: string
+                    example: Map을 찾을 수 없거나 접근 권한이 없습니다.
+                  errors:
+                    type: object
+                    example: {}
+
+  /v1/play/{map_play_member_id}/members:
+    get:
+      tags:
+        - MapPlay
+      summary: Map Play 멤버 목록 조회
+      description: |
+        Map Play의 멤버 목록을 조회합니다.
+        - 본인이 해당 플레이의 멤버인 경우에만 조회 가능합니다.
+        - 멤버 목록은 역할(admin -> participant)과 생성일시 순으로 정렬됩니다.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: map_play_member_id
+          in: path
+          description: Map Play 멤버 ID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status_code
+                  - data
+                properties:
+                  status_code:
+                    type: string
+                    description: "상태 코드"
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      members:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              description: Map Play 멤버 ID
+                              example: 1
+                            member_info:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+                                  description: 멤버 ID
+                                  example: 1
+                                nickname:
+                                  type: string
+                                  description: 멤버 닉네임
+                                  example: "비니"
+                            role:
+                              type: string
+                              description: 역할 (admin/participant)
+                              example: "admin"
+                            created_at:
+                              type: string
+                              format: date-time
+                              description: 생성일시
+                              example: "2024-02-05T14:30:00Z"
+                            updated_at:
+                              type: string
+                              format: date-time
+                              description: 수정일시
+                              example: "2024-02-05T14:30:00Z"
+        '403':
+          description: 맵 플레이 멤버를 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                  - status_code
+                  - errors
+                properties:
+                  message:
+                    type: string
+                    description: "에러 메시지"
+                    example: "Map Play 멤버를 찾을 수 없습니다."
+                  status_code:
+                    type: string
+                    description: "에러 코드"
+                    example: "play-member-not-found"
+                  errors:
+                    type: object
+                    nullable: true
+                    additionalProperties:
+                      type: array
+                      items:
+                        type: string
+                    example: null
+
+  /v1/play/{map_play_member_id}/management:
+    put:
+      tags:
+        - MapPlay
+      summary: Map Play 관리 (제목 수정)
+      description: |
+        Map Play의 제목을 수정합니다.
+        - admin만 수정할 수 있습니다.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: map_play_member_id
+          in: path
+          description: Map Play 멤버 ID
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                  description: 새로운 제목
+                  example: "새로운 React 학습"
+      responses:
+        '200':
+          description: 제목 수정 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      map_play_id:
+                        type: integer
+                        example: 1
+                      map_id:
+                        type: integer
+                        example: 1
+                      title:
+                        type: string
+                        example: "새로운 React 학습"
+                      created_at:
+                        type: string
+                        format: date-time
+                      updated_at:
+                        type: string
+                        format: date-time
+        '400':
+          description: |
+            제목 수정 실패<br>
+            [ status_code ENUM ]<br>
+            INVALID_INPUT_MANAGEMENT_ERROR_400<br>
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                  - status_code
+                  - errors
+                properties:
+                  message:
+                    type: string
+                    description: "에러 메시지"
+                    example: "유효하지 않은 입력값입니다."
+                  status_code:
+                    type: string
+                    description: "에러 코드"
+                    example: "invalid-input"
+                  errors:
+                    type: object
+                    nullable: true
+                    additionalProperties:
+                      type: array
+                      items:
+                        type: string
+                    example:
+                      title: ["제목은 필수입니다."]
+        '403':
+          description: |
+            제목 수정 실패<br>
+            [ status_code ENUM ]<br>
+            play-admin-permission-denied<br>
+            [ errors ]<br>
+            - 해당 플레이의 admin만 이 작업을 수행할 수 있습니다.<br>
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                  - status_code
+                  - errors
+                properties:
+                  message:
+                    type: string
+                    description: "에러 메시지"
+                    example: "해당 플레이의 admin만 이 작업을 수행할 수 있습니다."
+                  status_code:
+                    type: string
+                    description: "에러 코드"
+                    example: "play-admin-permission-denied"
+                  errors:
+                    type: object
+                    nullable: true
+                    additionalProperties:
+                      type: array
+                      items:
+                        type: string
+                    example: null
+
+  /v1/map/{map_id}/feedback-answers:
+    get:
+      tags:
+        - Map
+      summary: Map 피드백 답변 목록 조회
+      description: |
+        Map의 피드백이 필요한/완료된 답변 목록을 조회합니다.
+        - Map 생성자만 조회 가능합니다.
+        - status 파라미터로 피드백 상태를 필터링할 수 있습니다.
+        - 페이지네이션은 cursor 방식으로 구현되어 있습니다.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: map_id
+          in: path
+          description: Map ID
+          required: true
+          schema:
+            type: integer
+        - name: status
+          in: query
+          description: 피드백 상태 (pending - 대기중, completed - 완료)
+          required: false
+          schema:
+            type: string
+            enum: [pending, completed]
+            default: pending
+        - name: cursor
+          in: query
+          description: 페이지네이션 커서
+          required: false
+          schema:
+            type: string
+        - name: size
+          in: query
+          description: 페이지 크기
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: 피드백 답변 목록 조회 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      answers:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              description: 답변 ID
+                              example: 1
+                            question:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+                                  description: 문제 ID
+                                  example: 1
+                                title:
+                                  type: string
+                                  description: 문제 제목
+                                  example: "React Hooks 이해하기"
+                            member:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+                                  description: 멤버 ID
+                                  example: 1
+                                nickname:
+                                  type: string
+                                  description: 멤버 닉네임
+                                  example: "비니"
+                            answer:
+                              type: string
+                              description: 답변 내용
+                              example: "React Hooks는 ..."
+                            files:
+                              type: array
+                              description: 첨부 파일 목록
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: integer
+                                    description: 파일 ID
+                                    example: 1
+                                  name:
+                                    type: string
+                                    description: 파일 이름
+                                    example: "file.pdf"
+                                  file:
+                                    type: string
+                                    description: 파일 경로
+                                    example: "s3/path/to/file.pdf"
+                            submitted_at:
+                              type: string
+                              format: date-time
+                              description: 제출 일시
+                              example: "2024-02-05T14:30:00Z"
+                      next_cursor:
+                        type: string
+                        nullable: true
+                        description: 다음 페이지 커서
+                        example: "eyJpZF9fZ3QiOiA1fQ=="
+                      has_more:
+                        type: boolean
+                        description: 다음 페이지 존재 여부
+                        example: true
+        '400':
+          description: |
+            피드백 답변 목록 조회 실패<br>
+            [ status_code ENUM ]<br>
+            INVALID_INPUT_FEEDBACK_ANSWERS_ERROR_400<br>
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                  - status_code
+                  - errors
+                properties:
+                  message:
+                    type: string
+                    description: "에러 메시지"
+                    example: "유효하지 않은 입력값입니다."
+                  status_code:
+                    type: string
+                    description: "에러 코드"
+                    example: "invalid-input"
+                  errors:
+                    type: object
+                    nullable: true
+                    additionalProperties:
+                      type: array
+                      items:
+                        type: string
+                    example:
+                      status: ["유효하지 않은 상태값입니다."]
+        '403':
+          description: |
+            피드백 답변 목록 조회 실패<br>
+            [ status_code ENUM ]<br>
+            map-owner-permission-denied<br>
+            [ errors ]<br>
+            - Map 생성자만 이 작업을 수행할 수 있습니다.<br>
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                  - status_code
+                  - errors
+                properties:
+                  message:
+                    type: string
+                    description: "에러 메시지"
+                    example: "Map 생성자만 이 작업을 수행할 수 있습니다."
+                  status_code:
+                    type: string
+                    description: "에러 코드"
+                    example: "map-owner-permission-denied"
+                  errors:
+                    type: object
+                    nullable: true
+                    additionalProperties:
+                      type: array
+                      items:
+                        type: string
+                    example: null
+
+  /v1/question/user-question-answer/{user_question_answer_id}:
+    get:
+      tags:
+        - Question
+      summary: "사용자 문제 답변 상세 조회"
+      description: |
+        사용자의 문제 답변 상세 정보를 조회합니다.
+        - 답변 작성자 본인 또는 Map 생성자만 조회 가능합니다.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_question_answer_id
+          in: path
+          description: 조회할 답변 ID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 답변 상세 정보 조회 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        description: 답변 ID
+                        example: 1
+                      question:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            description: 문제 ID
+                            example: 1
+                          title:
+                            type: string
+                            description: 문제 제목
+                            example: "React Hooks 이해하기"
+                          description:
+                            type: string
+                            description: 문제 설명
+                            example: "React Hooks의 기본 개념과 사용법을 설명하세요."
+                      member:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            description: 멤버 ID
+                            example: 1
+                          nickname:
+                            type: string
+                            description: 멤버 닉네임
+                            example: "비니"
+                      answer:
+                        type: string
+                        description: 답변 내용
+                        example: "React Hooks는 ..."
+                      files:
+                        type: array
+                        description: 첨부 파일 목록
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              description: 파일 ID
+                              example: 1
+                            name:
+                              type: string
+                              description: 파일 이름
+                              example: "file.pdf"
+                            file:
+                              type: string
+                              description: 파일 경로
+                              example: "s3/path/to/file.pdf"
+                      is_correct:
+                        type: boolean
+                        nullable: true
+                        description: 정답 여부
+                        example: true
+                      feedback:
+                        type: string
+                        nullable: true
+                        description: 피드백 내용
+                        example: "잘 설명해주셨습니다."
+                      reviewed_by:
+                        type: object
+                        nullable: true
+                        properties:
+                          id:
+                            type: integer
+                            description: 리뷰어 ID
+                            example: 1
+                          nickname:
+                            type: string
+                            description: 리뷰어 닉네임
+                            example: "관리자"
+                      reviewed_at:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        description: 리뷰 일시
+                        example: "2024-02-05T14:30:00Z"
+                      submitted_at:
+                        type: string
+                        format: date-time
+                        description: 제출 일시
+                        example: "2024-02-05T14:30:00Z"
+        '403':
+          description: |
+            답변 조회 실패<br>
+            [ status_code ENUM ]<br>
+            answer-permission-denied<br>
+            [ errors ]<br>
+            - 답변 작성자 본인 또는 Map 생성자만 조회할 수 있습니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: |
+            답변 조회 실패<br>
+            [ status_code ENUM ]<br>
+            answer-not-found<br>
+            [ errors ]<br>
+            - 존재하지 않는 답변입니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      tags:
+        - Question
+      summary: "사용자 문제 답변 피드백 제출"
+      description: |
+        사용자의 문제 답변에 대한 피드백을 제출합니다.
+        - Map 생성자만 피드백을 제출할 수 있습니다.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_question_answer_id
+          in: path
+          description: 피드백을 제출할 답변 ID
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - is_correct
+                - feedback
+              properties:
+                is_correct:
+                  type: boolean
+                  description: 정답 여부
+                  example: true
+                feedback:
+                  type: string
+                  description: 피드백 내용
+                  example: "잘 설명해주셨습니다."
+      responses:
+        '200':
+          description: 피드백 제출 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        description: 답변 ID
+                        example: 1
+                      is_correct:
+                        type: boolean
+                        description: 정답 여부
+                        example: true
+                      feedback:
+                        type: string
+                        description: 피드백 내용
+                        example: "잘 설명해주셨습니다."
+                      reviewed_by:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            description: 리뷰어 ID
+                            example: 1
+                          nickname:
+                            type: string
+                            description: 리뷰어 닉네임
+                            example: "관리자"
+                      reviewed_at:
+                        type: string
+                        format: date-time
+                        description: 리뷰 일시
+                        example: "2024-02-05T14:30:00Z"
+        '400':
+          description: |
+            피드백 제출 실패<br>
+            [ status_code ENUM ]<br>
+            INVALID_INPUT_FEEDBACK_ERROR_400<br>
+            [ errors ]<br>
+            - is_correct와 feedback은 필수입니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '403':
+          description: |
+            피드백 제출 실패<br>
+            [ status_code ENUM ]<br>
+            answer-permission-denied<br>
+            [ errors ]<br>
+            - Map 생성자만 피드백을 제출할 수 있습니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: |
+            피드백 제출 실패<br>
+            [ status_code ENUM ]<br>
+            answer-not-found<br>
+            [ errors ]<br>
+            - 존재하지 않는 답변입니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
   schemas:
@@ -1531,9 +3343,12 @@ components:
         subscriber_count:
           type: integer
           example: 2345
-        view_count:
+        play_count:
           type: integer
           example: 2345
+        is_private:
+          type: boolean
+          example: false
         is_subscribed:
           type: boolean
           example: false
@@ -1558,36 +3373,54 @@ components:
           example: "2024-01-20T00:00:00Z"
 
     MapDetail:
-      allOf:
-        - $ref: "#/components/schemas/MapListItem"
-        - type: object
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "React 학습 로드맵"
+        description:
+          type: string
+          example: "React 개발자가 되기 위한 단계별 학습 로드맵입니다"
+        subscriber_count:
+          type: integer
+          example: 2345
+        play_count:
+          type: integer
+          example: 2345
+        is_private:
+          type: boolean
+          example: false
+        is_subscribed:
+          type: boolean
+          example: false
+        is_owner:
+          type: boolean
+          example: true
+        total_node_count:
+          type: integer
+          example: 10
+        icon_image:
+          type: string
+          example: "https://s3/path/to/image.jpg"
+        background_image:
+          type: string
+          example: "s3/path/to/image.jpg"
+        created_by:
+          type: object
           properties:
-            background_image:
+            id:
+              type: integer
+              example: 1
+            nickname:
               type: string
-              example: "s3/path/to/image.jpg"
-            progress:
-              type: object
-              properties:
-                completed_node_count:
-                  type: integer
-                  example: 4
-                total_node_count:
-                  type: integer
-                  example: 10
-                percentage:
-                  type: integer
-                  example: 40
-                recent_activated_nodes:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                        example: 1
-                      name:
-                        type: string
-                        example: "HTML 마스터"
+              example: "Alice"
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-20T00:00:00Z"
 
     NodeDetail:
       type: object
@@ -1955,6 +3788,162 @@ components:
         subscribed_map_count:
           type: integer
           example: 5
+
+    MapPlayInviteCode:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        map_play_id:
+          type: integer
+          example: 1
+        code:
+          type: string
+          example: "MAP-0001-240205-1423-AB12"
+        created_by_id:
+          type: integer
+          example: 1
+        max_uses:
+          type: integer
+          nullable: true
+          example: 10
+        current_uses:
+          type: integer
+          example: 5
+        expired_at:
+          type: string
+          format: date-time
+          nullable: true
+        is_active:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    MapPlayMember:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        map_play_id:
+          type: integer
+          example: 1
+        member_id:
+          type: integer
+          example: 1
+        role:
+          type: string
+          enum: [participant, admin]
+          example: "participant"
+        deactivated:
+          type: boolean
+          example: false
+        deactivated_reason:
+          type: string
+          enum: [self_deactivated, banned]
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    MapPlayMemberDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        map_play_id:
+          type: integer
+          example: 1
+        member_id:
+          type: integer
+          example: 1
+        role:
+          type: string
+          enum: [participant, admin]
+          example: "participant"
+        deactivated:
+          type: boolean
+          example: false
+        deactivated_reason:
+          type: string
+          enum: [self_deactivated, banned]
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PlayAdminDeactivateError:
+      type: object
+      properties:
+        status_code:
+          type: string
+          example: "ERROR"
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "play-admin-deactivate"
+            summary:
+              type: string
+              example: "다른 멤버가 있는 경우 admin 권한을 위임한 후에 탈퇴할 수 있습니다."
+
+    PlayMemberNotFoundError:
+      type: object
+      properties:
+        status_code:
+          type: string
+          example: "ERROR"
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "play-member-not-found"
+            summary:
+              type: string
+              example: "존재하지 않거나 이미 탈퇴한 멤버입니다."
+
+    DeviceToken:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: "디바이스 토큰 ID"
+        guest_id:
+          type: integer
+          description: "토큰 소유자 게스트 ID"
+        token:
+          type: string
+          description: "Firebase 디바이스 토큰"
+        device_type:
+          type: string
+          enum: [ios, android]
+          description: "디바이스 타입"
+        is_active:
+          type: boolean
+          description: "활성화 여부"
+        created_at:
+          type: string
+          format: date-time
+          description: "생성일시"
+        updated_at:
+          type: string
+          format: date-time
+          description: "수정일시"
 
   responses:
     UnauthorizedError:

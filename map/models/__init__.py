@@ -4,7 +4,10 @@ from map.models.category import (
     Category,
     MapCategory,
 )
-from map.models.map import Map
+from map.models.map import (
+    Map,
+    PopularMap,
+)
 from map.models.node import Node
 from map.models.node_history import NodeCompletedHistory
 from map.models.node_rule import NodeCompleteRule
@@ -19,4 +22,5 @@ __all__ = [
     'ArrowProgress',
     'Category',
     'MapCategory',
+    'PopularMap',
 ]

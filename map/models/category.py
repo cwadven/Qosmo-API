@@ -4,7 +4,7 @@ from django.db import models
 class Category(models.Model):
     name = models.CharField(max_length=255, help_text='카테고리 이름')
     description = models.TextField(help_text='카테고리 설명')
-    icon = models.CharField(max_length=255, help_text='카테고리 아이콘')
+    icon = models.CharField(max_length=2048, help_text='카테고리 아이콘')
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -150,8 +150,27 @@ class GetMemberProfileTestCase(TestCase):
         self.member = Member.objects.create_user(
             username='test_user',
             nickname='테스트 유저',
-            profile_image_url='test/image.jpg'
+            profile_image_url='test/image.jpg',
+            member_status_id=1,
         )
+
+    @patch('member.services.Member.raise_if_inaccessible')
+    def test_get_member_profile_should_raise_error_when_invalid_member_status(
+            self,
+            mock_raise_if_inaccessible,
+    ):
+        # Given: member_status_id invalid
+        self.member.member_status_id = 2
+        self.member.save()
+        # And:
+        mock_raise_if_inaccessible.side_effect = Exception
+
+        # When: 프로필 정보 조회
+        with self.assertRaises(Exception):
+            get_member_profile(self.member.id)
+
+        # Then: Should raise error
+        mock_raise_if_inaccessible.assert_called_once_with()
 
     @patch('member.services.MapSubscriptionService')
     def test_get_member_profile_should_return_correct_profile_data(self, mock_subscription_service):
@@ -181,7 +200,8 @@ class GetMemberProfileTestCase(TestCase):
         member_without_image = Member.objects.create_user(
             username='no_image_user',
             nickname='이미지없는유저',
-            profile_image_url=None
+            profile_image_url=None,
+            member_status_id=1,
         )
 
         # Given: MapSubscriptionService 모킹 설정

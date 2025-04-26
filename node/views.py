@@ -10,8 +10,11 @@ from rest_framework.views import APIView
 class NodeDetailView(APIView):
     permission_classes = [IsGuestExists]
 
-    def get(self, request, node_id: int):
-        service = NodeDetailService(member_id=request.guest.member_id)
+    def get(self, request, node_id: int, map_play_member_id: int = None):
+        service = NodeDetailService(
+            member_id=request.guest.member_id,
+            map_play_member_id=map_play_member_id,
+        )
         return Response(
             BaseFormatResponse(
                 status_code=SuccessStatusCode.SUCCESS.value,

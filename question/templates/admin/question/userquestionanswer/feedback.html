@@ -62,6 +62,8 @@
             <p><strong>파일:</strong> <a href="{{ file.file }}" target="_blank"></a></p>
             {% if file.file|lower|slice:"-3:" in "jpg,png,gif,bmp" %}
                 <img src="{{ file.file }}" alt="첨부 이미지">
+            {% else %}
+                <a href="{{ file.file }}" target="_blank">파일 다운로드</a>
             {% endif %}
         </div>
         {% endfor %}

@@ -1,0 +1,29 @@
+<div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+    <h2 style="color: #000000;">사용자가 문제 결과를 제출했습니다.</h2>
+    <h3>문제 결과를 확인하고 피드백을 제공해주세요.</h3>
+    <p><strong>제출자: {{ nickname }}</strong></p>
+    <p><strong>[ 문제 ]</strong></p>
+    <blockquote style="background: #f9f9f9; border-left: 10px solid #ccc; margin: 1.5em 10px; padding: 0.5em 10px;">
+        {{ question_title }}
+    </blockquote>
+    <p><strong>[ 사용자 답변 ]</strong></p>
+    <blockquote style="background: #f9f9f9; border-left: 10px solid #ccc; margin: 1.5em 10px; padding: 0.5em 10px;">
+        {{ user_answer }}
+    </blockquote>
+    {% if files %}
+        <p><strong>[ 사용자 답변: 파일 ]</strong></p>
+    <ul>
+        {% for file in files %}
+        <li class="file-item" style="margin-bottom: 10px;">
+            <p><strong>파일: {{ file.name }}</strong></p>
+            {% if file.url|lower|slice:"-3:" in "jpg,png,gif,bmp" %}
+                <img src="{{ file.url }}" alt="첨부 이미지" style="max-width: 100%; height: auto; border: 1px solid #ddd; padding: 5px; margin-top: 5px;">
+            {% else %}
+                <a href="{{ file.url }}" target="_blank" style="color: #1E90FF; text-decoration: none;">파일 다운로드</a>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    <p>자세한 정보 확인: <a href="{{ deeplink }}" style="color: #1E90FF;">여기</a></p>
+</div>

@@ -40,7 +40,7 @@ class MapListViewTest(TestCase):
                     icon_image=f'test_icon_{i}.jpg',
                     background_image=f'test_bg_{i}.jpg',
                     subscriber_count=i * 10,
-                    view_count=i * 100,
+                    play_count=i * 100,
                     created_by=self.member,
                     is_private=False,
                 )

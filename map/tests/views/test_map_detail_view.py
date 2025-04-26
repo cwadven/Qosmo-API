@@ -37,7 +37,7 @@ class MapDetailViewTest(TestCase):
             icon_image='test_icon.jpg',
             background_image='test_bg.jpg',
             subscriber_count=100,
-            view_count=1000,
+            play_count=1000,
             created_by=self.member,
             is_private=False,
         )

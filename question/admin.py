@@ -11,7 +11,12 @@ from django.template.response import TemplateResponse
 from django.utils import timezone
 
 from map.models import Arrow
+from member.models import Guest
+from play.models import MapPlayMember
+from push.consts import PushChannelType
 from question.consts import QuestionType
+from question.forms.admin_forms import QuestionFileAdminForm
+from question.forms.client_forms import FeedbackForm
 from question.models import (
     Question,
     QuestionAnswer,
@@ -19,10 +24,10 @@ from question.models import (
     UserQuestionAnswer,
     UserQuestionAnswerFile,
 )
-from question.forms import FeedbackForm
 from django.http import HttpResponseRedirect
 from question.services.node_completion_service import NodeCompletionService
 from django.db import transaction
+from push.services import PushService
 
 
 class QuestionAdminForm(ModelForm):
@@ -38,6 +43,20 @@ class QuestionAdminForm(ModelForm):
 
     def clean_question_types(self):
         return list(self.cleaned_data['question_types'])
+        
+    def clean(self):
+        """유효성 검사를 수행합니다"""
+        cleaned_data = super().clean()
+        
+        # map이 변경되었는지 확인
+        if 'map' in cleaned_data:
+            map_obj = cleaned_data['map']
+            arrow = cleaned_data.get('arrow')
+
+            if arrow and arrow.map_id != map_obj.id:
+                pass
+        
+        return cleaned_data
 
 
 @admin.register(Question)
@@ -58,10 +77,44 @@ class QuestionAdmin(admin.ModelAdmin):
     )
     search_fields = ('title', 'description', 'map__name')
     readonly_fields = ('created_at', 'updated_at')
+    autocomplete_fields = ['map']
+
+    class Media:
+        js = ('map/js/question_admin.js',)
 
     def get_question_types_display(self, obj):
         return ', '.join(obj.question_types)
     get_question_types_display.short_description = '문제 유형'
+    
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        
+        # map_id 결정: 기존 객체 -> POST 데이터 -> GET 파라미터 순으로 확인
+        map_id = None
+        if obj and obj.map_id:
+            map_id = obj.map_id
+        elif request.method == 'POST' and 'map' in request.POST:
+            map_id = request.POST.get('map')
+        elif 'map' in request.GET:
+            map_id = request.GET.get('map')
+        
+        if map_id:
+            # 맵 ID가 있으면 관련 필드의 쿼리셋을 설정
+            
+            # 화살표 쿼리셋 설정
+            from map.models import Arrow
+            arrows_queryset = Arrow.objects.filter(map_id=map_id, is_deleted=False)
+            form.base_fields['arrow'].queryset = arrows_queryset
+        else:
+            # 맵 ID가 없으면 빈 쿼리셋 설정
+            from map.models import Arrow
+            form.base_fields['arrow'].queryset = Arrow.objects.none()
+        
+        return form
+        
+    def save_model(self, request, obj, form, change):
+        # 저장 로직은 수정하지 않고 그대로 진행
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(QuestionAnswer)
@@ -78,6 +131,29 @@ class QuestionAnswerAdmin(admin.ModelAdmin):
         'description',
     )
     readonly_fields = ('created_at', 'updated_at')
+    autocomplete_fields = ['map']
+    
+    class Media:
+        js = ('map/js/question_answer_admin.js',)
+    
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        
+        # 만약 객체가 이미 존재하거나 POST 요청에 question_id가 있다면
+        question_id = None
+        if obj and obj.question_id:
+            question_id = obj.question_id
+        elif request.method == 'POST' and 'question' in request.POST:
+            question_id = request.POST.get('question')
+        elif 'question' in request.GET:
+            question_id = request.GET.get('question')
+            
+        # form에 데이터 초기값 설정 또는 추가 설정
+        if question_id:
+            # 필요한 경우 이 부분에 질문 ID에 따른 추가 로직 구현
+            pass
+            
+        return form
 
 
 @admin.register(UserQuestionAnswer)
@@ -146,20 +222,64 @@ class UserQuestionAnswerAdmin(admin.ModelAdmin):
 
                     # 정답인 경우 노드 완료 처리
                     if feedback_obj.is_correct:
-                        # Question과 연결된 Arrow의 start_node 찾기
-                        # 지금은 무조건 1개의 arrow 는 1개의 question 가정
-                        arrow = Arrow.objects.filter(
-                            question=user_answer.question,
-                            is_deleted=False
-                        ).first()
-
-                        if arrow and arrow.start_node:
+                        if user_answer.question.arrow and user_answer.question.arrow.start_node:
                             node_completion_service = NodeCompletionService(
-                                member_id=user_answer.member_id
+                                member_id=user_answer.member_id,
+                                map_play_member_id=user_answer.map_play_member_id,
+                                map_play_id=user_answer.map_play_member.map_play_id,
                             )
                             node_completion_service.process_nodes_completion(
-                                nodes=[arrow.start_node]
+                                nodes=[user_answer.question.arrow.start_node]
                             )
+                    map_play_members = MapPlayMember.objects.filter(
+                        map_play_id=user_answer.map_play_member.map_play.id,
+                        deactivated=False,
+                    )
+                    try:
+                        push_service = PushService()
+
+                        answer_owner = Guest.objects.get(
+                            member_id=user_answer.member_id,
+                            member__is_active=True,
+                        )
+                        push_service.send_push(
+                            guest_id=answer_owner.id,
+                            title=f"\'{user_answer.question.title}\' 문제 결과",
+                            body=feedback_obj.feedback,
+                            push_channel_type=PushChannelType.QUESTION_FEEDBACK,
+                            data={
+                                "type": "question_feedback",
+                                "question_id": str(user_answer.question.id),
+                                "map_id": str(user_answer.question.arrow.map_id),
+                                "map_play_member_id": str(user_answer.map_play_member_id),
+                                "is_correct": str(feedback_obj.is_correct).lower(),
+                            },
+                        )
+
+                        if feedback_obj.is_correct:
+                            guests = Guest.objects.filter(
+                                member_id__in=[map_play_member.member_id for map_play_member in map_play_members],
+                                member__is_active=True,
+                            ).exclude(
+                                member_id=user_answer.member_id,
+                            )
+                            for guest in guests:
+                                push_service.send_push(
+                                    guest_id=guest.id,
+                                    title=f"\'{user_answer.question.title}\' 문제 해결",
+                                    body=f"{user_answer.member.nickname}님이 문제를 해결했습니다.",
+                                    push_channel_type=PushChannelType.QUESTION_SOLVED_ALERT,
+                                    data={
+                                        "type": "question_solved_alert",
+                                        "question_id": str(user_answer.question.id),
+                                        "map_id": str(user_answer.question.arrow.map_id),
+                                        "map_play_id": str(user_answer.map_play_member.map_play_id),
+                                        "is_correct": True,
+                                    },
+                                )
+                    except (Guest.DoesNotExist, Arrow.DoesNotExist):
+                        pass
+
                 messages.success(request, '피드백이 성공적으로 저장되었습니다.')
                 return HttpResponseRedirect(
                     reverse('admin:question_userquestionanswer_change', args=[object_id])
@@ -202,8 +322,33 @@ class UserQuestionAnswerFileAdmin(admin.ModelAdmin):
 class QuestionFileAdmin(admin.ModelAdmin):
     list_display = (
         'question',
+        'name',
         'file',
         'created_at',
     )
     search_fields = ('question__title',)
     readonly_fields = ('created_at', 'updated_at')
+    form = QuestionFileAdminForm
+    autocomplete_fields = ['map']
+    
+    class Media:
+        js = ('map/js/question_file_admin.js',)
+    
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        
+        # 만약 객체가 이미 존재하거나 POST 요청에 question_id가 있다면
+        question_id = None
+        if obj and obj.question_id:
+            question_id = obj.question_id
+        elif request.method == 'POST' and 'question' in request.POST:
+            question_id = request.POST.get('question')
+        elif 'question' in request.GET:
+            question_id = request.GET.get('question')
+            
+        # form에 데이터 초기값 설정 또는 추가 설정
+        if question_id:
+            # 필요한 경우 이 부분에 질문 ID에 따른 추가 로직 구현
+            pass
+            
+        return form

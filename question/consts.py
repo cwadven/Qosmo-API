@@ -24,6 +24,7 @@ class QuestionInvalidInputResponseErrorStatus(StrValueLabel):
     Question 입력값 검증 실패 응답 코드
     """
     INVALID_INPUT_ANSWER_PARAM_ERROR_400 = ('40040002', '입력값을 확인해주세요.')
+    INVALID_INPUT_FEEDBACK_ERROR_400 = ('40040003', '피드백 입력값을 확인해주세요.')
 
 
 class AnswerStatus(StrValueLabel):

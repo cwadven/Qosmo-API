@@ -22,7 +22,10 @@ class MapSubscription(models.Model):
         help_text='구독 시작 시각',
         db_index=True
     )
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        db_index=True,
+    )
 
     class Meta:
         verbose_name = 'Map 구독'

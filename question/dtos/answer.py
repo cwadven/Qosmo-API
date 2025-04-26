@@ -1,14 +1,15 @@
 from datetime import datetime
 from typing import List, Optional, ClassVar
 from pydantic import BaseModel, Field, field_validator
+
+from question.dtos.member_answer_file import MemberAnswerFileDto
 from question.models import Question, UserQuestionAnswer
 from question.consts import AnswerStatus, QuestionType
-from django.core.files.uploadedfile import UploadedFile
 
 
 class AnswerRequestDto(BaseModel):
     answer: Optional[str] = Field(None, description="답변 내용")
-    files: List[UploadedFile] = Field(default=[], description="첨부 파일 목록")
+    answer_file_infos: List[MemberAnswerFileDto] = Field(default=[], description="첨부 파일 url")
 
     _question: ClassVar['Question'] = None  # Lazy referencing for Question model
 
@@ -27,8 +28,8 @@ class AnswerRequestDto(BaseModel):
             raise ValueError('텍스트 답변은 필수입니다')
         return value
 
-    @field_validator('files', mode='before')
-    def validate_files(cls, value: List[UploadedFile]) -> List[UploadedFile]:
+    @field_validator('answer_file_infos', mode='before')
+    def validate_files(cls, value: List[MemberAnswerFileDto]) -> List[MemberAnswerFileDto]:
         if not cls._question:
             raise ValueError('Question이 설정되지 않았습니다')
         if QuestionType.FILE.value in cls._question.question_types and not value:

@@ -20,7 +20,7 @@ class HealthCheckResponse(BaseModel):
 
 
 class ConstanceTypeResponse(BaseModel):
-    data: List[ConstanceType] = Field(default_factory=list, description='Constance type list')
+    data: List[Any] = Field(default_factory=list, description='Constance type list')
 
 
 class ConstanceDetailTypeResponse(BaseModel):
@@ -29,6 +29,10 @@ class ConstanceDetailTypeResponse(BaseModel):
 
 class GetPreSignedURLResponse(BaseModel):
     url: str = Field(...)
+    data: Dict[str, Any] = Field(default_factory=dict)
+
+
+class GetServerPreSignedURLResponse(BaseModel):
     data: Dict[str, Any] = Field(default_factory=dict)
 
 

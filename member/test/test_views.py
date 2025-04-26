@@ -357,7 +357,7 @@ class RefreshTokenViewViewTestCase(TestCase):
         self.assertEqual(response.status_code, 401)
 
         # Check the response data for expected keys
-        self.assertEqual(response.data['message'], '잘못된 리프레시 토큰입니다.')
+        self.assertEqual(response.data['message'], '회원이 아닌 리프레시 토큰입니다.')
 
     @patch('member.views.jwt_decode_handler')
     def test_refresh_token_fail_with_jwt_invalid(self, mock_jwt_decode_handler):

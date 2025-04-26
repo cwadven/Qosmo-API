@@ -19,8 +19,15 @@ from question.dtos.node_completion import NodeCompletionResultDto
 
 
 class NodeCompletionService:
-    def __init__(self, member_id: int):
+    def __init__(
+            self,
+            member_id: int,
+            map_play_member_id: int,
+            map_play_id: int,
+    ):
         self.member_id = member_id
+        self.map_play_member_id = map_play_member_id
+        self.map_play_id = map_play_id
 
     @transaction.atomic
     def process_nodes_completion(self, nodes: List[Node]) -> NodeCompletionResultDto:
@@ -60,6 +67,7 @@ class NodeCompletionService:
                             map_id=map_data['map_id'],
                             arrow=arrow,
                             member_id=self.member_id,
+                            map_play_member_id=self.map_play_member_id,
                             is_resolved=True,
                             resolved_at=now
                         )
@@ -76,6 +84,7 @@ class NodeCompletionService:
                         map_id=map_data['map_id'],
                         node_id=going_to_completed_node_id,
                         member_id=self.member_id,
+                        map_play_member_id=self.map_play_member_id,
                         node_complete_rule=rule
                     )
                 )
@@ -102,7 +111,10 @@ class NodeCompletionService:
         arrows = Arrow.objects.filter(
             map_id=map_id,
             is_deleted=False
-        ).select_related('start_node', 'end_node', 'node_complete_rule')
+        ).select_related(
+            'start_node',
+            'node_complete_rule__node',
+        )
 
         # NodeCompleteRule 가져오기
         rules = NodeCompleteRule.objects.filter(
@@ -113,14 +125,14 @@ class NodeCompletionService:
         # 기존 ArrowProgress 가져오기
         existing_progresses = ArrowProgress.objects.filter(
             map_id=map_id,
-            member_id=self.member_id,
+            map_play_member__map_play_id=self.map_play_id,
             is_resolved=True
         )
 
         # 기존 NodeCompletedHistory 가져오기 (node_complete_rule_id도 함께 가져옴)
         completed_histories = NodeCompletedHistory.objects.filter(
             map_id=map_id,
-            member_id=self.member_id
+            map_play_member__map_play_id=self.map_play_id,
         ).values_list('node_id', 'node_complete_rule_id')
 
         # rule별 arrow 매핑 구성

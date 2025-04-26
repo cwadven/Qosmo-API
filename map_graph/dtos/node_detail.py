@@ -11,11 +11,16 @@ from question.models import UserQuestionAnswer
 
 class FileDTO(BaseModel):
     id: int
-    file: str
     name: Optional[str]
+    url: str
 
 
 class ReviewerDTO(BaseModel):
+    id: int
+    nickname: str
+
+
+class SubmittedByDTO(BaseModel):
     id: int
     nickname: str
 
@@ -28,6 +33,7 @@ class MyAnswerDTO(BaseModel):
     reviewed_by: Optional[ReviewerDTO]
     reviewed_at: Optional[datetime]
     submitted_at: datetime
+    submitted_by: SubmittedByDTO
     files: List[FileDTO]
 
     @classmethod
@@ -50,11 +56,15 @@ class MyAnswerDTO(BaseModel):
             reviewed_by=reviewed_by,
             reviewed_at=user_question_answer.reviewed_at,
             submitted_at=user_question_answer.created_at,
+            submitted_by=SubmittedByDTO(
+                id=user_question_answer.member.id,
+                nickname=user_question_answer.member.nickname,
+            ),
             files=[
                 FileDTO(
                     id=file.id,
                     name=file.name,
-                    file=file.file,
+                    url=file.file,
                 )
                 for file in user_question_answer.files.filter(
                     is_deleted=False,

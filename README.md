@@ -234,6 +234,7 @@ Default Gmail if you want to use other email services, you need to change the se
 - Input AWS_IAM_ACCESS_KEY:
 - Input AWS_IAM_SECRET_ACCESS_KEY:
 - Input AWS_S3_BUCKET_NAME:
+- Input AWS_S3_PRE_SIGNED_UPLOAD_URL:
 - Input AWS_SQS_URL:
 ----------------------------------------
 AWS settings.
@@ -241,6 +242,7 @@ AWS settings.
 "AWS_IAM_ACCESS_KEY" Example: AKIAYXZ223G...
 "AWS_IAM_SECRET_ACCESS_KEY" Example: AKIAYXZ223G...
 "AWS_S3_BUCKET_NAME" Example: nully
+"AWS_S3_BUCKET_NAME" Example: https://XXX.s3.amazonaws.com
 "AWS_SQS_URL" Example: https://sqs.ap-northeast-2.amazonaws.com/1234/nully
 ----------------------------------------
 
@@ -318,6 +320,21 @@ python manage.py runserver
 # Run the celery worker
 celery -A config worker -l INFO -P solo
 ````
+
+7. Crontab 적용
+```shell
+# 로그 디렉토리 생성
+mkdir -p /tmp/log
+# Run the crontab
+fab2 update-crontab
+# 필요에 따라 dos2unix 설치
+dos2unix command.cron
+chmod 0644 command.cron
+cat command.cron | crontab -
+service cron restart
+# Cron 된 내용 확인
+crontab -l
+```
 
 ### Docker Start
 ```shell

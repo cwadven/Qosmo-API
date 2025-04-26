@@ -29,7 +29,7 @@ class GraphArrow(BaseModel):
         return cls(
             id=arrow.id,
             start_node_id=arrow.start_node_id,
-            end_node_id=arrow.end_node_id,
+            end_node_id=arrow.node_complete_rule.node_id,
             active_rule_id=arrow.node_complete_rule_id,
             status=status,
         )

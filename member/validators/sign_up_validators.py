@@ -5,17 +5,13 @@ from member.consts import (
     NICKNAME_MIN_LENGTH,
     PASSWORD_MAX_LENGTH,
     PASSWORD_MIN_LENGTH,
-    USERNAME_MAX_LENGTH,
-    USERNAME_MIN_LENGTH,
 )
 from member.services import (
     check_email_exists,
     check_email_reg_exp_valid,
     check_nickname_exists,
     check_nickname_valid,
-    check_only_alphanumeric,
     check_only_korean_english_alphanumeric,
-    check_username_exists,
 )
 
 
@@ -24,23 +20,6 @@ class SignUpPayloadValidator(PayloadValidator):
         super(SignUpPayloadValidator, self).__init__(payload)
 
     def validate(self) -> dict:
-        # username
-        if check_username_exists(self.payload['username']):
-            self.add_error_context('username', MemberCreationExceptionMessage.USERNAME_EXISTS.label)
-        if not (USERNAME_MIN_LENGTH <= len(self.payload['username']) <= USERNAME_MAX_LENGTH):
-            self.add_error_context(
-                'username',
-                MemberCreationExceptionMessage.USERNAME_LENGTH_INVALID.label.format(
-                    USERNAME_MIN_LENGTH,
-                    USERNAME_MAX_LENGTH,
-                )
-            )
-        if not check_only_alphanumeric(self.payload['username']):
-            self.add_error_context(
-                'username',
-                MemberCreationExceptionMessage.USERNAME_REG_EXP_INVALID.label
-            )
-
         # nickname
         if check_nickname_exists(self.payload['nickname']):
             self.add_error_context('nickname', MemberCreationExceptionMessage.NICKNAME_EXISTS.label)

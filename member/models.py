@@ -35,7 +35,7 @@ class Member(AbstractUser):
     member_type = models.ForeignKey(MemberType, models.DO_NOTHING, blank=True, null=True)
     member_status = models.ForeignKey(MemberStatus, models.DO_NOTHING, blank=True, null=True)
     member_provider = models.ForeignKey(MemberProvider, models.DO_NOTHING, blank=True, null=True)
-    profile_image_url = models.CharField(max_length=256, blank=True, null=True)
+    profile_image_url = models.CharField(max_length=2048, blank=True, null=True)
 
     objects = MemberManager()
 

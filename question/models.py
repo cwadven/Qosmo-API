@@ -1,6 +1,9 @@
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from map.models import Map
+from map.models import (
+    Arrow,
+    Map,
+)
 from member.models import Member
 from question.consts import (
     QuestionType,
@@ -13,6 +16,13 @@ class Question(models.Model):
         Map,
         on_delete=models.DO_NOTHING,
         related_name='questions'
+    )
+    arrow = models.ForeignKey(
+        Arrow,
+        on_delete=models.DO_NOTHING,
+        related_name='questions',
+        null=True,
+        blank=True,
     )
     title = models.CharField(max_length=255)
     question_types = ArrayField(
@@ -79,6 +89,13 @@ class UserQuestionAnswer(models.Model):
         Member,
         on_delete=models.DO_NOTHING,
         related_name='question_answers',
+    )
+    map_play_member = models.ForeignKey(
+        'play.MapPlayMember',
+        on_delete=models.DO_NOTHING,
+        related_name='user_answers',
+        null=True,
+        blank=True,
     )
     answer = models.TextField()
     is_correct = models.BooleanField(
