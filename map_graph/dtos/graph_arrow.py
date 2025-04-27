@@ -20,7 +20,7 @@ class GraphArrow(BaseModel):
             arrow: Arrow,
             completed_arrow_ids: Set[int],
     ) -> 'GraphArrow':
-        if arrow.start_node_id in completed_arrow_ids:
+        if arrow.id in completed_arrow_ids:
             status = 'completed'
         else:
             status = 'locked'
