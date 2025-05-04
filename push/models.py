@@ -3,6 +3,7 @@ from member.models import (
     Guest,
     Member,
 )
+from push.consts import PushMapPlayMemberPushType
 
 
 class DeviceToken(models.Model):
@@ -91,3 +92,36 @@ class PushHistory(models.Model):
 
     def __str__(self):
         return f'{self.guest.id}에게 발송된 푸시: {self.title}'
+
+
+class PushMapPlayMember(models.Model):
+    map_play_member = models.ForeignKey(
+        'play.MapPlayMember',
+        on_delete=models.DO_NOTHING,
+        related_name='push_map_play_members',
+        help_text='맵 플레이 멤버',
+    )
+    push_type = models.CharField(
+        max_length=20,
+        choices=PushMapPlayMemberPushType.choices(),
+        help_text='푸시 타입',
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text='활성화 여부',
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text='생성일시',
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        help_text='수정일시',
+    )
+
+    class Meta:
+        verbose_name = '푸시 맵 플레이 멤버'
+        verbose_name_plural = '푸시 맵 플레이 멤버'
+
+    def __str__(self):
+        return f'{self.map_play_member.member.nickname}의 푸시 맵 {self.map_play_member.map_play.map.name} 플레이 멤버'
