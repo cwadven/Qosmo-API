@@ -101,6 +101,11 @@ class PushMapPlayMember(models.Model):
         related_name='push_map_play_members',
         help_text='맵 플레이 멤버',
     )
+    guest = models.ForeignKey(
+        Guest,
+        on_delete=models.DO_NOTHING,
+        help_text='푸시 수신자',
+    )
     push_type = models.CharField(
         max_length=20,
         choices=PushMapPlayMemberPushType.choices(),
