@@ -101,6 +101,7 @@ class PushMapPlayMember(models.Model):
         related_name='push_map_play_members',
         help_text='맵 플레이 멤버',
     )
+    # Query 성능 개선을 위해서 MapPlayMember 안에는 Member 가 있지 Guest 가 있는 게 아님.
     guest = models.ForeignKey(
         Guest,
         on_delete=models.DO_NOTHING,
