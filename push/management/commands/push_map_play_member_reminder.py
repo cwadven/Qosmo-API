@@ -36,6 +36,7 @@ class Command(BaseCommand):
             (Q(push_date__isnull=True) | Q(push_date=datetime_now.date())),
             Q(push_time=datetime_now.time())
         )
+        print(f"datetime_now: {datetime_now}", f"date: {datetime_now.date()}", f"time: {datetime_now.time()}")
         push_service = PushService()
         for push_map_play_member in push_map_play_members:
             map_name = push_map_play_member.map_play_member.map_play.map.name
