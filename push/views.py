@@ -4,7 +4,15 @@ from rest_framework import status
 from common.common_consts.common_status_codes import SuccessStatusCode
 from common.dtos.response_dtos import BaseFormatResponse
 from member.permissions import IsGuestExists
+from play.exceptions import PlayMemberNoPermissionException
+from play.services import MapPlayService
+from push.exceptions import PushMapPlayMemberNotFoundException
 from push.services import PushService
+from push.models import PushMapPlayMember
+from push.consts import PushMapPlayMemberPushType
+from play.models import MapPlayMember
+from django.shortcuts import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
 
 
 class DeviceTokenView(APIView):
@@ -106,3 +114,115 @@ class TestPushView(APIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+class PushMapPlayMemberView(APIView):
+    permission_classes = [IsAuthenticated, IsGuestExists]
+    
+    def post(self, request, map_play_member_id):
+        """맵 플레이 멤버의 푸시 알림 설정 활성화"""
+        active_map_play_member = MapPlayService().get_map_play_member_by_id(map_play_member_id)
+        if active_map_play_member.member_id != request.member.id:
+            raise PlayMemberNoPermissionException()
+
+        push_time = request.data.get('push_time')
+        
+        push_map_play_member, created = PushMapPlayMember.objects.get_or_create(
+            map_play_member_id=map_play_member_id,
+            guest_id=request.guest.id,
+            push_type=PushMapPlayMemberPushType.REMINDER.value,
+            push_time=push_time,
+            defaults={
+                'is_active': True,
+            }
+        )
+
+        if not created:
+            push_map_play_member.is_active = True
+            push_map_play_member.save(update_fields=['is_active', 'updated_at'])
+
+        return Response(
+            BaseFormatResponse(
+                status_code=SuccessStatusCode.SUCCESS.value,
+            ).model_dump(),
+            status=status.HTTP_200_OK,
+        )
+
+
+class PushMapPlayMemberDeleteView(APIView):
+    permission_classes = [IsAuthenticated, IsGuestExists]
+    
+    def delete(self, request, push_map_play_member_id):
+        """푸시 맵 플레이 멤버 알림 설정 삭제"""
+        try:
+            try:
+                push_map_play_member = PushMapPlayMember.objects.get(
+                    id=push_map_play_member_id,
+                    guest_id=request.guest.id,
+                )
+            except PushMapPlayMember.DoesNotExist:
+                raise PushMapPlayMemberNotFoundException()
+            
+            # 요청한 사용자가 해당 푸시 설정의 소유자인지 확인
+            map_play_member = push_map_play_member.map_play_member
+            if map_play_member.member_id != request.member.id:
+                raise PlayMemberNoPermissionException()
+
+            push_map_play_member.is_active = False
+            push_map_play_member.save(update_fields=['is_active', 'updated_at'])
+            
+            return Response(
+                BaseFormatResponse(
+                    status_code=SuccessStatusCode.SUCCESS.value,
+                ).model_dump(),
+                status=status.HTTP_200_OK,
+            )
+        except PushMapPlayMember.DoesNotExist:
+            raise PushMapPlayMemberNotFoundException()
+
+
+class PushMapPlayMemberListView(APIView):
+    permission_classes = [IsAuthenticated, IsGuestExists]
+    
+    def get(self, request, map_play_member_id):
+        """특정 맵 플레이 멤버의 푸시 알림 설정 목록 조회"""
+        # map_play_member 존재 여부 확인 및 접근 권한 체크
+        active_map_play_member = MapPlayService().get_map_play_member_by_id(map_play_member_id)
+        if active_map_play_member.member_id != request.member.id:
+            raise PlayMemberNoPermissionException()
+            
+        # 해당 맵 플레이 멤버의 푸시 알림 설정 조회
+        push_map_play_members = PushMapPlayMember.objects.filter(
+            map_play_member_id=map_play_member_id,
+            guest_id=request.guest.id,
+            is_active=True
+        ).select_related(
+            'map_play_member',
+            'map_play_member__map_play',
+            'map_play_member__map_play__map',
+        ).order_by(
+            '-push_date',
+            'push_time',
+        )
+        
+        result = []
+        for push_member in push_map_play_members:
+            result.append({
+                'id': push_member.id,
+                'map_play_member_id': push_member.map_play_member_id,
+                'map_name': push_member.map_play_member.map_play.map.name,
+                'push_date': push_member.push_date,
+                'push_time': push_member.push_time,
+                'created_at': push_member.created_at,
+                'updated_at': push_member.updated_at
+            })
+            
+        return Response(
+            BaseFormatResponse(
+                status_code=SuccessStatusCode.SUCCESS.value,
+                data={
+                    'push_map_play_members': result
+                }
+            ).model_dump(),
+            status=status.HTTP_200_OK,
+        )
