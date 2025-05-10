@@ -127,7 +127,7 @@ class PushMapPlayMemberView(APIView):
 
         push_date = request.data.get('push_date')
         push_time = request.data.get('push_time')
-
+        
         push_map_play_member, created = PushMapPlayMember.objects.get_or_create(
             map_play_member_id=map_play_member_id,
             guest_id=request.guest.id,
@@ -217,6 +217,48 @@ class PushMapPlayMemberListView(APIView):
                 'updated_at': push_member.updated_at
             })
             
+        return Response(
+            BaseFormatResponse(
+                status_code=SuccessStatusCode.SUCCESS.value,
+                data={
+                    'push_map_play_members': result
+                }
+            ).model_dump(),
+            status=status.HTTP_200_OK,
+        )
+
+
+class MemberPushMapPlayMemberListView(APIView):
+    permission_classes = [IsMemberLogin]
+
+    def get(self, request):
+        """사용자의 모든 활성화된 푸시 알림 설정 목록 조회"""
+        # 사용자의 모든 활성화된 푸시 알림 설정 조회
+        push_map_play_members = PushMapPlayMember.objects.filter(
+            map_play_member__member_id=request.member.id,
+            guest_id=request.guest.id,
+            is_active=True
+        ).select_related(
+            'map_play_member',
+            'map_play_member__map_play',
+            'map_play_member__map_play__map',
+        ).order_by(
+            '-push_date',
+            'push_time',
+        )
+
+        result = []
+        for push_member in push_map_play_members:
+            result.append({
+                'id': push_member.id,
+                'push_date': push_member.push_date,
+                'push_time': push_member.push_time,
+                'map_name': push_member.map_play_member.map_play.map.name,
+                'map_play_title': push_member.map_play_member.map_play.title,
+                'created_at': push_member.created_at,
+                'updated_at': push_member.updated_at
+            })
+
         return Response(
             BaseFormatResponse(
                 status_code=SuccessStatusCode.SUCCESS.value,

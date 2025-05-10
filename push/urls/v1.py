@@ -1,5 +1,12 @@
 from django.urls import path
-from push.views import DeviceTokenView, TestPushView, PushMapPlayMemberView, PushMapPlayMemberDeleteView, PushMapPlayMemberListView
+from push.views import (
+    DeviceTokenView,
+    TestPushView,
+    PushMapPlayMemberView,
+    PushMapPlayMemberDeleteView,
+    PushMapPlayMemberListView,
+    MemberPushMapPlayMemberListView,
+)
 
 app_name = 'push'
 
@@ -9,4 +16,5 @@ urlpatterns = [
     path('/map-play-member/<int:map_play_member_id>', PushMapPlayMemberView.as_view(), name='push_map_play_member'),
     path('/push-map-play-member/<int:push_map_play_member_id>', PushMapPlayMemberDeleteView.as_view(), name='push_map_play_member_delete'),
     path('/map-play-member/<int:map_play_member_id>/push-settings', PushMapPlayMemberListView.as_view(), name='push_map_play_member_list'),
+    path('/member/push-settings', MemberPushMapPlayMemberListView.as_view(), name='member_push_map_play_member_list'),
 ]

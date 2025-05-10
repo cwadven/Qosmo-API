@@ -3338,7 +3338,7 @@ paths:
       description: |
         특정 맵 플레이 멤버의 푸시 알림 설정 목록을 조회합니다.
         - 지정된 맵 플레이 멤버의 모든 활성화된 푸시 알림 설정을 반환합니다.
-        - 각 설정에는 ID, 맵 이름, 푸시 날짜/시간 등의 정보가 포함됩니다.
+        - 각 설정에는 ID, 푸시 날짜/시간 등의 정보가 포함됩니다.
       security:
         - BearerAuth: []
       parameters:
@@ -3405,6 +3405,81 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         '404':
           description: 맵 플레이 멤버를 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /v1/push/member/push-settings:
+    get:
+      tags:
+        - Push
+      summary: "사용자의 모든 활성화된 푸시 알림 설정 목록 조회"
+      description: |
+        현재 로그인한 사용자의 모든 활성화된 푸시 알림 설정 목록을 조회합니다.
+        - 사용자의 모든 활성화된 푸시 알림 설정을 반환합니다.
+        - 각 설정에는 ID, 맵 이름, 맵 플레이 제목, 푸시 날짜/시간 등의 정보가 포함됩니다.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 조회 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      push_map_play_members:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              description: "푸시 맵 플레이 멤버 ID"
+                              example: 1
+                            push_date:
+                              type: string
+                              format: date
+                              description: "푸시 발송 날짜"
+                              example: "2023-07-15"
+                            push_time:
+                              type: string
+                              format: time
+                              description: "푸시 발송 시간"
+                              example: "09:00:00"
+                            map_name:
+                              type: string
+                              description: "맵 이름"
+                              example: "서울 여행 코스"
+                            map_play_title:
+                              type: string
+                              description: "맵 플레이 제목"
+                              example: "2024 서울 여행"
+                            created_at:
+                              type: string
+                              format: date-time
+                              description: "생성 일시"
+                              example: "2023-07-10T14:30:00Z"
+                            updated_at:
+                              type: string
+                              format: date-time
+                              description: "수정 일시"
+                              example: "2023-07-12T15:45:00Z"
+        '400':
+          description: 잘못된 요청
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '403':
+          description: 권한 없음
           content:
             application/json:
               schema:
