@@ -209,8 +209,6 @@ class PushMapPlayMemberListView(APIView):
         for push_member in push_map_play_members:
             result.append({
                 'id': push_member.id,
-                'map_play_member_id': push_member.map_play_member_id,
-                'map_name': push_member.map_play_member.map_play.map.name,
                 'push_date': push_member.push_date,
                 'push_time': push_member.push_time,
                 'created_at': push_member.created_at,
