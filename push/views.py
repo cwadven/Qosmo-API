@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from common.common_consts.common_status_codes import SuccessStatusCode
 from common.dtos.response_dtos import BaseFormatResponse
-from member.permissions import IsGuestExists
+from member.permissions import IsGuestExists, IsMemberLogin
 from play.exceptions import PlayMemberNoPermissionException
 from play.services import MapPlayService
 from push.exceptions import PushMapPlayMemberNotFoundException
@@ -117,7 +117,7 @@ class TestPushView(APIView):
 
 
 class PushMapPlayMemberView(APIView):
-    permission_classes = [IsAuthenticated, IsGuestExists]
+    permission_classes = [IsMemberLogin]
     
     def post(self, request, map_play_member_id):
         """맵 플레이 멤버의 푸시 알림 설정 활성화"""
@@ -150,7 +150,7 @@ class PushMapPlayMemberView(APIView):
 
 
 class PushMapPlayMemberDeleteView(APIView):
-    permission_classes = [IsAuthenticated, IsGuestExists]
+    permission_classes = [IsMemberLogin]
     
     def delete(self, request, push_map_play_member_id):
         """푸시 맵 플레이 멤버 알림 설정 삭제"""
@@ -182,7 +182,7 @@ class PushMapPlayMemberDeleteView(APIView):
 
 
 class PushMapPlayMemberListView(APIView):
-    permission_classes = [IsAuthenticated, IsGuestExists]
+    permission_classes = [IsMemberLogin]
     
     def get(self, request, map_play_member_id):
         """특정 맵 플레이 멤버의 푸시 알림 설정 목록 조회"""
