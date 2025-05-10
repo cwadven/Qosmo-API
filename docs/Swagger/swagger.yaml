@@ -3233,6 +3233,12 @@ paths:
             schema:
               type: object
               properties:
+                push_date:
+                  type: string
+                  format: date
+                  nullable: true
+                  example: "2024-01-01"
+                  description: "푸시 알림을 보낼 시간 (HH:MM:SS 형식)"
                 push_time:
                   type: string
                   format: time

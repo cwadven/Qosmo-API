@@ -125,12 +125,14 @@ class PushMapPlayMemberView(APIView):
         if active_map_play_member.member_id != request.member.id:
             raise PlayMemberNoPermissionException()
 
+        push_date = request.data.get('push_date')
         push_time = request.data.get('push_time')
-        
+
         push_map_play_member, created = PushMapPlayMember.objects.get_or_create(
             map_play_member_id=map_play_member_id,
             guest_id=request.guest.id,
             push_type=PushMapPlayMemberPushType.REMINDER.value,
+            push_date=push_date,
             push_time=push_time,
             defaults={
                 'is_active': True,
