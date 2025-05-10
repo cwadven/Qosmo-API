@@ -21,6 +21,13 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         datetime_now = timezone.now()
+        # time 에 시간, 분 만 나오도록 초는 무조건 00
+        datetime_now = datetime_now.replace(
+            hour=datetime_now.hour,
+            minute=datetime_now.minute,
+            second=0,
+            microsecond=0,
+        )
         push_map_play_members = PushMapPlayMember.objects.select_related(
             'map_play_member__map_play__map',
             'guest__member',
