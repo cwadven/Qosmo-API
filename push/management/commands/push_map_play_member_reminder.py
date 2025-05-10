@@ -1,3 +1,5 @@
+from zoneinfo import ZoneInfo
+
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 from django.utils import timezone
@@ -21,9 +23,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # timezone korea 설정
-        timezone.activate('Asia/Seoul')
         # 현재 시간
-        datetime_now = timezone.now()
+        datetime_now = timezone.now().astimezone(ZoneInfo("Asia/Seoul"))
         # time 에 시간, 분 만 나오도록 초는 무조건 00
         datetime_now = datetime_now.replace(
             hour=datetime_now.hour,
