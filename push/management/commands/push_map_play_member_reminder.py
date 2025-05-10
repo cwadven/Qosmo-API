@@ -20,6 +20,9 @@ class Command(BaseCommand):
     help = '알림을 통해 해야할 MapPlayMember 를 통한 리마인드, 리마인더.'
 
     def handle(self, *args, **options):
+        # timezone korea 설정
+        timezone.activate('Asia/Seoul')
+        # 현재 시간
         datetime_now = timezone.now()
         # time 에 시간, 분 만 나오도록 초는 무조건 00
         datetime_now = datetime_now.replace(
