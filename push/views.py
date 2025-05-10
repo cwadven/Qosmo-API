@@ -246,11 +246,14 @@ class MemberPushMapPlayMemberListView(APIView):
             '-push_date',
             'push_time',
         )
-
+        
         result = []
         for push_member in push_map_play_members:
             result.append({
                 'id': push_member.id,
+                'map_play_member_id': push_member.map_play_member_id,
+                'map_id': push_member.map_play_member.map_play.map.id,
+                'map_play_id': push_member.map_play_member.map_play.id,
                 'push_date': push_member.push_date,
                 'push_time': push_member.push_time,
                 'map_name': push_member.map_play_member.map_play.map.name,
@@ -258,7 +261,7 @@ class MemberPushMapPlayMemberListView(APIView):
                 'created_at': push_member.created_at,
                 'updated_at': push_member.updated_at
             })
-
+            
         return Response(
             BaseFormatResponse(
                 status_code=SuccessStatusCode.SUCCESS.value,

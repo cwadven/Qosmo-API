@@ -3444,6 +3444,18 @@ paths:
                               type: integer
                               description: "푸시 맵 플레이 멤버 ID"
                               example: 1
+                            map_play_member_id:
+                              type: integer
+                              description: "맵 플레이 멤버 ID"
+                              example: 123
+                            map_id:
+                              type: integer
+                              description: "맵 ID"
+                              example: 456
+                            map_play_id:
+                              type: integer
+                              description: "맵 플레이 ID"
+                              example: 789
                             push_date:
                               type: string
                               format: date
