@@ -322,6 +322,10 @@ celery -A config worker -l INFO -P solo
 ````
 
 7. Crontab 적용
+
+- 적용 시 .django_env 에서 CRONTAB_PREFIX_COMMAND 를 설정합니다.
+- 이때, cd 프로젝트위치 && source venv/bin/activate && python manage.py 로 설정합니다.
+
 ```shell
 # 로그 디렉토리 생성
 mkdir -p /tmp/log
