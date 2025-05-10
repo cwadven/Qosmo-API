@@ -22,10 +22,8 @@ class Command(BaseCommand):
     help = '알림을 통해 해야할 MapPlayMember 를 통한 리마인드, 리마인더.'
 
     def handle(self, *args, **options):
-        # timezone korea 설정
-        # 현재 시간
+        # Due to cron job, the time zone is set to Asia/Seoul
         datetime_now = timezone.now().astimezone(ZoneInfo("Asia/Seoul"))
-        # time 에 시간, 분 만 나오도록 초는 무조건 00
         datetime_now = datetime_now.replace(
             hour=datetime_now.hour,
             minute=datetime_now.minute,
@@ -40,7 +38,6 @@ class Command(BaseCommand):
             (Q(push_date__isnull=True) | Q(push_date=datetime_now.date())),
             Q(push_time=datetime_now.time())
         )
-        print(f"datetime_now: {datetime_now}", f"date: {datetime_now.date()}", f"time: {datetime_now.time()}")
         push_service = PushService()
         for push_map_play_member in push_map_play_members:
             map_name = push_map_play_member.map_play_member.map_play.map.name
