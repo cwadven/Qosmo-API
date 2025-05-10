@@ -33,7 +33,7 @@ class Command(BaseCommand):
             'guest__member',
         ).filter(
             Q(is_active=True) &
-            (Q(push_date__isnull=False) | Q(push_date=datetime_now.date())),
+            (Q(push_date__isnull=True) | Q(push_date=datetime_now.date())),
             Q(push_time=datetime_now.time())
         )
         push_service = PushService()
