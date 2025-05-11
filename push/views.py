@@ -127,21 +127,16 @@ class PushMapPlayMemberView(APIView):
 
         push_date = request.data.get('push_date')
         push_time = request.data.get('push_time')
+        remind_info = request.data.get('remind_info')
         
-        push_map_play_member, created = PushMapPlayMember.objects.get_or_create(
+        PushMapPlayMember.objects.create(
             map_play_member_id=map_play_member_id,
             guest_id=request.guest.id,
             push_type=PushMapPlayMemberPushType.REMINDER.value,
             push_date=push_date,
             push_time=push_time,
-            defaults={
-                'is_active': True,
-            }
+            remind_info=remind_info,
         )
-
-        if not created:
-            push_map_play_member.is_active = True
-            push_map_play_member.save(update_fields=['is_active', 'updated_at'])
 
         return Response(
             BaseFormatResponse(
@@ -205,6 +200,7 @@ class PushMapPlayMemberListView(APIView):
         ).order_by(
             '-push_date',
             'push_time',
+            '-id',
         )
         
         result = []
@@ -213,6 +209,7 @@ class PushMapPlayMemberListView(APIView):
                 'id': push_member.id,
                 'push_date': push_member.push_date,
                 'push_time': push_member.push_time,
+                'remind_info': push_member.remind_info,
                 'created_at': push_member.created_at,
                 'updated_at': push_member.updated_at
             })
@@ -256,6 +253,7 @@ class MemberPushMapPlayMemberListView(APIView):
                 'map_play_id': push_member.map_play_member.map_play.id,
                 'push_date': push_member.push_date,
                 'push_time': push_member.push_time,
+                'remind_info': push_member.remind_info,
                 'map_name': push_member.map_play_member.map_play.map.name,
                 'map_play_title': push_member.map_play_member.map_play.title,
                 'created_at': push_member.created_at,

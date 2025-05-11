@@ -3238,12 +3238,17 @@ paths:
                   format: date
                   nullable: true
                   example: "2024-01-01"
-                  description: "푸시 알림을 보낼 시간 (HH:MM:SS 형식)"
+                  description: "푸시 알림을 보낼 날짜 (YYYY-MM-DD 형식)"
                 push_time:
                   type: string
                   format: time
                   example: "18:30:00"
                   description: "푸시 알림을 보낼 시간 (HH:MM:SS 형식)"
+                remind_info:
+                  type: string
+                  nullable: true
+                  example: "집에 도착해서 먼저 짐 정리하기"
+                  description: "추가 리마인드 정보"
       responses:
         '200':
           description: 설정 활성화 성공
@@ -3381,6 +3386,11 @@ paths:
                               format: time
                               description: "푸시 발송 시간"
                               example: "09:00:00"
+                            remind_info:
+                              type: string
+                              nullable: true
+                              description: "추가 리마인드 정보"
+                              example: "집에 도착해서 먼저 짐 정리하기"
                             created_at:
                               type: string
                               format: date-time
@@ -3466,6 +3476,11 @@ paths:
                               format: time
                               description: "푸시 발송 시간"
                               example: "09:00:00"
+                            remind_info:
+                              type: string
+                              nullable: true
+                              description: "추가 리마인드 정보"
+                              example: "집에 도착해서 먼저 짐 정리하기"
                             map_name:
                               type: string
                               description: "맵 이름"
