@@ -151,37 +151,92 @@ class PushMapPlayMemberView(APIView):
         )
 
 
-class PushMapPlayMemberDeleteView(APIView):
+class PushMapPlayDetailView(APIView):
     permission_classes = [IsMemberLogin]
+    
+    def put(self, request, push_map_play_member_id):
+        """푸시 맵 플레이 멤버 알림 설정 수정"""
+        # 존재 여부 및 소유권 확인
+        try:
+            push_map_play_member = PushMapPlayMember.objects.get(
+                id=push_map_play_member_id,
+                guest_id=request.guest.id,
+                is_deleted=False,
+            )
+        except PushMapPlayMember.DoesNotExist:
+            raise PushMapPlayMemberNotFoundException()
+        
+        # 요청한 사용자가 해당 푸시 설정의 소유자인지 확인
+        map_play_member = push_map_play_member.map_play_member
+        if map_play_member.member_id != request.member.id:
+            raise PlayMemberNoPermissionException()
+
+        # 업데이트할 필드 설정
+        push_date = request.data.get('push_date')
+        push_time = request.data.get('push_time')
+        remind_info = request.data.get('remind_info')
+        is_active = request.data.get('is_active')
+        
+        update_fields = ['updated_at']
+        
+        if push_date is not None:
+            push_map_play_member.push_date = push_date
+            update_fields.append('push_date')
+            
+        if push_time is not None:
+            push_map_play_member.push_time = push_time
+            update_fields.append('push_time')
+            
+        if remind_info is not None:
+            push_map_play_member.remind_info = remind_info
+            update_fields.append('remind_info')
+            
+        if is_active is not None:
+            push_map_play_member.is_active = is_active
+            update_fields.append('is_active')
+        
+        push_map_play_member.save(update_fields=update_fields)
+        
+        return Response(
+            BaseFormatResponse(
+                status_code=SuccessStatusCode.SUCCESS.value,
+                data={
+                    'id': push_map_play_member.id,
+                    'push_date': push_map_play_member.push_date,
+                    'push_time': push_map_play_member.push_time,
+                    'remind_info': push_map_play_member.remind_info,
+                    'is_active': push_map_play_member.is_active,
+                    'updated_at': push_map_play_member.updated_at
+                }
+            ).model_dump(),
+            status=status.HTTP_200_OK,
+        )
     
     def delete(self, request, push_map_play_member_id):
         """푸시 맵 플레이 멤버 알림 설정 삭제"""
         try:
-            try:
-                push_map_play_member = PushMapPlayMember.objects.get(
-                    id=push_map_play_member_id,
-                    guest_id=request.guest.id,
-                    is_deleted=False,
-                )
-            except PushMapPlayMember.DoesNotExist:
-                raise PushMapPlayMemberNotFoundException()
-            
-            # 요청한 사용자가 해당 푸시 설정의 소유자인지 확인
-            map_play_member = push_map_play_member.map_play_member
-            if map_play_member.member_id != request.member.id:
-                raise PlayMemberNoPermissionException()
-
-            push_map_play_member.is_deleted = True
-            push_map_play_member.save(update_fields=['is_deleted', 'updated_at'])
-            
-            return Response(
-                BaseFormatResponse(
-                    status_code=SuccessStatusCode.SUCCESS.value,
-                ).model_dump(),
-                status=status.HTTP_200_OK,
+            push_map_play_member = PushMapPlayMember.objects.get(
+                id=push_map_play_member_id,
+                guest_id=request.guest.id,
+                is_deleted=False,
             )
         except PushMapPlayMember.DoesNotExist:
             raise PushMapPlayMemberNotFoundException()
+        
+        # 요청한 사용자가 해당 푸시 설정의 소유자인지 확인
+        map_play_member = push_map_play_member.map_play_member
+        if map_play_member.member_id != request.member.id:
+            raise PlayMemberNoPermissionException()
+
+        push_map_play_member.is_deleted = True
+        push_map_play_member.save(update_fields=['is_deleted', 'updated_at'])
+        
+        return Response(
+            BaseFormatResponse(
+                status_code=SuccessStatusCode.SUCCESS.value,
+            ).model_dump(),
+            status=status.HTTP_200_OK,
+        )
 
 
 class PushMapPlayMemberListView(APIView):

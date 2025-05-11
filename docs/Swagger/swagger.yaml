@@ -3301,7 +3301,7 @@ paths:
       parameters:
         - name: push_map_play_member_id
           in: path
-          description: Push Map Play 멤버 ID
+          description: "삭제할 푸시 맵 플레이 멤버 ID"
           required: true
           schema:
             type: integer
@@ -3316,6 +3316,9 @@ paths:
                   status_code:
                     type: string
                     example: "success"
+                  data:
+                    type: object
+                    example: {}
         '403':
           description: |
             삭제 실패<br>
@@ -3338,6 +3341,119 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+    
+    put:
+      tags:
+        - Push
+      summary: "푸시 맵 플레이 멤버 알림 설정 수정"
+      description: |
+        푸시 맵 플레이 멤버 알림 설정을 수정합니다.
+        - 해당 푸시 설정의 소유자만 수정할 수 있습니다.
+        - 날짜, 시간, 알림 내용, 활성화 상태 등을 수정할 수 있습니다.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: push_map_play_member_id
+          in: path
+          description: "수정할 푸시 맵 플레이 멤버 ID"
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                push_date:
+                  type: string
+                  format: date
+                  nullable: true
+                  example: "2024-01-01"
+                  description: "푸시 알림을 보낼 날짜 (YYYY-MM-DD 형식)"
+                push_time:
+                  type: string
+                  format: time
+                  example: "18:30:00"
+                  description: "푸시 알림을 보낼 시간 (HH:MM:SS 형식)"
+                remind_info:
+                  type: string
+                  nullable: true
+                  example: "집에 도착해서 먼저 짐 정리하기"
+                  description: "추가 리마인드 정보"
+                is_active:
+                  type: boolean
+                  description: "활성화 여부"
+                  example: true
+      responses:
+        "200":
+          description: 수정 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        description: "푸시 맵 플레이 멤버 ID"
+                        example: 1
+                      push_date:
+                        type: string
+                        format: date
+                        description: "푸시 발송 날짜"
+                        example: "2024-01-01"
+                      push_time:
+                        type: string
+                        format: time
+                        description: "푸시 발송 시간"
+                        example: "18:30:00"
+                      remind_info:
+                        type: string
+                        nullable: true
+                        description: "추가 리마인드 정보"
+                        example: "집에 도착해서 먼저 짐 정리하기"
+                      is_active:
+                        type: boolean
+                        description: "활성화 여부"
+                        example: true
+                      updated_at:
+                        type: string
+                        format: date-time
+                        description: "수정 일시"
+                        example: "2024-01-01T18:30:00Z"
+        "403":
+          description: |
+            수정 실패<br>
+            [ status_code ENUM ]<br>
+            play-member-no-permission<br>
+            [ errors ]<br>
+            - 접근 권한이 없습니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: |
+            수정 실패<br>
+            [ status_code ENUM ]<br>
+            push-map-play-member-not-found<br>
+            [ errors ]<br>
+            - 존재하지 않는 푸시 맵 플레이 멤버입니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
 
   /v1/push/map-play-member/{map_play_member_id}/push-settings:
     get:
@@ -3427,6 +3543,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
 
   /v1/push/member/push-settings:
     get:
@@ -3523,6 +3641,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
 
   /v1/push/push-settings/active:
     put:
@@ -3585,6 +3705,118 @@ paths:
             play-member-no-permission<br>
             [ errors ]<br>
             - 접근 권한이 없습니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
+  /v1/push/push-map-play-member/{push_map_play_member_id}/update:
+    put:
+      tags:
+        - Push
+      summary: "특정 푸시 알림 설정 수정"
+      description: |
+        특정 푸시 맵 플레이 멤버 알림 설정을 수정합니다.
+        - 해당 푸시 설정의 소유자만 수정할 수 있습니다.
+        - 날짜, 시간, 알림 내용, 활성화 상태 등을 수정할 수 있습니다.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: push_map_play_member_id
+          in: path
+          description: "수정할 푸시 맵 플레이 멤버 ID"
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                push_date:
+                  type: string
+                  format: date
+                  nullable: true
+                  example: "2024-01-01"
+                  description: "푸시 알림을 보낼 날짜 (YYYY-MM-DD 형식)"
+                push_time:
+                  type: string
+                  format: time
+                  example: "18:30:00"
+                  description: "푸시 알림을 보낼 시간 (HH:MM:SS 형식)"
+                remind_info:
+                  type: string
+                  nullable: true
+                  example: "집에 도착해서 먼저 짐 정리하기"
+                  description: "추가 리마인드 정보"
+                is_active:
+                  type: boolean
+                  description: "활성화 여부"
+                  example: true
+      responses:
+        "200":
+          description: 수정 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        description: "푸시 맵 플레이 멤버 ID"
+                        example: 1
+                      push_date:
+                        type: string
+                        format: date
+                        description: "푸시 발송 날짜"
+                        example: "2024-01-01"
+                      push_time:
+                        type: string
+                        format: time
+                        description: "푸시 발송 시간"
+                        example: "18:30:00"
+                      remind_info:
+                        type: string
+                        nullable: true
+                        description: "추가 리마인드 정보"
+                        example: "집에 도착해서 먼저 짐 정리하기"
+                      is_active:
+                        type: boolean
+                        description: "활성화 여부"
+                        example: true
+                      updated_at:
+                        type: string
+                        format: date-time
+                        description: "수정 일시"
+                        example: "2024-01-01T18:30:00Z"
+        "403":
+          description: |
+            수정 실패<br>
+            [ status_code ENUM ]<br>
+            play-member-no-permission<br>
+            [ errors ]<br>
+            - 접근 권한이 없습니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: |
+            수정 실패<br>
+            [ status_code ENUM ]<br>
+            push-map-play-member-not-found<br>
+            [ errors ]<br>
+            - 존재하지 않는 푸시 맵 플레이 멤버입니다.<br>
           content:
             application/json:
               schema:
