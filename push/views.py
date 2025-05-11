@@ -1,11 +1,16 @@
+from pydantic import ValidationError
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+
+from common.common_consts.common_error_messages import InvalidInputResponseErrorStatus
 from common.common_consts.common_status_codes import SuccessStatusCode
+from common.common_exceptions import PydanticAPIException
 from common.dtos.response_dtos import BaseFormatResponse
 from member.permissions import IsGuestExists, IsMemberLogin
 from play.exceptions import PlayMemberNoPermissionException
 from play.services import MapPlayService
+from push.dtos.request_dtos import PutPushMapPlayMemberActiveRequest
 from push.exceptions import PushMapPlayMemberNotFoundException
 from push.services import PushService
 from push.models import PushMapPlayMember
@@ -269,6 +274,52 @@ class MemberPushMapPlayMemberListView(APIView):
                 data={
                     'push_map_play_members': result
                 }
+            ).model_dump(),
+            status=status.HTTP_200_OK,
+        )
+
+
+class PushMapPlayMemberActiveUpdateView(APIView):
+    permission_classes = [IsMemberLogin]
+    
+    def put(self, request):
+        """여러 푸시 맵 플레이 멤버의 활성화 상태 일괄 업데이트"""
+        # 요청 바디에서 데이터 추출
+        try:
+            put_push_map_play_member_active_request = PutPushMapPlayMemberActiveRequest(
+                is_active=request.data.get('is_active'),
+                push_map_play_member_ids=request.data.get('push_map_play_member_ids', []),
+            )
+        except ValidationError as e:
+            raise PydanticAPIException(
+                status_code=400,
+                error_summary=InvalidInputResponseErrorStatus.INVALID_PUT_PUSH_MAP_PLAY_MEMBER_INPUT_DATA_400.label,
+                error_code=InvalidInputResponseErrorStatus.INVALID_PUT_PUSH_MAP_PLAY_MEMBER_INPUT_DATA_400.value,
+                errors=e.errors(),
+            )
+
+        user_push_members = PushMapPlayMember.objects.filter(
+            id__in=put_push_map_play_member_active_request.push_map_play_member_ids,
+            guest_id=request.guest.id,
+            map_play_member__member_id=request.member.id,
+            is_deleted=False,
+        )
+
+        found_ids = set(user_push_members.values_list('id', flat=True))
+        not_found_ids = set(put_push_map_play_member_active_request.push_map_play_member_ids) - found_ids
+        if not_found_ids:
+            raise PlayMemberNoPermissionException
+
+        service = PushService()
+        service.update_push_map_play_member_active_status(
+            push_map_play_member_ids=put_push_map_play_member_active_request.push_map_play_member_ids,
+            is_active=put_push_map_play_member_active_request.is_active,
+        )
+
+        return Response(
+            BaseFormatResponse(
+                status_code=SuccessStatusCode.SUCCESS.value,
+                data={},
             ).model_dump(),
             status=status.HTTP_200_OK,
         )

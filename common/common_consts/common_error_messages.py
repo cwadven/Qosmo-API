@@ -29,3 +29,6 @@ class InvalidInputResponseErrorStatus(StrValueLabel):
     INVALID_PROFILE_CHANGE_INPUT_DATA_400 = (
         '400-profile_change-00001', ErrorMessage.INVALID_INPUT_ERROR_MESSAGE.label
     )
+    INVALID_PUT_PUSH_MAP_PLAY_MEMBER_INPUT_DATA_400 = (
+        '400-invalid-put-push-map-play-member-00001', ErrorMessage.INVALID_INPUT_ERROR_MESSAGE.label
+    )

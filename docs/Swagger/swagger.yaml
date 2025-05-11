@@ -3524,6 +3524,74 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /v1/push/push-settings/active:
+    put:
+      tags:
+        - Push
+      summary: 여러 푸시 알림 설정의 활성화 상태 일괄 업데이트
+      description: 여러 푸시 맵 플레이 멤버의 활성화 상태를 한 번에 업데이트합니다.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - is_active
+                - push_map_play_member_ids
+              properties:
+                is_active:
+                  type: boolean
+                  example: true
+                  description: 설정할 활성화 상태
+                push_map_play_member_ids:
+                  type: array
+                  items:
+                    type: integer
+                  example: [1, 2, 3]
+                  description: 업데이트할 푸시 맵 플레이 멤버 ID 목록
+      responses:
+        "200":
+          description: 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    example: {}
+        "400":
+          description: |
+            요청 오류<br>
+            [ status_code ENUM ]<br>
+            INVALID_PUT_PUSH_MAP_PLAY_MEMBER_INPUT_DATA_400<br>
+            [ errors ENUM ]<br>
+            is_active<br>
+            push_map_play_member_ids<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: |
+            권한 오류<br>
+            [ status_code ENUM ]<br>
+            play-member-no-permission<br>
+            [ errors ]<br>
+            - 접근 권한이 없습니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+
 components:
   schemas:
     NotUserAuthPermission:
