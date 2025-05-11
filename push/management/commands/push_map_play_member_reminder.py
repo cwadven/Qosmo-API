@@ -36,6 +36,8 @@ class Command(BaseCommand):
         ).filter(
             Q(is_active=True) &
             Q(is_deleted=False) &
+            Q(map_play_member__deactivated=False) &
+            Q(map_play_member__map_play__map__is_deleted=False) &
             (Q(push_date__isnull=True) | Q(push_date=datetime_now.date())),
             Q(push_time=datetime_now.time())
         )
