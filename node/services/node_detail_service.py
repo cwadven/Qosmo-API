@@ -232,7 +232,8 @@ class NodeDetailService:
             'reviewed_by',
             'member',
         ).filter(
-            Q(map_play_member_id=self.map_play_member_id) | Q(is_correct=True),
+            Q(map_play_member_id=self.map_play_member_id) |
+            Q(map_play_member__map_play_id=self.map_play_id, is_correct=True),
         ).prefetch_related(
             'files',
         ).annotate(
