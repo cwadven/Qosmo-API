@@ -43,7 +43,7 @@ class QuestionAdminForm(ModelForm):
 
     def clean_question_types(self):
         return list(self.cleaned_data['question_types'])
-        
+
     def clean(self):
         """유효성 검사를 수행합니다"""
         cleaned_data = super().clean()

@@ -3249,6 +3249,10 @@ paths:
                   nullable: true
                   example: "집에 도착해서 먼저 짐 정리하기"
                   description: "추가 리마인드 정보"
+                is_active:
+                  type: boolean
+                  description: "활성화 여부"
+                  example: true
       responses:
         '200':
           description: 설정 활성화 성공
@@ -3391,6 +3395,10 @@ paths:
                               nullable: true
                               description: "추가 리마인드 정보"
                               example: "집에 도착해서 먼저 짐 정리하기"
+                            is_active:
+                              type: boolean
+                              description: "활성화 여부"
+                              example: true
                             created_at:
                               type: string
                               format: date-time
@@ -3481,6 +3489,10 @@ paths:
                               nullable: true
                               description: "추가 리마인드 정보"
                               example: "집에 도착해서 먼저 짐 정리하기"
+                            is_active:
+                              type: boolean
+                              description: "활성화 여부"
+                              example: true
                             map_name:
                               type: string
                               description: "맵 이름"

@@ -211,6 +211,7 @@ class PushMapPlayMemberListView(APIView):
                 'push_date': push_member.push_date,
                 'push_time': push_member.push_time,
                 'remind_info': push_member.remind_info,
+                'is_active': push_member.is_active,
                 'created_at': push_member.created_at,
                 'updated_at': push_member.updated_at
             })
@@ -255,6 +256,7 @@ class MemberPushMapPlayMemberListView(APIView):
                 'push_date': push_member.push_date,
                 'push_time': push_member.push_time,
                 'remind_info': push_member.remind_info,
+                'is_active': push_member.is_active,
                 'map_name': push_member.map_play_member.map_play.map.name,
                 'map_play_title': push_member.map_play_member.map_play.title,
                 'created_at': push_member.created_at,
