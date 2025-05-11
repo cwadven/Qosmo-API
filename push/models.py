@@ -111,6 +111,11 @@ class PushMapPlayMember(models.Model):
         null=True,
         blank=True,
     )
+    remind_info = models.TextField(
+        null=True,
+        blank=True,
+        help_text='추가 리마인드',
+    )
     # Query 성능 개선을 위해서 MapPlayMember 안에는 Member 가 있지 Guest 가 있는 게 아님.
     guest = models.ForeignKey(
         Guest,
