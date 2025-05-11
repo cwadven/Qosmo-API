@@ -131,6 +131,10 @@ class PushMapPlayMember(models.Model):
         default=True,
         help_text='활성화 여부',
     )
+    is_deleted = models.BooleanField(
+        default=False,
+        help_text='삭제 여부',
+    )
     created_at = models.DateTimeField(
         auto_now_add=True,
         help_text='생성일시',

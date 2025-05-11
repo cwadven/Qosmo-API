@@ -156,6 +156,7 @@ class PushMapPlayMemberDeleteView(APIView):
                 push_map_play_member = PushMapPlayMember.objects.get(
                     id=push_map_play_member_id,
                     guest_id=request.guest.id,
+                    is_deleted=False,
                 )
             except PushMapPlayMember.DoesNotExist:
                 raise PushMapPlayMemberNotFoundException()
@@ -165,8 +166,8 @@ class PushMapPlayMemberDeleteView(APIView):
             if map_play_member.member_id != request.member.id:
                 raise PlayMemberNoPermissionException()
 
-            push_map_play_member.is_active = False
-            push_map_play_member.save(update_fields=['is_active', 'updated_at'])
+            push_map_play_member.is_deleted = True
+            push_map_play_member.save(update_fields=['is_deleted', 'updated_at'])
             
             return Response(
                 BaseFormatResponse(
@@ -192,7 +193,7 @@ class PushMapPlayMemberListView(APIView):
         push_map_play_members = PushMapPlayMember.objects.filter(
             map_play_member_id=map_play_member_id,
             guest_id=request.guest.id,
-            is_active=True
+            is_deleted=False,
         ).select_related(
             'map_play_member',
             'map_play_member__map_play',
@@ -234,7 +235,7 @@ class MemberPushMapPlayMemberListView(APIView):
         push_map_play_members = PushMapPlayMember.objects.filter(
             map_play_member__member_id=request.member.id,
             guest_id=request.guest.id,
-            is_active=True
+            is_deleted=False,
         ).select_related(
             'map_play_member',
             'map_play_member__map_play',
