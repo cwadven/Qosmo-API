@@ -10,7 +10,7 @@ from push.services import PushService
 
 
 PUSH_REMIND_TITLE = "리마인드 알림"
-PUSH_REMIND_BODY = "{} 의 {} 리마인드 알림 입니다."
+PUSH_REMIND_BODY = "{} 의 {} 리마인드 알림 입니다. {}"
 
 
 class Command(BaseCommand):
@@ -45,7 +45,11 @@ class Command(BaseCommand):
             push_service.send_push(
                 guest_id=push_map_play_member.guest_id,
                 title=PUSH_REMIND_TITLE,
-                body=PUSH_REMIND_BODY.format(map_name, map_play_title),
+                body=PUSH_REMIND_BODY.format(
+                    map_name,
+                    map_play_title,
+                    f"\n{push_map_play_member.remind_info}" if push_map_play_member.remind_info else "",
+                ),
                 data={
                     "type": PushChannelType.MAP_PLAY_MEMBER_REMINDER.value,
                     "map_id": str(push_map_play_member.map_play_member.map_play.map_id),
