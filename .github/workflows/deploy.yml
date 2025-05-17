@@ -7,9 +7,8 @@ on:
         type: choice
         description: 'Which server to deployment type'
         required: true
-        default: 'staging'
+        default: 'production'
         options:
-          - staging
           - production
 
 concurrency:
@@ -32,11 +31,7 @@ jobs:
     steps:
     - name: Set Safe Directory
       run: |
-        if [ "${{ inputs.deployment-type }}" = "production" ]; then
-          git config --global --add safe.directory "${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}"
-        else
-          git config --global --add safe.directory "${{ secrets.DEVELOPMENT_PROJECT_FILE_PATH }}"
-        fi
+        git config --global --add safe.directory "${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}"
 
   pull-code:
     needs: setup-git
@@ -44,11 +39,7 @@ jobs:
     steps:
     - name: Pull Branch
       run: |
-        if [ "${{ inputs.deployment-type }}" = "production" ]; then
-          cd ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }} && sudo git pull origin ${{ github.ref }}
-        else
-          cd ${{ secrets.DEVELOPMENT_PROJECT_FILE_PATH }} && sudo git pull origin ${{ github.ref }}
-        fi
+        cd ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }} && sudo git pull origin ${{ github.ref }}
 
   update-dependencies:
     needs: pull-code
@@ -56,11 +47,7 @@ jobs:
     steps:
     - name: pip Update
       run: |
-        if [ "${{ inputs.deployment-type }}" = "production" ]; then
-          . ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/venv/bin/activate && pip install -r ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/requirements.txt
-        else
-          . ${{ secrets.DEVELOPMENT_PROJECT_FILE_PATH }}/venv/bin/activate && pip install -r ${{ secrets.DEVELOPMENT_PROJECT_FILE_PATH }}/requirements.txt
-        fi
+        . ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/venv/bin/activate && pip install -r ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/requirements.txt
 
   collect-static:
     needs: update-dependencies
@@ -68,11 +55,7 @@ jobs:
     steps:
     - name: Collectstatic
       run: |
-        if [ "${{ inputs.deployment-type }}" = "production" ]; then
-          . ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/venv/bin/activate && python ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/manage.py collectstatic --noinput
-        else
-          . ${{ secrets.DEVELOPMENT_PROJECT_FILE_PATH }}/venv/bin/activate && python ${{ secrets.DEVELOPMENT_PROJECT_FILE_PATH }}/manage.py collectstatic --noinput
-        fi
+        . ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/venv/bin/activate && python ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/manage.py collectstatic --noinput
 
   database-migrate:
     needs: collect-static
@@ -80,11 +63,7 @@ jobs:
     steps:
     - name: Database Update
       run: |
-        if [ "${{ inputs.deployment-type }}" = "production" ]; then
-          . ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/venv/bin/activate && python ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/manage.py migrate --noinput
-        else
-          . ${{ secrets.DEVELOPMENT_PROJECT_FILE_PATH }}/venv/bin/activate && python ${{ secrets.DEVELOPMENT_PROJECT_FILE_PATH }}/manage.py migrate --noinput
-        fi
+        . ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/venv/bin/activate && python ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/manage.py migrate --noinput
 
   update-cron:
     needs: database-migrate
@@ -92,11 +71,7 @@ jobs:
     steps:
     - name: cronjob command update
       run: |
-        if [ "${{ inputs.deployment-type }}" = "production" ]; then
-          . ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/venv/bin/activate && cd ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }} && fab2 update-crontab
-        else
-          . ${{ secrets.DEVELOPMENT_PROJECT_FILE_PATH }}/venv/bin/activate && cd ${{ secrets.DEVELOPMENT_PROJECT_FILE_PATH }} && fab2 update-crontab
-        fi
+        . ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/venv/bin/activate && cd ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }} && fab2 update-crontab
       continue-on-error: true
 
   restart-cron:
@@ -105,11 +80,7 @@ jobs:
     steps:
     - name: cronjob restart
       run: |
-        if [ "${{ inputs.deployment-type }}" = "production" ]; then
-          cat ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/command.cron | sudo crontab -
-        else
-          cat ${{ secrets.DEVELOPMENT_PROJECT_FILE_PATH }}/command.cron | sudo crontab -
-        fi
+        cat ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/command.cron | sudo crontab -
         sudo /etc/init.d/cron reload
       continue-on-error: true
 
