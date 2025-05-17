@@ -28,63 +28,55 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  setup-ssh:
+  deploy:
     needs: checkout
     runs-on: ubuntu-latest
     steps:
-    - name: Setup SSH
+    - name: Deploy to server
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.SERVER_HOST }}
         username: ${{ secrets.SERVER_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-  deploy:
-    needs: setup-ssh
-    runs-on: ubuntu-latest
-    steps:
-    - name: Deploy to server
-      run: |
-        echo "🚀 Starting deployment process..."
-        ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} '
+        script: |
+          echo "🚀 Starting deployment process..."
+          
           echo "📂 Changing to project directory..."
-          cd ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }} && \
+          cd ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}
           
           echo "🔄 Fetching latest changes from git..."
-          git fetch origin && \
+          git fetch origin
           
           echo "🔍 Checking out to ${{ github.ref }}..."
-          git checkout ${{ github.ref }} && \
+          git checkout ${{ github.ref }}
           
           echo "⬇️ Pulling latest changes..."
-          git pull origin ${{ github.ref }} && \
+          git pull origin ${{ github.ref }}
           
           echo "🐍 Activating virtual environment..."
-          . venv/bin/activate && \
+          . venv/bin/activate
           
           echo "📦 Installing/updating dependencies..."
-          pip install -r requirements.txt && \
+          pip install -r requirements.txt
           
           echo "📝 Collecting static files..."
-          python manage.py collectstatic --noinput && \
+          python manage.py collectstatic --noinput
           
           echo "🗃️ Running database migrations..."
-          python manage.py migrate --noinput && \
+          python manage.py migrate --noinput
           
           echo "⏰ Updating cron jobs..."
-          fab2 update-crontab && \
+          fab2 update-crontab
           
           echo "📅 Installing cron jobs..."
-          cat command.cron | sudo crontab - && \
-          sudo /etc/init.d/cron reload && \
+          cat command.cron | sudo crontab -
+          sudo /etc/init.d/cron reload
           
           echo "🌿 Restarting Celery..."
-          sudo /etc/init.d/celeryd restart && \
+          sudo /etc/init.d/celeryd restart
           
           echo "🌐 Restarting web servers..."
-          sudo systemctl restart nginx && \
-          sudo systemctl restart gunicorn && \
+          sudo systemctl restart nginx
+          sudo systemctl restart gunicorn
           
-          echo "✅ Deployment completed successfully!"
-        '
-      continue-on-error: true 
+          echo "✅ Deployment completed successfully!" 
