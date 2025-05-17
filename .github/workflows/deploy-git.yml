@@ -1,0 +1,93 @@
+name: Deploy to GitHub Runner
+
+on:
+  workflow_dispatch:
+    inputs:
+      deployment-type:
+        type: choice
+        description: 'Which server to deployment type'
+        required: true
+        default: 'production'
+        options:
+          - production
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DJANGO_SETTINGS_MODULE: "config.settings.production"
+
+jobs:
+  checkout:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.ref }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  setup-ssh:
+    needs: checkout
+    runs-on: ubuntu-latest
+    steps:
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Add known hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+  deploy:
+    needs: setup-ssh
+    runs-on: ubuntu-latest
+    steps:
+    - name: Deploy to server
+      run: |
+        echo "🚀 Starting deployment process..."
+        ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} '
+          echo "📂 Changing to project directory..."
+          cd ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }} && \
+          
+          echo "🔄 Fetching latest changes from git..."
+          git fetch origin && \
+          
+          echo "🔍 Checking out to ${{ github.ref }}..."
+          git checkout ${{ github.ref }} && \
+          
+          echo "⬇️ Pulling latest changes..."
+          git pull origin ${{ github.ref }} && \
+          
+          echo "🐍 Activating virtual environment..."
+          . venv/bin/activate && \
+          
+          echo "📦 Installing/updating dependencies..."
+          pip install -r requirements.txt && \
+          
+          echo "📝 Collecting static files..."
+          python manage.py collectstatic --noinput && \
+          
+          echo "🗃️ Running database migrations..."
+          python manage.py migrate --noinput && \
+          
+          echo "⏰ Updating cron jobs..."
+          fab2 update-crontab && \
+          
+          echo "📅 Installing cron jobs..."
+          cat command.cron | sudo crontab - && \
+          sudo /etc/init.d/cron reload && \
+          
+          echo "🌿 Restarting Celery..."
+          sudo /etc/init.d/celeryd restart && \
+          
+          echo "🌐 Restarting web servers..."
+          sudo systemctl restart nginx && \
+          sudo systemctl restart gunicorn && \
+          
+          echo "✅ Deployment completed successfully!"
+        '
+      continue-on-error: true 
