@@ -2,6 +2,7 @@ from django.contrib import admin
 from push.models import (
     DeviceToken,
     PushHistory,
+    PushMapPlayMember,
 )
 
 
@@ -33,3 +34,14 @@ class PushHistoryAdmin(admin.ModelAdmin):
         'error_message',
     )
     readonly_fields = ('sent_at',)
+
+
+@admin.register(PushMapPlayMember)
+class PushHistoryAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'map_play_member',
+        'guest',
+        'push_type',
+        'is_active',
+    )

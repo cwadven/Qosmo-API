@@ -2,3 +2,4 @@ PATH=/usr/local/bin:/usr/bin:/bin
 MAILTO=""
 0 15 * * * {{ prefix_command }} set_popular_maps daily >> /tmp/log/django_commands.log 2>&1
 0 15 * * * {{ prefix_command }} set_popular_maps monthly >> /tmp/log/django_commands.log 2>&1
+* * * * * {{ prefix_command }} push_map_play_member_reminder >> /tmp/log/django_commands.log 2>&1

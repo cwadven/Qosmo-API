@@ -13,6 +13,7 @@ from push.consts import PushChannelType
 from push.models import (
     DeviceToken,
     PushHistory,
+    PushMapPlayMember,
 )
 
 
@@ -231,4 +232,31 @@ class PushService:
                 data,
             )
             all_histories.extend(histories)
-        return all_histories 
+        return all_histories
+
+    def update_push_map_play_member_active_status(
+        self,
+        push_map_play_member_ids: List[int],
+        is_active: bool,
+    ) -> List[PushMapPlayMember]:
+        """
+        여러 PushMapPlayMember의 is_active 상태를 한 번에 업데이트
+        
+        Args:
+            push_map_play_member_ids: 업데이트할 PushMapPlayMember id 목록
+            is_active: 설정할 활성화 상태
+            
+        Returns:
+            업데이트된 PushMapPlayMember 목록
+        """
+        # 존재하는 PushMapPlayMember 객체들 필터링
+        push_map_play_members = PushMapPlayMember.objects.filter(
+            id__in=push_map_play_member_ids,
+            is_deleted=False,
+        )
+        
+        # 대량 업데이트 수행
+        push_map_play_members.update(is_active=is_active)
+        
+        # 업데이트된 객체들 반환
+        return list(push_map_play_members)

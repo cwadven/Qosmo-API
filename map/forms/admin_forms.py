@@ -72,6 +72,9 @@ class NodeAdminForm(PreSignedUrlAdminForm):
 
 
 class CategoryAdminForm(PreSignedUrlAdminForm):
+    icon = forms.CharField(
+        required=False,
+    )
     icon_image_file = forms.ImageField(
         label='아이콘 이미지 업로드 하기',
         help_text='이미지를 업로드 후, 저장하면 URL이 자동으로 입력됩니다.',

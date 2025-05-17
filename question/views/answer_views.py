@@ -101,6 +101,7 @@ class AnswerSubmitView(APIView):
         ]
         going_to_in_progress_node_ids = find_activatable_node_ids_after_completion(
             request.guest.member_id,
+            map_play_member_id,
             completed_node_ids,
         )
 

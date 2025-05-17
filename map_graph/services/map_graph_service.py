@@ -9,7 +9,7 @@ from django.utils import timezone
 
 from map.models import (
     Arrow,
-    NodeCompleteRule,
+    NodeCompleteRule, ArrowProgress,
 )
 from map_graph.dtos.graph_arrow import GraphArrow
 from map_graph.dtos.graph_node import GraphNode
@@ -91,17 +91,19 @@ class MapGraphService:
             map_id=map_id,
             is_deleted=False,
         )
-
-        # 완료된 노드들의 id를 저장합니다.
-        completed_node_ids = {
-            completed_node.id
-            for completed_node in self.get_map_play_member_completed_nodes(map_play_member_id)
-        }
-
+        completed_arrow_ids = set(
+            ArrowProgress.objects.filter(
+                arrow_id__in=arrows.values_list('id', flat=True),
+                is_resolved=True,
+            ).values_list(
+                'arrow_id',
+                flat=True,
+            )
+        )
         return [
             GraphArrow.from_arrow(
                 arrow,
-                completed_node_ids,
+                completed_arrow_ids,
             )
             for arrow in arrows
         ]

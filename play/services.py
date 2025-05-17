@@ -59,6 +59,12 @@ class MapPlayService:
         except MapPlayMember.DoesNotExist:
             raise PlayMemberNotFoundException()
 
+    def get_map_play_member_by_id(self, map_play_id: int) -> MapPlayMember:
+        """
+        맵 플레이 조회
+        """
+        return self._get_map_play_member_by_id(map_play_id)
+
     def _get_map_play_by_map_play_member_id(self, map_play_member_id: int) -> MapPlay:
         """
         맵 플레이 조회

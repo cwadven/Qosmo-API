@@ -142,6 +142,7 @@ def get_map_play_completed_node_ids(
 
 def find_activatable_node_ids_after_completion(
         member_id: Optional[int],
+        map_play_member_id: Optional[int],
         node_ids: List[int]
 ) -> Set[int]:
     """
@@ -163,6 +164,7 @@ def find_activatable_node_ids_after_completion(
     member_node_completed_node_ids = set(
         NodeCompletedHistory.objects.filter(
             member_id=member_id,
+            map_play_member_id=map_play_member_id,
             node_id__in=able_to_in_progress_node_ids,
         ).values_list(
             'node_id',
@@ -232,7 +234,8 @@ class NodeDetailService:
             'reviewed_by',
             'member',
         ).filter(
-            Q(map_play_member_id=self.map_play_member_id) | Q(is_correct=True),
+            Q(map_play_member_id=self.map_play_member_id) |
+            Q(map_play_member__map_play_id=self.map_play_id, is_correct=True),
         ).prefetch_related(
             'files',
         ).annotate(

@@ -18,10 +18,9 @@ class GraphArrow(BaseModel):
     def from_arrow(
             cls,
             arrow: Arrow,
-            completed_node_ids: Set[int],
+            completed_arrow_ids: Set[int],
     ) -> 'GraphArrow':
-        # start_node가 완료되었으면 completed
-        if arrow.start_node_id in completed_node_ids:
+        if arrow.id in completed_arrow_ids:
             status = 'completed'
         else:
             status = 'locked'
