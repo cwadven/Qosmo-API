@@ -11,3 +11,122 @@ on:
         options:
           - staging
           - production
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checkout:
+    runs-on: self-hosted
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.ref }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+
+  setup-git:
+    needs: checkout
+    runs-on: self-hosted
+    steps:
+    - name: Set Safe Directory
+      run: |
+        if [ "${{ inputs.deployment-type }}" = "production" ]; then
+          git config --global --add safe.directory "${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}"
+        else
+          git config --global --add safe.directory "${{ secrets.DEVELOPMENT_PROJECT_FILE_PATH }}"
+        fi
+
+  pull-code:
+    needs: setup-git
+    runs-on: self-hosted
+    steps:
+    - name: Pull Branch
+      run: |
+        if [ "${{ inputs.deployment-type }}" = "production" ]; then
+          cd ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }} && sudo git pull origin ${{ github.ref }}
+        else
+          cd ${{ secrets.DEVELOPMENT_PROJECT_FILE_PATH }} && sudo git pull origin ${{ github.ref }}
+        fi
+
+  update-dependencies:
+    needs: pull-code
+    runs-on: self-hosted
+    steps:
+    - name: pip Update
+      run: |
+        if [ "${{ inputs.deployment-type }}" = "production" ]; then
+          . ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/venv/bin/activate && pip install -r ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/requirements.txt
+        else
+          . ${{ secrets.DEVELOPMENT_PROJECT_FILE_PATH }}/venv/bin/activate && pip install -r ${{ secrets.DEVELOPMENT_PROJECT_FILE_PATH }}/requirements.txt
+        fi
+
+  collect-static:
+    needs: update-dependencies
+    runs-on: self-hosted
+    steps:
+    - name: Collectstatic
+      run: |
+        if [ "${{ inputs.deployment-type }}" = "production" ]; then
+          . ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/venv/bin/activate && python ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/manage.py collectstatic --noinput
+        else
+          . ${{ secrets.DEVELOPMENT_PROJECT_FILE_PATH }}/venv/bin/activate && python ${{ secrets.DEVELOPMENT_PROJECT_FILE_PATH }}/manage.py collectstatic --noinput
+        fi
+
+  database-migrate:
+    needs: collect-static
+    runs-on: self-hosted
+    steps:
+    - name: Database Update
+      run: |
+        if [ "${{ inputs.deployment-type }}" = "production" ]; then
+          . ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/venv/bin/activate && python ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/manage.py migrate --noinput
+        else
+          . ${{ secrets.DEVELOPMENT_PROJECT_FILE_PATH }}/venv/bin/activate && python ${{ secrets.DEVELOPMENT_PROJECT_FILE_PATH }}/manage.py migrate --noinput
+        fi
+
+  update-cron:
+    needs: database-migrate
+    runs-on: self-hosted
+    steps:
+    - name: cronjob command update
+      run: |
+        if [ "${{ inputs.deployment-type }}" = "production" ]; then
+          . ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/venv/bin/activate && cd ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }} && fab2 update-crontab
+        else
+          . ${{ secrets.DEVELOPMENT_PROJECT_FILE_PATH }}/venv/bin/activate && cd ${{ secrets.DEVELOPMENT_PROJECT_FILE_PATH }} && fab2 update-crontab
+        fi
+      continue-on-error: true
+
+  restart-cron:
+    needs: update-cron
+    runs-on: self-hosted
+    steps:
+    - name: cronjob restart
+      run: |
+        if [ "${{ inputs.deployment-type }}" = "production" ]; then
+          cat ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/command.cron | sudo crontab -
+        else
+          cat ${{ secrets.DEVELOPMENT_PROJECT_FILE_PATH }}/command.cron | sudo crontab -
+        fi
+        sudo /etc/init.d/cron reload
+      continue-on-error: true
+
+  restart-celery:
+    needs: restart-cron
+    runs-on: self-hosted
+    steps:
+    - name: celery restart
+      run: |
+        sudo /etc/init.d/celeryd restart
+      continue-on-error: true
+
+  restart-web-server:
+    needs: restart-celery
+    runs-on: self-hosted
+    steps:
+    - name: Restart web server
+      run: |
+        sudo systemctl restart nginx
+        sudo systemctl restart gunicorn
