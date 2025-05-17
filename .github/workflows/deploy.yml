@@ -60,13 +60,23 @@ jobs:
       run: |
         cd ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }} && . ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/venv/bin/activate && python ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/manage.py migrate --noinput
 
-  restart-cron:
+  update-cron:
     needs: database-migrate
+    runs-on: self-hosted
+    steps:
+    - name: cronjob command update
+      run: |
+        cd ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }} && . ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/venv/bin/activate && cd ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }} && fab2 update-crontab
+      continue-on-error: true
+
+  restart-cron:
+    needs: update-cron
     runs-on: self-hosted
     steps:
     - name: cronjob restart
       run: |
-        cd ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }} && . ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/venv/bin/activate && python manage.py crontab add
+        cat ${{ secrets.PRODUCTION_PROJECT_FILE_PATH }}/command.cron | sudo crontab -
+        sudo /etc/init.d/cron reload
       continue-on-error: true
 
   restart-celery:
