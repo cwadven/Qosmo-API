@@ -15,10 +15,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  DJANGO_SETTINGS_MODULE: "config.settings.production"
+
 jobs:
   setup-git:
     runs-on: self-hosted
-    environment: production
     steps:
     - name: Set Safe Directory
       run: |
@@ -27,7 +29,6 @@ jobs:
   pull-code:
     needs: setup-git
     runs-on: self-hosted
-    environment: production
     env:
       GITHUB_TOKEN: ${{ secrets.TOKEN }}
     steps:
@@ -38,7 +39,6 @@ jobs:
   update-dependencies:
     needs: pull-code
     runs-on: self-hosted
-    environment: production
     steps:
     - name: pip Update
       run: |
@@ -47,7 +47,6 @@ jobs:
   collect-static:
     needs: update-dependencies
     runs-on: self-hosted
-    environment: production
     steps:
     - name: Collectstatic
       run: |
@@ -56,7 +55,6 @@ jobs:
   database-migrate:
     needs: collect-static
     runs-on: self-hosted
-    environment: production
     steps:
     - name: Database Update
       run: |
@@ -65,7 +63,6 @@ jobs:
   restart-cron:
     needs: database-migrate
     runs-on: self-hosted
-    environment: production
     steps:
     - name: cronjob restart
       run: |
@@ -75,7 +72,6 @@ jobs:
   restart-celery:
     needs: restart-cron
     runs-on: self-hosted
-    environment: production
     steps:
     - name: celery restart
       run: |
@@ -85,7 +81,6 @@ jobs:
   restart-web-server:
     needs: restart-celery
     runs-on: self-hosted
-    environment: production
     steps:
     - name: Restart web server
       run: |
