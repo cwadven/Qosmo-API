@@ -1244,6 +1244,159 @@ paths:
           $ref: "#/components/responses/NodeForbiddenError"
         "404":
           $ref: "#/components/responses/NodeNotFoundError"
+          
+    patch:
+      tags:
+        - Node
+      summary: "Node 속성 수정"
+      description: |
+        특정 Node의 속성을 수정합니다.
+        - Map 생성자만 접근 가능합니다.
+        - 노드의 이름, 제목, 설명, 배경 이미지, 활성화 상태, 너비, 높이 등을 수정할 수 있습니다.
+        - 위치 정보(position_x, position_y)도 함께 수정할 수 있습니다.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: node_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: "노드 이름"
+                  example: "HTML 기초"
+                title:
+                  type: string
+                  description: "노드 제목"
+                  example: "HTML 마스터"
+                description:
+                  type: string
+                  description: "노드 설명"
+                  example: "HTML의 기본 구조와 시맨틱 태그를 이해하고 활용할 수 있습니다"
+                background_image:
+                  type: string
+                  description: "배경 이미지 URL"
+                  example: "s3/path/to/image.jpg"
+                is_active:
+                  type: boolean
+                  description: "활성화 여부"
+                  example: true
+                width:
+                  type: number
+                  format: float
+                  description: "노드 너비"
+                  example: 200.5
+                height:
+                  type: number
+                  format: float
+                  description: "노드 높이"
+                  example: 150.5
+                position_x:
+                  type: number
+                  format: float
+                  description: "X 좌표 위치"
+                  example: 100.5
+                position_y:
+                  type: number
+                  format: float
+                  description: "Y 좌표 위치"
+                  example: 200.5
+      responses:
+        "200":
+          description: 성공적으로 Node 속성을 수정했습니다
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      name:
+                        type: string
+                        example: "HTML 기초"
+                      title:
+                        type: string
+                        example: "HTML 마스터"
+                      description:
+                        type: string
+                        example: "HTML의 기본 구조와 시맨틱 태그를 이해하고 활용할 수 있습니다"
+                      background_image:
+                        type: string
+                        example: "s3/path/to/image.jpg"
+                      is_active:
+                        type: boolean
+                        example: true
+                      width:
+                        type: number
+                        format: float
+                        example: 200.5
+                      height:
+                        type: number
+                        format: float
+                        example: 150.5
+                      position_x:
+                        type: number
+                        format: float
+                        example: 100.5
+                      position_y:
+                        type: number
+                        format: float
+                        example: 200.5
+                      updated_at:
+                        type: string
+                        format: date-time
+                        example: "2024-01-01T09:00:00Z"
+        "400":
+          description: |
+            요청 오류<br>
+            [ status_code ENUM ]<br>
+            missing-mandatory-parameter<br>
+            invalid-parameter-type<br>
+            [ errors ENUM ]<br>
+            name<br>
+            title<br>
+            description<br>
+            background_image<br>
+            is_active<br>
+            width<br>
+            height<br>
+            position_x<br>
+            position_y<br>
+            properties<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: |
+            접근 권한 없음<br>
+            [ status_code ENUM ]<br>
+            node-edit-permission-denied<br>
+            [ errors ]<br>
+            - Map 생성자만 이 작업을 수행할 수 있습니다.<br>
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          $ref: "#/components/responses/NodeNotFoundError"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
 
   /v1/question/{question_id}/answer/submit:
     post:
@@ -3052,28 +3205,28 @@ paths:
                             type: string
                             description: 멤버 닉네임
                             example: "비니"
-                      answer:
-                        type: string
-                        description: 답변 내용
-                        example: "React Hooks는 ..."
-                      files:
-                        type: array
-                        description: 첨부 파일 목록
-                        items:
-                          type: object
-                          properties:
-                            id:
-                              type: integer
-                              description: 파일 ID
-                              example: 1
-                            name:
-                              type: string
-                              description: 파일 이름
-                              example: "file.pdf"
-                            file:
-                              type: string
-                              description: 파일 경로
-                              example: "s3/path/to/file.pdf"
+                        answer:
+                          type: string
+                          description: 답변 내용
+                          example: "React Hooks는 ..."
+                        files:
+                          type: array
+                          description: 첨부 파일 목록
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                                description: 파일 ID
+                                example: 1
+                              name:
+                                type: string
+                                description: 파일 이름
+                                example: "file.pdf"
+                              file:
+                                type: string
+                                description: 파일 경로
+                                example: "s3/path/to/file.pdf"
                       is_correct:
                         type: boolean
                         nullable: true

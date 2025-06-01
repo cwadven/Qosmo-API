@@ -32,3 +32,6 @@ class InvalidInputResponseErrorStatus(StrValueLabel):
     INVALID_PUT_PUSH_MAP_PLAY_MEMBER_INPUT_DATA_400 = (
         '400-invalid-put-push-map-play-member-00001', ErrorMessage.INVALID_INPUT_ERROR_MESSAGE.label
     )
+    INVALID_UPDATE_NODE_PROPERTIES_INPUT_DATA_400 = (
+        '400-update_node_properties_input_data-00001', ErrorMessage.INVALID_INPUT_ERROR_MESSAGE.label
+    )
