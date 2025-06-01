@@ -1,6 +1,6 @@
 from django.urls import path
 
-from node.views import NodeDetailView
+from node.views import NodeDetailView, NodeDetailAdminView
 
 app_name = 'node'
 
@@ -8,4 +8,6 @@ app_name = 'node'
 urlpatterns = [
     path('/<int:node_id>', NodeDetailView.as_view(), name='node-detail'),
     path('/<int:node_id>/member-play/<int:map_play_member_id>', NodeDetailView.as_view(), name='node-detail'),
+
+    path('/<int:node_id>/management', NodeDetailAdminView.as_view(), name='node-detail-admin'),
 ]

@@ -7,6 +7,7 @@ from typing import (
 
 from django.db.models import F, Q, Case, When, Value, IntegerField
 
+from map.consts import NodeStatus
 from map.models import (
     Arrow,
     ArrowProgress,
@@ -187,6 +188,18 @@ class NodeDetailService:
         )
         self.map_play = self.map_play_member.map_play if self.map_play_member else None
 
+    def validate_node_meta_editable(self, node_id: int) -> None:
+        try:
+            node = Node.objects.get(
+                id=node_id,
+                is_deleted=False,
+            )
+        except Node.DoesNotExist:
+            raise NodeNotFoundException()
+
+        if self.member_id != node.map.created_by_id:
+            raise NodeNotFoundException()
+
     @property
     def map_play_member_id(self):
         return self.map_play_member.id if self.map_play_member else None
@@ -194,6 +207,144 @@ class NodeDetailService:
     @property
     def map_play_id(self):
         return self.map_play.id if self.map_play else None
+
+    def get_node_detail_bypass(self, node_id: int) -> NodeDetailDTO:
+        try:
+            node = Node.objects.get(
+                id=node_id,
+                is_deleted=False,
+            )
+        except Node.DoesNotExist:
+            raise NodeNotFoundException()
+
+        rules = list(
+            NodeCompleteRule.objects.filter(
+                node_id=node_id,
+                is_deleted=False,
+            )
+        )
+        rule_ids = [rule.id for rule in rules]
+        arrows = Arrow.objects.filter(
+            node_complete_rule_id__in=rule_ids,
+            is_deleted=False,
+        ).select_related(
+            'start_node',
+        )
+
+        # Rule별 Question 매핑
+        questions_by_rule_id = {}
+        questions = list(
+            Question.objects.filter(
+                arrow_id__in=[arrow.id for arrow in arrows],
+                is_deleted=False,
+            )
+        )
+        question_ids = [question.id for question in questions]
+        question_dtos_by_rule_id = {}
+        question_files_by_question_id = {}
+        question_files = QuestionFile.objects.filter(
+            question_id__in=question_ids,
+        )
+        for question_file in question_files:
+            if question_file.question_id not in question_files_by_question_id:
+                question_files_by_question_id[question_file.question_id] = []
+            question_files_by_question_id[question_file.question_id].append(question_file)
+
+        question_by_arrow_id = {
+            question.arrow_id: question for question in questions if question.arrow_id
+        }
+        for arrow in arrows:
+            if arrow.node_complete_rule_id not in question_dtos_by_rule_id:
+                question_dtos_by_rule_id[arrow.node_complete_rule_id] = []
+            mapping_question = question_by_arrow_id.get(arrow.id, Question(id=None))
+            if mapping_question.id:
+                question_dtos_by_rule_id[arrow.node_complete_rule_id].append(
+                    QuestionDTO(
+                        id=mapping_question.id,
+                        arrow_id=arrow.id,
+                        title=mapping_question.title,
+                        description=mapping_question.description,
+                        question_files=[
+                            FileDTO(
+                                id=file.id,
+                                url=file.file,
+                                name=file.name,
+                            )
+                            for file in question_files_by_question_id.get(mapping_question.id, [])
+                        ],
+                        status="in_progress",
+                        by_node_id=arrow.start_node_id,
+                        answer_submit_with_text=QuestionType.TEXT.value in mapping_question.question_types,
+                        answer_submit_with_file=QuestionType.FILE.value in mapping_question.question_types,
+                        answer_submittable=True,
+                        my_answers=[],
+                    )
+                )
+
+                if arrow.node_complete_rule_id not in questions_by_rule_id:
+                    questions_by_rule_id[arrow.node_complete_rule_id] = []
+                questions_by_rule_id[arrow.node_complete_rule_id].append(mapping_question)
+            else:
+                question_dtos_by_rule_id[arrow.node_complete_rule_id].append(
+                    QuestionDTO(
+                        id=None,
+                        arrow_id=arrow.id,
+                        title=f'"{arrow.start_node.name}"를 완료해주세요.',
+                        description=f'"{arrow.start_node.name}" 를 완료해주세요.',
+                        question_files=[],
+                        status="in_progress",
+                        by_node_id=arrow.start_node_id,
+                        answer_submit_with_text=False,
+                        answer_submit_with_file=False,
+                        answer_submittable=True,
+                        my_answers=[],
+                    )
+                )
+        activated_count, completed_count = self._get_node_map_play_statistics(node)
+        node_state = NodeStatus.IN_PROGRESS.value
+        if not node.is_active:
+            node_state = NodeStatus.DEACTIVATED.value
+        return NodeDetailDTO(
+            id=node.id,
+            name=node.name,
+            title=node.title,
+            description=node.description,
+            status=node_state,
+            background_image=node.background_image,
+            statistic=NodeStatisticDTO(
+                activated_member_count=activated_count,
+                completed_member_count=completed_count,
+            ),
+            active_rules=[
+                NodeCompleteRuleDetailDTO(
+                    id=rule.id,
+                    name=rule.name,
+                    progress=RuleProgressDTO(
+                        completed_questions=len(
+                            [
+                                question_dto
+                                for question_dto in question_dtos_by_rule_id.get(rule.id, [])
+                                if question_dto.status == 'completed'
+                            ]
+                        ),
+                        total_questions=len(question_dtos_by_rule_id.get(rule.id, [])),
+                        percentage=int(
+                            len(
+                                [
+                                    question_dto
+                                    for question_dto in question_dtos_by_rule_id.get(rule.id, [])
+                                    if question_dto.status == 'completed'
+                                ]
+                            ) / len(question_dtos_by_rule_id.get(rule.id, [])) * 100
+                        )
+                        if question_dtos_by_rule_id.get(rule.id, [])
+                        else 0,
+                    ),
+                    questions=question_dtos_by_rule_id.get(rule.id, []),
+                )
+                for rule in rules
+            ],
+        )
 
     def get_node_detail(self, node_id: int) -> NodeDetailDTO:
         try:
@@ -275,19 +426,19 @@ class NodeDetailService:
         # 모든 Arrow 가 start_node_id == end_node_id 면 in_progress
         # 해결된 Node 면 completed
         # 아니면 locked
-        node_status = 'locked'
+        node_status = NodeStatus.LOCKED.value
         if not node.is_active:
-            node_status = 'deactivated'
+            node_status = NodeStatus.DEACTIVATED.value
         elif node.id in members_completed_node_ids:
-            node_status = 'completed'
+            node_status = NodeStatus.COMPLETED.value
         elif bool(len({arrow.id for arrow in arrows} & members_completed_arrow_ids)):
-            node_status = 'in_progress'
+            node_status = NodeStatus.IN_PROGRESS.value
         elif is_start_node:
-            node_status = 'in_progress'
+            node_status = NodeStatus.IN_PROGRESS.value
 
         # 통계 데이터 조회
         activated_count, completed_count = self._get_node_map_play_statistics(node)
-        if node_status == 'locked':
+        if node_status == NodeStatus.LOCKED.value:
             return NodeDetailDTO(
                 id=node.id,
                 name=node.name,

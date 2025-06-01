@@ -1214,6 +1214,37 @@ paths:
         "404":
           $ref: "#/components/responses/NodeNotFoundError"
 
+  /v1/node/{node_id}/management:
+    get:
+      tags:
+        - Node
+      summary: "Node 상세 정보 조회, (맵 관리자용)"
+      description: |
+        특정 Node의 상세 정보를 조회합니다.
+      parameters:
+        - name: node_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 성공적으로 Node 상세 정보를 조회했습니다
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status_code:
+                    type: string
+                    example: "success"
+                  data:
+                    $ref: "#/components/schemas/NodeDetail"
+        "403":
+          $ref: "#/components/responses/NodeForbiddenError"
+        "404":
+          $ref: "#/components/responses/NodeNotFoundError"
+
   /v1/question/{question_id}/answer/submit:
     post:
       tags:
